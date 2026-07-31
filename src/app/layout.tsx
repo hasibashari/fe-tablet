@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   description: "Scientifically backed, high-purity medical solutions designed to improve your quality of life.",
 };
 
+import ThemeRegistry from "@/src/shared/components/ThemeRegistry";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,10 +35,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${cormorantSerif.variable} ${interSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-white text-ink">
-        {children}
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans bg-white text-ink">
+        <ThemeRegistry>{children}</ThemeRegistry>
       </body>
     </html>
   );
