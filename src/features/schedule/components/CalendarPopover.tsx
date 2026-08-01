@@ -102,7 +102,7 @@ export default function CalendarPopover({ selectedDate, onDateChange }: Calendar
           bgcolor: '#ffffff',
           borderColor: 'var(--color-hairline, #e2e8f0)',
           color: 'text.primary',
-          borderRadius: 3,
+          borderRadius: 1,
           textTransform: 'none',
           fontWeight: 600,
           px: 2,
@@ -133,7 +133,7 @@ export default function CalendarPopover({ selectedDate, onDateChange }: Calendar
           paper: {
             elevation: 4,
             sx: {
-              borderRadius: 4,
+              borderRadius: 1.5,
               p: 2.5,
               width: 310,
               mt: 1,
@@ -195,7 +195,7 @@ export default function CalendarPopover({ selectedDate, onDateChange }: Calendar
                     width: 34,
                     height: 34,
                     p: 0,
-                    borderRadius: 2.5,
+                    borderRadius: 1,
                     fontSize: '0.85rem',
                     fontWeight: isSelected || isToday ? 700 : 500,
                     bgcolor: isSelected ? '#0284c7' : 'transparent',

@@ -32,16 +32,16 @@ export default function ProfileView() {
     return (
       <Box sx={{ pb: 5, width: '100%' }}>
         <Skeleton variant="text" width={200} height={40} />
-        <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 6, my: 4 }} />
+        <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 2, my: 4 }} />
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 4 }} />
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 2 }} />
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 4 }} />
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 2 }} />
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 4 }} />
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 2 }} />
           </Grid>
         </Grid>
       </Box>
@@ -76,16 +76,16 @@ export default function ProfileView() {
           variant="contained"
           startIcon={<Edit2 size={16} />}
           sx={{
-            bgcolor: 'rgba(2, 132, 199, 0.1)',
-            color: 'primary.main',
+            bgcolor: 'primary.light',
+            color: 'primary.dark',
             boxShadow: 'none',
-            borderRadius: 2.5,
+            borderRadius: 1.5,
             textTransform: 'none',
             fontWeight: 600,
             px: 2.5,
             py: 1,
             '&:hover': {
-              bgcolor: 'rgba(2, 132, 199, 0.2)',
+              bgcolor: 'rgba(2, 132, 199, 0.15)', // slightly darker primary.light
               boxShadow: 'none',
             },
           }}
@@ -98,11 +98,11 @@ export default function ProfileView() {
       <Card
         elevation={0}
         sx={{
-          borderRadius: 6,
+          borderRadius: 2,
           border: '1px solid',
-          borderColor: 'var(--color-hairline, #e2e8f0)',
+          borderColor: 'divider',
           mb: 4,
-          bgcolor: '#ffffff',
+          bgcolor: 'background.paper',
         }}
       >
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -134,19 +134,19 @@ export default function ProfileView() {
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'text.primary' }}>
-                    <Mail size={18} style={{ color: '#0284c7' }} />
+                    <Mail size={18} style={{ color: 'var(--mui-palette-primary-main)' }} />
                     <Typography variant="body2">{profile.email}</Typography>
                   </Box>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'text.primary' }}>
-                    <Phone size={18} style={{ color: '#0284c7' }} />
+                    <Phone size={18} style={{ color: 'var(--mui-palette-primary-main)' }} />
                     <Typography variant="body2">{profile.phone}</Typography>
                   </Box>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'text.primary' }}>
-                    <Calendar size={18} style={{ color: '#0284c7' }} />
+                    <Calendar size={18} style={{ color: 'var(--mui-palette-primary-main)' }} />
                     <Typography variant="body2">Born {profile.dateOfBirth}</Typography>
                   </Box>
                 </Grid>
@@ -166,9 +166,9 @@ export default function ProfileView() {
           <Card
             elevation={0}
             sx={{
-              borderRadius: 4,
+              borderRadius: 2,
               border: '1px solid',
-              borderColor: 'var(--color-hairline, #e2e8f0)',
+              borderColor: 'divider',
               p: 2.5,
               display: 'flex',
               alignItems: 'center',
@@ -178,9 +178,9 @@ export default function ProfileView() {
             <Box
               sx={{
                 p: 1.5,
-                borderRadius: 3,
-                bgcolor: '#fef2f2',
-                color: '#ef4444',
+                borderRadius: 1.5,
+                bgcolor: 'error.light',
+                color: 'error.dark',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -192,7 +192,7 @@ export default function ProfileView() {
               <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
                 Blood Type
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', leading: 1.2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
                 {profile.bloodType}
               </Typography>
             </Box>
@@ -203,9 +203,9 @@ export default function ProfileView() {
           <Card
             elevation={0}
             sx={{
-              borderRadius: 4,
+              borderRadius: 2,
               border: '1px solid',
-              borderColor: 'var(--color-hairline, #e2e8f0)',
+              borderColor: 'divider',
               p: 2.5,
               display: 'flex',
               alignItems: 'center',
@@ -215,9 +215,9 @@ export default function ProfileView() {
             <Box
               sx={{
                 p: 1.5,
-                borderRadius: 3,
-                bgcolor: '#eff6ff',
-                color: '#3b82f6',
+                borderRadius: 1.5,
+                bgcolor: 'info.light',
+                color: 'info.dark',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -229,7 +229,7 @@ export default function ProfileView() {
               <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
                 Height
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', leading: 1.2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
                 {profile.height} cm
               </Typography>
             </Box>
@@ -240,9 +240,9 @@ export default function ProfileView() {
           <Card
             elevation={0}
             sx={{
-              borderRadius: 4,
+              borderRadius: 2,
               border: '1px solid',
-              borderColor: 'var(--color-hairline, #e2e8f0)',
+              borderColor: 'divider',
               p: 2.5,
               display: 'flex',
               alignItems: 'center',
@@ -252,9 +252,9 @@ export default function ProfileView() {
             <Box
               sx={{
                 p: 1.5,
-                borderRadius: 3,
-                bgcolor: '#f0fdf4',
-                color: '#22c55e',
+                borderRadius: 1.5,
+                bgcolor: 'success.light',
+                color: 'success.dark',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -266,7 +266,7 @@ export default function ProfileView() {
               <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
                 Weight
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', leading: 1.2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
                 {profile.weight} kg
               </Typography>
             </Box>
@@ -277,4 +277,3 @@ export default function ProfileView() {
   )
 
 }
-

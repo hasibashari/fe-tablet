@@ -66,7 +66,7 @@ export default function HealthLineChart() {
     <Card
       elevation={0}
       sx={{
-        borderRadius: 5,
+        borderRadius: 2,
         border: '1px solid',
         borderColor: 'var(--color-hairline, #e2e8f0)',
         bgcolor: '#ffffff',
@@ -88,7 +88,7 @@ export default function HealthLineChart() {
             <Box
               sx={{
                 p: 1.25,
-                borderRadius: 3,
+                borderRadius: 1.5,
                 bgcolor: 'rgba(2, 132, 199, 0.1)',
                 color: '#0284c7',
                 display: 'flex',
@@ -117,7 +117,7 @@ export default function HealthLineChart() {
                 fontWeight: 700,
               }}
             />
-            <ButtonGroup size="small" variant="outlined" sx={{ borderRadius: 2 }}>
+            <ButtonGroup size="small" variant="outlined" sx={{ borderRadius: 1 }}>
               <Button
                 onClick={() => setRange('7d')}
                 variant={range === '7d' ? 'contained' : 'outlined'}
@@ -142,7 +142,7 @@ export default function HealthLineChart() {
             sx={{
               p: 1.5,
               px: 2,
-              borderRadius: 3,
+              borderRadius: 1.5,
               bgcolor: '#f8fafc',
               border: '1px solid #e2e8f0',
               mb: 2,

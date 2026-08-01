@@ -93,8 +93,8 @@ export default function DashboardView() {
                     label={`${completedCount}/${totalCount} Completed`}
                     size="small"
                     sx={{
-                      bgcolor: 'rgba(2, 132, 199, 0.1)',
-                      color: 'primary.main',
+                      bgcolor: 'primary.light',
+                      color: 'primary.dark',
                       fontWeight: 600,
                     }}
                   />
@@ -103,9 +103,9 @@ export default function DashboardView() {
 
               {loading ? (
                 <Stack spacing={2}>
-                  <Skeleton variant="rounded" height={80} sx={{ borderRadius: 4 }} />
-                  <Skeleton variant="rounded" height={80} sx={{ borderRadius: 4 }} />
-                  <Skeleton variant="rounded" height={80} sx={{ borderRadius: 4 }} />
+                  <Skeleton variant="rounded" height={80} sx={{ borderRadius: 2 }} />
+                  <Skeleton variant="rounded" height={80} sx={{ borderRadius: 2 }} />
+                  <Skeleton variant="rounded" height={80} sx={{ borderRadius: 2 }} />
                 </Stack>
               ) : reminders.length === 0 ? (
                 <Paper
@@ -114,8 +114,8 @@ export default function DashboardView() {
                     p: 4,
                     border: '2px dashed',
                     borderColor: 'divider',
-                    borderRadius: 4,
-                    bgcolor: '#ffffff',
+                    borderRadius: 2,
+                    bgcolor: 'background.paper',
                     textAlign: 'center',
                     color: 'text.secondary',
                   }}
@@ -140,44 +140,42 @@ export default function DashboardView() {
         {/* RIGHT COLUMN (30%) */}
         <Grid size={{ xs: 12, md: 5, lg: 4 }}>
           <Stack spacing={3}>
-            {/* Widget 1: Upcoming Reminder Card */}
+            {/* Widget 1: Upcoming Reminder Card - HIGHEST HIERARCHY */}
             {nextReminder ? (
               <Card
                 elevation={0}
                 sx={{
-                  borderRadius: 4,
+                  borderRadius: 2,
                   border: '1px solid',
-                  borderColor: 'rgba(2, 132, 199, 0.2)',
-                  bgcolor: 'rgba(2, 132, 199, 0.03)',
-                  p: 2.5,
+                  borderColor: 'primary.main',
+                  bgcolor: 'primary.light',
+                  p: 3,
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                  <BellRing size={18} style={{ color: '#0284c7' }} />
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                  <BellRing size={20} style={{ color: 'var(--mui-palette-primary-dark)' }} />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.dark' }}>
                     Upcoming Reminder
                   </Typography>
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.dark', mb: 1 }}>
                   {nextReminder.title}
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5, mb: 1.5 }}>
+                <Typography variant="body2" sx={{ color: 'primary.main', mb: 2.5 }}>
                   {nextReminder.description || 'Scheduled reminder'}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Chip
-                    icon={<Clock size={14} />}
+                    icon={<Clock size={16} />}
                     label={nextReminder.time}
-                    size="small"
                     color="primary"
-                    variant="outlined"
-                    sx={{ fontWeight: 600, borderRadius: 2 }}
+                    sx={{ fontWeight: 700, borderRadius: 2 }}
                   />
                   <Button
                     size="small"
                     variant="contained"
                     onClick={() => handleToggleStatus(nextReminder.id, nextReminder.status)}
-                    sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, bgcolor: '#0284c7' }}
+                    sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
                   >
                     Mark Done
                   </Button>
@@ -187,32 +185,32 @@ export default function DashboardView() {
               <Card
                 elevation={0}
                 sx={{
-                  borderRadius: 4,
+                  borderRadius: 2,
                   border: '1px solid',
-                  borderColor: 'var(--color-hairline, #e2e8f0)',
-                  bgcolor: '#ffffff',
-                  p: 2.5,
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                  p: 3,
                   textAlign: 'center',
                 }}
               >
-                <CheckCircle2 size={32} style={{ color: '#16a34a', margin: '0 auto 8px' }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                <CheckCircle2 size={36} style={{ color: 'var(--mui-palette-success-main)', margin: '0 auto 12px' }} />
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
                   All Done for Today!
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                   You have completed all scheduled medications today.
                 </Typography>
               </Card>
             )}
 
-            {/* Widget 2: Daily Hydration Tracker (New Unique Metric) */}
+            {/* Widget 2: Daily Hydration Tracker (Secondary Hierarchy) */}
             <Card
               elevation={0}
               sx={{
-                borderRadius: 4,
+                borderRadius: 2,
                 border: '1px solid',
-                borderColor: 'var(--color-hairline, #e2e8f0)',
-                bgcolor: '#ffffff',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
                 p: 2.5,
               }}
             >
@@ -221,9 +219,9 @@ export default function DashboardView() {
                   <Box
                     sx={{
                       p: 1,
-                      borderRadius: 2.5,
-                      bgcolor: 'rgba(2, 132, 199, 0.1)',
-                      color: '#0284c7',
+                      borderRadius: 1.5,
+                      bgcolor: 'info.light',
+                      color: 'info.dark',
                       display: 'flex',
                     }}
                   >
@@ -233,7 +231,7 @@ export default function DashboardView() {
                     Hydration Goal
                   </Typography>
                 </Box>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#0284c7' }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'info.dark' }}>
                   {waterAmount} / 2.0 L
                 </Typography>
               </Box>
@@ -241,14 +239,10 @@ export default function DashboardView() {
               <LinearProgress
                 variant="determinate"
                 value={Math.min(100, (waterAmount / 2.0) * 100)}
+                color="info"
                 sx={{
                   height: 8,
-                  borderRadius: 4,
-                  bgcolor: '#f1f5f9',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 4,
-                    bgcolor: '#0284c7',
-                  },
+                  borderRadius: 2,
                   mb: 2,
                 }}
               />
@@ -257,32 +251,27 @@ export default function DashboardView() {
                 fullWidth
                 size="small"
                 variant="outlined"
+                color="info"
                 startIcon={<Plus size={16} />}
                 onClick={handleAddWater}
                 sx={{
-                  borderRadius: 2.5,
+                  borderRadius: 1.5,
                   textTransform: 'none',
                   fontWeight: 600,
-                  borderColor: '#e2e8f0',
-                  color: 'text.primary',
-                  '&:hover': {
-                    bgcolor: 'rgba(2, 132, 199, 0.04)',
-                    borderColor: '#0284c7',
-                  },
                 }}
               >
                 Log +250ml Water
               </Button>
             </Card>
 
-            {/* Widget 3: Caregiver & Doctor Quick Contact (New Unique Feature) */}
+            {/* Widget 3: Caregiver & Doctor Quick Contact (Secondary Hierarchy) */}
             <Card
               elevation={0}
               sx={{
-                borderRadius: 4,
+                borderRadius: 2,
                 border: '1px solid',
-                borderColor: 'var(--color-hairline, #e2e8f0)',
-                bgcolor: '#ffffff',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
                 p: 2.5,
               }}
             >
@@ -290,9 +279,9 @@ export default function DashboardView() {
                 <Box
                   sx={{
                     p: 1,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(16, 185, 129, 0.1)',
-                    color: '#059669',
+                    borderRadius: 1.5,
+                    bgcolor: 'success.light',
+                    color: 'success.dark',
                     display: 'flex',
                   }}
                 >
@@ -317,7 +306,7 @@ export default function DashboardView() {
                 color="success"
                 startIcon={<PhoneCall size={15} />}
                 sx={{
-                  borderRadius: 2.5,
+                  borderRadius: 1.5,
                   textTransform: 'none',
                   fontWeight: 600,
                 }}

@@ -13,7 +13,7 @@ export default function DailyProgress({ total, completed }: DailyProgressProps) 
     <Card
       elevation={0}
       sx={{
-        borderRadius: 6,
+        borderRadius: 2,
         background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
         color: '#ffffff',
         position: 'relative',

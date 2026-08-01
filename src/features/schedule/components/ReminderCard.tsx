@@ -25,7 +25,7 @@ export default function ReminderCard({ reminder, onToggleStatus }: ReminderCardP
     <Card
       elevation={0}
       sx={{
-        borderRadius: 4,
+        borderRadius: 1.5,
         border: '1px solid',
         borderColor: isMissed
           ? 'error.light'
