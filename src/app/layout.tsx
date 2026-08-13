@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 };
 
 import ThemeRegistry from "@/src/shared/components/ThemeRegistry";
+import { AuthProvider } from "@/src/features/auth";
 
 export default function RootLayout({
   children,
@@ -39,7 +40,9 @@ export default function RootLayout({
       className={`${cormorantSerif.variable} ${interSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col font-sans bg-white text-ink">
-        <ThemeRegistry>{children}</ThemeRegistry>
+        <ThemeRegistry>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );

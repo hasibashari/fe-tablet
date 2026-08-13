@@ -12,7 +12,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
     <Card
       elevation={0}
       sx={{
-        borderRadius: 5,
+        borderRadius: 2,
         border: '1px solid',
         borderColor: 'var(--color-hairline, #e2e8f0)',
         bgcolor: '#ffffff',

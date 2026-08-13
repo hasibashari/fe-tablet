@@ -79,7 +79,15 @@ export default function ScheduleView() {
     <Box sx={{ pb: 6, width: '100%' }}>
       {/* Header Title */}
       <Box sx={{ mb: 3.5 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: 'text.primary' }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            fontWeight: 700,
+            color: 'text.primary',
+            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
+          }}
+        >
           My Schedule
         </Typography>
         <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5 }}>
@@ -91,8 +99,8 @@ export default function ScheduleView() {
       <Paper
         elevation={0}
         sx={{
-          p: 2.5,
-          borderRadius: 4,
+          p: { xs: 2, sm: 2.5 },
+          borderRadius: 2,
           border: '1px solid',
           borderColor: 'var(--color-hairline, #e2e8f0)',
           bgcolor: '#ffffff',
@@ -136,7 +144,7 @@ export default function ScheduleView() {
               sx={{
                 width: { xs: '100%', sm: 260 },
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 3,
+                  borderRadius: 1.5,
                   bgcolor: '#f8fafc',
                 },
               }}
@@ -147,7 +155,18 @@ export default function ScheduleView() {
           </Box>
 
           {/* Right Controls: Status Filter Chips */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              overflowX: 'auto',
+              flexWrap: { xs: 'nowrap', sm: 'wrap' },
+              pb: { xs: 0.5, sm: 0 },
+              '&::-webkit-scrollbar': { height: 4 },
+              '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.1)', borderRadius: 2 },
+            }}
+          >
             {(['ALL', 'PENDING', 'COMPLETED', 'MISSED'] as StatusFilterType[]).map(st => {
               const isActive = statusFilter === st
               return (
@@ -161,11 +180,12 @@ export default function ScheduleView() {
                     fontSize: '0.775rem',
                     px: 0.5,
                     height: 32,
-                    borderRadius: 2.5,
-                    bgcolor: isActive ? '#0284c7' : '#f1f5f9',
+                    borderRadius: 1.5,
+                    bgcolor: isActive ? 'primary.main' : 'background.default',
                     color: isActive ? '#ffffff' : 'text.secondary',
+                    flexShrink: 0,
                     '&:hover': {
-                      bgcolor: isActive ? '#0284c7' : '#e2e8f0',
+                      bgcolor: isActive ? 'primary.dark' : 'action.hover',
                     },
                   }}
                 />

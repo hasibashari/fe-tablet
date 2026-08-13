@@ -1,12 +1,13 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import { motion } from 'motion/react'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Sparkles, Award } from 'lucide-react'
 
 export default function ProductInfo() {
   return (
-    <section className="py-24 bg-surface-soft">
+    <section className="py-24 bg-surface-soft relative overflow-hidden">
       <div className="container mx-auto px-6 max-w-7xl">
         <div className="flex flex-col lg:flex-row items-center gap-16">
           <motion.div
@@ -14,11 +15,55 @@ export default function ProductInfo() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="lg:w-1/2 w-full"
+            className="lg:w-1/2 w-full relative"
           >
-            <div className="aspect-square md:aspect-[4/3] lg:aspect-square rounded-3xl overflow-hidden shadow-lg border border-hairline bg-white relative flex items-center justify-center text-muted-soft">
-              <span className="text-sm font-medium uppercase tracking-widest">Product Display Image</span>
+            {/* Ambient subtle glow */}
+            <div className="absolute -inset-2 bg-gradient-to-tr from-accent-teal/20 to-primary/20 rounded-3xl blur-xl -z-10 opacity-70"></div>
+
+            <div className="aspect-square md:aspect-[4/3] lg:aspect-square rounded-3xl overflow-hidden shadow-xl border border-hairline bg-white relative group">
+              <Image
+                src="https://images.pexels.com/photos/5998474/pexels-photo-5998474.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                alt="Laboratory precision medicine research"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-[center_20%] group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent to-transparent pointer-events-none" />
             </div>
+
+            {/* Floating Top Left Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="absolute -top-4 -left-4 sm:-left-6 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-hairline flex items-center gap-3"
+            >
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-body">Purity Standard</p>
+                <p className="text-sm font-bold text-ink">99.8% Pharmaceutical Grade</p>
+              </div>
+            </motion.div>
+
+            {/* Floating Bottom Right Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="absolute -bottom-4 -right-4 sm:-right-6 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-hairline flex items-center gap-3"
+            >
+              <div className="h-10 w-10 rounded-xl bg-accent-teal/10 flex items-center justify-center text-accent-teal">
+                <Award size={20} />
+              </div>
+              <div>
+                <p className="text-xs text-muted">Absorption Rate</p>
+                <p className="text-sm font-bold text-ink">4.8x Higher Bioavailability</p>
+              </div>
+            </motion.div>
           </motion.div>
 
           <motion.div
@@ -28,6 +73,9 @@ export default function ProductInfo() {
             transition={{ duration: 0.8 }}
             className="lg:w-1/2 w-full"
           >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-hairline text-xs font-semibold text-primary mb-4 shadow-sm">
+              <span>Next-Gen Formulation</span>
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold text-ink mb-6">
               Precision Medicine for Your Unique Needs
             </h2>
@@ -49,7 +97,7 @@ export default function ProductInfo() {
               ))}
             </ul>
 
-            <button className="bg-primary hover:bg-primary-active text-white px-8 py-3 rounded-full font-medium transition-colors">
+            <button className="bg-primary hover:bg-primary-active text-white px-8 py-3.5 rounded-full font-medium transition-all shadow-[0_4px_14px_0_rgba(14,165,233,0.3)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.2)] cursor-pointer">
               Read the Research
             </button>
           </motion.div>
@@ -58,3 +106,4 @@ export default function ProductInfo() {
     </section>
   )
 }
+

@@ -89,9 +89,11 @@ export default function HealthLineChart() {
               sx={{
                 p: 1.25,
                 borderRadius: 1.5,
-                bgcolor: 'rgba(2, 132, 199, 0.1)',
-                color: '#0284c7',
+                bgcolor: 'rgba(204, 120, 92, 0.12)',
+                color: 'primary.main',
                 display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <Activity size={20} />
@@ -106,7 +108,7 @@ export default function HealthLineChart() {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'space-between', sm: 'flex-end' } }}>
             <Chip
               icon={<TrendingUp size={14} style={{ color: '#16a34a' }} />}
               label={`Avg: ${avgAdherence}%`}
@@ -121,14 +123,14 @@ export default function HealthLineChart() {
               <Button
                 onClick={() => setRange('7d')}
                 variant={range === '7d' ? 'contained' : 'outlined'}
-                sx={{ textTransform: 'none', fontWeight: 600, px: 1.5 }}
+                sx={{ textTransform: 'none', fontWeight: 600, px: 1.5, minHeight: 36 }}
               >
                 7 Days
               </Button>
               <Button
                 onClick={() => setRange('30d')}
                 variant={range === '30d' ? 'contained' : 'outlined'}
-                sx={{ textTransform: 'none', fontWeight: 600, px: 1.5 }}
+                sx={{ textTransform: 'none', fontWeight: 600, px: 1.5, minHeight: 36 }}
               >
                 30 Days
               </Button>

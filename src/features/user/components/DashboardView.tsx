@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useMemo } from 'react'
-import { HealthLineChart } from '@/src/features/user'
+import HealthLineChart from './HealthLineChart'
 import { ReminderCard, getTodayReminders, Reminder } from '@/src/features/schedule'
 import {
   Box,
@@ -17,7 +17,6 @@ import {
 } from '@mui/material'
 import {
   Clock,
-  CheckCircle2,
   BellRing,
   Droplets,
   PhoneCall,
@@ -59,14 +58,24 @@ export default function DashboardView() {
   const totalCount = reminders.length
 
   const nextReminder = useMemo(() => {
-    return reminders.find(r => r.status === 'PENDING')
+    return reminders
+      .filter(r => r.status === 'PENDING')
+      .sort((a, b) => a.time.localeCompare(b.time))[0]
   }, [reminders])
 
   return (
     <Box sx={{ pb: 5, width: '100%' }}>
       {/* Welcome Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: 'text.primary' }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            fontWeight: 700,
+            color: 'text.primary',
+            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
+          }}
+        >
           Dashboard
         </Typography>
         <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5 }}>
@@ -140,20 +149,20 @@ export default function DashboardView() {
         {/* RIGHT COLUMN (30%) */}
         <Grid size={{ xs: 12, md: 5, lg: 4 }}>
           <Stack spacing={3}>
-            {/* Widget 1: Upcoming Reminder Card - HIGHEST HIERARCHY */}
-            {nextReminder ? (
+            {/* Widget 1: Upcoming Reminder Card - HIGHEST HIERARCHY (Rendered only when active) */}
+            {Boolean(nextReminder) && (
               <Card
                 elevation={0}
                 sx={{
                   borderRadius: 2,
                   border: '1px solid',
                   borderColor: 'primary.main',
-                  bgcolor: 'primary.light',
+                  bgcolor: 'rgba(204, 120, 92, 0.08)',
                   p: 3,
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                  <BellRing size={20} style={{ color: 'var(--mui-palette-primary-dark)' }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, color: 'primary.dark' }}>
+                  <BellRing size={20} />
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.dark' }}>
                     Upcoming Reminder
                   </Typography>
@@ -161,7 +170,7 @@ export default function DashboardView() {
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.dark', mb: 1 }}>
                   {nextReminder.title}
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'primary.main', mb: 2.5 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5 }}>
                   {nextReminder.description || 'Scheduled reminder'}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -180,26 +189,6 @@ export default function DashboardView() {
                     Mark Done
                   </Button>
                 </Box>
-              </Card>
-            ) : (
-              <Card
-                elevation={0}
-                sx={{
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'background.paper',
-                  p: 3,
-                  textAlign: 'center',
-                }}
-              >
-                <CheckCircle2 size={36} style={{ color: 'var(--mui-palette-success-main)', margin: '0 auto 12px' }} />
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                  All Done for Today!
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-                  You have completed all scheduled medications today.
-                </Typography>
               </Card>
             )}
 
@@ -258,6 +247,7 @@ export default function DashboardView() {
                   borderRadius: 1.5,
                   textTransform: 'none',
                   fontWeight: 600,
+                  minHeight: 42,
                 }}
               >
                 Log +250ml Water
@@ -309,6 +299,7 @@ export default function DashboardView() {
                   borderRadius: 1.5,
                   textTransform: 'none',
                   fontWeight: 600,
+                  minHeight: 42,
                 }}
               >
                 Call Physician

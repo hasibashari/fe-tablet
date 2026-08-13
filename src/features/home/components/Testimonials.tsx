@@ -1,15 +1,20 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import { motion } from 'motion/react'
-import { Star } from 'lucide-react'
+import { Star, CheckCircle2 } from 'lucide-react'
 
 import { testimonialsData } from '../../../shared/constants/healthcare'
+
 export default function Testimonials() {
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-6 max-w-7xl">
         <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-soft border border-hairline text-xs font-semibold text-primary mb-4">
+            <span>Verified Patient & Clinical Reviews</span>
+          </div>
           <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">Trusted by Professionals & Patients</h2>
           <p className="text-lg text-body max-w-2xl mx-auto">
             Read what the medical community and our long-term users have to say about our healthcare solutions.
@@ -24,17 +29,34 @@ export default function Testimonials() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="p-8 rounded-2xl bg-surface-soft border border-hairline relative"
+              className="p-8 rounded-2xl bg-surface-soft border border-hairline relative flex flex-col justify-between hover:shadow-lg hover:border-primary/20 transition-all"
             >
-              <div className="flex gap-1 mb-6">
-                {[...Array(5)].map((_, idx) => (
-                  <Star key={idx} size={18} className="fill-accent-amber text-accent-amber" />
-                ))}
+              <div>
+                <div className="flex gap-1 mb-6">
+                  {[...Array(5)].map((_, idx) => (
+                    <Star key={idx} size={18} className="fill-accent-amber text-accent-amber" />
+                  ))}
+                </div>
+                <p className="text-body italic mb-8 leading-relaxed">&quot;{review.quote}&quot;</p>
               </div>
-              <p className="text-body italic mb-8 leading-relaxed">&quot;{review.quote}&quot;</p>
-              <div className="mt-auto">
-                <p className="font-bold text-ink">{review.author}</p>
-                <p className="text-sm text-muted-soft">{review.role}</p>
+
+              <div className="flex items-center gap-4 pt-6 border-t border-hairline">
+                <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+                  <Image
+                    src={review.avatarUrl}
+                    alt={review.author}
+                    fill
+                    sizes="48px"
+                    className="object-cover object-top"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-bold text-ink truncate">{review.author}</p>
+                    <CheckCircle2 size={14} className="text-accent-teal shrink-0" />
+                  </div>
+                  <p className="text-xs text-muted truncate">{review.role}</p>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -43,3 +65,4 @@ export default function Testimonials() {
     </section>
   )
 }
+

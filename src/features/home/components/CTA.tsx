@@ -16,8 +16,8 @@ export default function CTA() {
           className="bg-primary rounded-[2.5rem] p-10 md:p-16 text-center text-white shadow-2xl relative overflow-hidden"
         >
           {/* Background decorations */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -mr-20 -mt-20"></div>
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-teal opacity-20 rounded-full blur-3xl -ml-20 -mb-20"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-teal opacity-25 rounded-full blur-3xl -ml-20 -mb-20"></div>
           
           <div className="relative z-10">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Optimize Your Health?</h2>

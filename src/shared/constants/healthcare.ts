@@ -39,16 +39,19 @@ export const testimonialsData = [
     quote: "After months of searching for a reliable supplement, I finally found one that delivers measurable results. My latest lab work confirmed the improvements.",
     author: "Dr. Sarah Jenkins",
     role: "Internal Medicine",
+    avatarUrl: "https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300",
   },
   {
     quote: "The transparency regarding their clinical trials and ingredient sourcing is unparalleled in the industry. I confidently recommend this to my patients.",
     author: "James T.",
     role: "Patient since 2023",
+    avatarUrl: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=300",
   },
   {
     quote: "Remarkable efficacy and absolutely zero adverse side effects. The sustained-release technology truly makes a noticeable difference in daily energy.",
     author: "Elena Rodriguez",
     role: "Clinical Researcher",
+    avatarUrl: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=300",
   }
 ]
 

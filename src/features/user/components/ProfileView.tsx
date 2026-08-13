@@ -64,7 +64,15 @@ export default function ProfileView() {
         }}
       >
         <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: 'text.primary' }}>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
+            }}
+          >
             My Profile
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5 }}>
