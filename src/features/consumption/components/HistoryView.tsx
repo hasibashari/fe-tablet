@@ -16,12 +16,9 @@ import {
 import {
   Search,
   RotateCcw,
-  Calendar,
-  Filter,
   Download,
   CalendarOff,
   History,
-  CheckCircle2,
 } from 'lucide-react'
 import {
   ConsumptionLog,
@@ -35,6 +32,7 @@ import {
 } from '../api/getConsumptionHistory'
 import ConsumptionStatsCard from './ConsumptionStatsCard'
 import HistoryTimelineItem from './HistoryTimelineItem'
+import Pagination from '@/src/shared/components/Pagination'
 
 export default function HistoryView() {
   const [logs, setLogs] = useState<ConsumptionLog[]>([])
@@ -45,6 +43,10 @@ export default function HistoryView() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('ALL')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [searchQuery, setSearchQuery] = useState<string>('')
+
+  // Pagination State
+  const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(10)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -100,11 +102,21 @@ export default function HistoryView() {
     })
   }, [logs, dateRange, categoryFilter, statusFilter, searchQuery])
 
-  // Group logs by date
+  // Safe page derived during render without cascading useEffect renders
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize))
+  const safePage = Math.min(Math.max(1, page), totalPages)
+
+  // Paginated logs
+  const paginatedLogs = useMemo(() => {
+    const start = (safePage - 1) * pageSize
+    return filteredLogs.slice(start, start + pageSize)
+  }, [filteredLogs, safePage, pageSize])
+
+  // Group paginated logs by date
   const groupedLogs = useMemo(() => {
     const groups: { [dateStr: string]: ConsumptionLog[] } = {}
 
-    filteredLogs.forEach((item) => {
+    paginatedLogs.forEach((item) => {
       if (!groups[item.scheduledDate]) {
         groups[item.scheduledDate] = []
       }
@@ -118,13 +130,14 @@ export default function HistoryView() {
         date: dateStr,
         items: groups[dateStr],
       }))
-  }, [filteredLogs])
+  }, [paginatedLogs])
 
   const handleResetFilters = () => {
     setDateRange('7_DAYS')
     setCategoryFilter('ALL')
     setStatusFilter('ALL')
     setSearchQuery('')
+    setPage(1)
   }
 
   const isFilterActive =
@@ -158,7 +171,6 @@ export default function HistoryView() {
   }
 
   const handleExportSummary = () => {
-    // Memberikan feedback / trigger cetak
     window.print()
   }
 
@@ -273,7 +285,10 @@ export default function HistoryView() {
                   placeholder="Cari obat, instruksi, atau catatan..."
                   size="small"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    setPage(1)
+                  }}
                   sx={{
                     width: { xs: '100%', sm: 320 },
                     '& .MuiOutlinedInput-root': {
@@ -320,7 +335,10 @@ export default function HistoryView() {
                       label={range.label}
                       size="small"
                       clickable
-                      onClick={() => setDateRange(range.key as DateRangeFilter)}
+                      onClick={() => {
+                        setDateRange(range.key as DateRangeFilter)
+                        setPage(1)
+                      }}
                       sx={{
                         fontWeight: 600,
                         fontSize: '0.75rem',
@@ -378,7 +396,10 @@ export default function HistoryView() {
                       label={cat.label}
                       size="small"
                       clickable
-                      onClick={() => setCategoryFilter(cat.key as CategoryFilter)}
+                      onClick={() => {
+                        setCategoryFilter(cat.key as CategoryFilter)
+                        setPage(1)
+                      }}
                       sx={{
                         fontWeight: categoryFilter === cat.key ? 700 : 500,
                         fontSize: '0.75rem',
@@ -420,7 +441,10 @@ export default function HistoryView() {
                       label={st.label}
                       size="small"
                       clickable
-                      onClick={() => setStatusFilter(st.key as StatusFilter)}
+                      onClick={() => {
+                        setStatusFilter(st.key as StatusFilter)
+                        setPage(1)
+                      }}
                       sx={{
                         fontWeight: statusFilter === st.key ? 700 : 500,
                         fontSize: '0.75rem',
@@ -432,20 +456,18 @@ export default function HistoryView() {
                     />
                   ))}
 
-                  {/* Reset Filter Button */}
                   {isFilterActive && (
                     <Button
                       size="small"
-                      startIcon={<RotateCcw size={14} />}
+                      color="inherit"
                       onClick={handleResetFilters}
+                      startIcon={<RotateCcw size={14} />}
                       sx={{
-                        ml: 1,
                         textTransform: 'none',
                         fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: 'error.main',
+                        color: 'text.secondary',
+                        ml: { xs: 0, md: 'auto' },
                         flexShrink: 0,
-                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.08)' },
                       }}
                     >
                       Reset
@@ -568,6 +590,24 @@ export default function HistoryView() {
                 )
               })}
             </Stack>
+          )}
+
+          {/* Pagination Footer */}
+          {!loading && filteredLogs.length > 0 && (
+            <Box sx={{ mt: 3, bgcolor: '#ffffff', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+              <Pagination
+                currentPage={safePage}
+                totalPages={totalPages}
+                totalItems={filteredLogs.length}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={(newSize) => {
+                  setPageSize(newSize)
+                  setPage(1)
+                }}
+                pageSizeOptions={[5, 10, 20]}
+              />
+            </Box>
           )}
         </>
       )}

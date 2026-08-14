@@ -1,6 +1,10 @@
 export * from './types/auth.types'
 export * from './api/mockAuthData'
 export * from './context/AuthContext'
+export * from './components/AuthSplitLayout'
 export * from './components/LoginForm'
 export * from './components/RegisterForm'
+export * from './components/LoginView'
+export * from './components/RegisterView'
 export * from './components/AuthGuard'
+
