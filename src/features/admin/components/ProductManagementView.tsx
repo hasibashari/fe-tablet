@@ -160,28 +160,35 @@ export default function ProductManagementView() {
 
   const columns: Column<MedicalProduct>[] = [
     {
-      id: 'nama',
-      label: 'Nama Produk',
-      renderCell: (product) => (
-        <Box>
-          <Typography variant="subtitle2" color="text.primary">
-            {product.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-            <Tag size={12} /> SKU: {product.sku}
-          </Typography>
-        </Box>
+      id: 'no',
+      label: 'No.',
+      width: '5%',
+      renderCell: (_, index) => (
+        <Typography variant="body2" color="text.secondary">
+          {index + 1}
+        </Typography>
       ),
     },
     {
-      id: 'kategori',
-      label: 'Kategori',
+      id: 'nama',
+      label: 'Nama Produk',
+      width: '35%',
       renderCell: (product) => (
-        <Chip 
-          label={product.category} 
-          size="small" 
-          sx={{ bgcolor: 'primary.light', color: 'primary.dark' }} 
-        />
+        <Box>
+          <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 600 }}>
+            {product.name}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+            <Chip 
+              label={product.category} 
+              size="small" 
+              sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600, bgcolor: 'primary.light', color: 'primary.dark' }} 
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Tag size={12} /> SKU: {product.sku}
+            </Typography>
+          </Box>
+        </Box>
       ),
     },
     {

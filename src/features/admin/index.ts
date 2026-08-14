@@ -7,6 +7,7 @@ export { default as ProductManagementView } from './components/ProductManagement
 export { default as ArticleManagementView } from './components/ArticleManagementView'
 export { default as ProgramManagementView } from './components/ProgramManagementView'
 export { default as ReportAnalyticsView } from './components/ReportAnalyticsView'
+export { default as AdminProfileView } from './components/AdminProfileView'
 
 export * from './types/admin.types'
 export * from './api/mockAdminData'

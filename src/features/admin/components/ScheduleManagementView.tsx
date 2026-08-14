@@ -23,7 +23,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material'
-import { Search, Plus, Clock, Calendar, Pill, BellRing, Edit, Trash2 } from 'lucide-react'
+import { Search, Plus, BellRing, Edit, Trash2 } from 'lucide-react'
 import AdminHeader from './AdminHeader'
 import SendReminderModal from './SendReminderModal'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
@@ -221,22 +221,29 @@ export default function ScheduleManagementView() {
     {
       id: 'obat',
       label: 'Obat / Tindakan',
-      width: '25%',
+      width: '28%',
       renderCell: (schedule) => (
         <Box>
           <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
             {schedule.medicationName}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {schedule.instructions}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
+            <Chip
+              label={schedule.category}
+              size="small"
+              sx={{ height: 18, fontSize: '0.68rem', fontWeight: 600, bgcolor: 'primary.light', color: 'primary.dark' }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {schedule.instructions}
+            </Typography>
+          </Box>
         </Box>
       ),
     },
     {
       id: 'dosis',
       label: 'Dosis',
-      width: '15%',
+      width: '16%',
       renderCell: (schedule) => (
         <>
           <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
@@ -251,21 +258,13 @@ export default function ScheduleManagementView() {
     {
       id: 'jadwal',
       label: 'Waktu',
-      width: '10%',
+      width: '14%',
       renderCell: (schedule) => (
         <Box>
           <Typography variant="body2" color="text.primary">
             {schedule.timeSlots.join(', ')}
           </Typography>
         </Box>
-      ),
-    },
-    {
-      id: 'kategori',
-      label: 'Kategori',
-      width: '10%',
-      renderCell: (schedule) => (
-        <Chip label={schedule.category} size="small" sx={{ bgcolor: 'primary.light', color: 'primary.dark' }} />
       ),
     },
     {

@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import {
   Box,
   Typography,
-  Card,
   Grid,
   Button,
   Chip,
@@ -150,34 +149,38 @@ export default function ProgramManagementView() {
     {
       id: 'nama',
       label: 'Nama Program',
-      width: '30%',
+      width: '35%',
       renderCell: (program) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'primary.light', color: 'primary.dark' }}>
             <Activity size={20} />
           </Box>
           <Box>
-            <Typography variant="subtitle2" color="text.primary">
+            <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 600 }}>
               {program.name}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Kode: {program.code}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
+              <Chip
+                label={program.targetCategory}
+                size="small"
+                sx={{ height: 18, fontSize: '0.68rem', fontWeight: 600, bgcolor: 'primary.light', color: 'primary.dark' }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Kode: {program.code}
+              </Typography>
+            </Box>
           </Box>
         </Box>
       ),
     },
     {
-      id: 'kategori',
-      label: 'Kategori & Durasi',
-      width: '20%',
+      id: 'durasi',
+      label: 'Durasi',
+      width: '15%',
       renderCell: (program) => (
-        <Box>
-          <Chip label={program.targetCategory} size="small" sx={{ mb: 0.5 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Calendar size={12} /> {program.durationWeeks} Minggu
-          </Typography>
-        </Box>
+        <Typography variant="body2" color="text.primary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 500 }}>
+          <Calendar size={14} color="#64748b" /> {program.durationWeeks} Minggu
+        </Typography>
       ),
     },
     {

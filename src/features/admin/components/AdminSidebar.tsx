@@ -12,6 +12,7 @@ import {
   BarChart3,
   LogOut,
   ShieldCheck,
+  User,
 } from 'lucide-react'
 import AppSidebar, { NavItem } from '@/src/shared/components/AppSidebar'
 import { useAuth } from '@/src/features/auth'
@@ -24,6 +25,7 @@ const adminNavItems: NavItem[] = [
   { name: 'Artikel Edukasi', href: '/admin/articles', icon: FileText },
   { name: 'Program Kesehatan', href: '/admin/programs', icon: Activity },
   { name: 'Laporan & Analitik', href: '/admin/reports', icon: BarChart3 },
+  { name: 'Profil Admin', href: '/admin/profile', icon: User },
 ]
 
 interface AdminSidebarProps {
