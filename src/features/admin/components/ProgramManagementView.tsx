@@ -1,16 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Typography,
   Grid,
   Button,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   FormControl,
   InputLabel,
@@ -18,12 +14,16 @@ import {
   MenuItem,
   IconButton,
   Tooltip,
-  Snackbar,
-  Alert,
 } from '@mui/material'
 import { Plus, Activity, Edit, Trash2, Users, Calendar } from 'lucide-react'
 import AdminHeader from './AdminHeader'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
+import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
+import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog'
+import { ToastFeedback } from '@/src/shared/components/ToastFeedback'
+import { useCrudModal } from '@/src/shared/hooks/useCrudModal'
+import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm'
+import { useToast } from '@/src/shared/hooks/useToast'
 import {
   getProgramsAction,
   createProgramAction,
@@ -32,69 +32,73 @@ import {
 } from '../api/adminRepository'
 import { HealthProgram } from '../types/admin.types'
 
+interface ProgramFormData {
+  name: string
+  code: string
+  description: string
+  durationWeeks: string
+  targetCategory: string
+  createdBy: string
+}
+
+const initialProgramFormData: ProgramFormData = {
+  name: '',
+  code: '',
+  description: '',
+  durationWeeks: '12',
+  targetCategory: 'Hipertensi',
+  createdBy: 'dr. Siti Rahma, Sp.PD',
+}
+
 export default function ProgramManagementView() {
   const [programs, setPrograms] = useState<HealthProgram[]>([])
-  const [openModal, setOpenModal] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [programToDelete, setProgramToDelete] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  const [toastOpen, setToastOpen] = useState(false)
-  const [toastMsg, setToastMsg] = useState('')
+  // 1. Hook Form Modal Add/Edit
+  const {
+    openModal,
+    editingId,
+    formData,
+    handleOpenAdd,
+    handleOpenEdit,
+    handleCloseModal,
+    updateFormData,
+  } = useCrudModal<ProgramFormData>(initialProgramFormData)
 
-  const loadData = React.useCallback(async () => {
+  // 2. Hook Konfirmasi Hapus
+  const {
+    open: deleteConfirmOpen,
+    itemToDelete: programToDelete,
+    requestDelete: handleDeleteRequest,
+    closeDelete: handleCloseDelete,
+  } = useDeleteConfirm<string>()
+
+  // 3. Hook Feedback Notifikasi
+  const {
+    open: toastOpen,
+    message: toastMsg,
+    severity: toastSeverity,
+    showToast,
+    hideToast,
+  } = useToast()
+
+  const loadData = useCallback(async () => {
     const data = await getProgramsAction()
     setPrograms(data)
   }, [])
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true
-    const init = async () => {
-      const data = await getProgramsAction()
-      if (isMounted) {
-        setPrograms(data)
-      }
-    }
-    init()
+    getProgramsAction().then((data) => {
+      if (isMounted) setPrograms(data)
+    })
     return () => {
       isMounted = false
     }
   }, [])
 
-  // Form State
-  const [formData, setFormData] = useState<{
-    name: string
-    code: string
-    description: string
-    durationWeeks: string
-    targetCategory: string
-    createdBy: string
-  }>({
-    name: '',
-    code: '',
-    description: '',
-    durationWeeks: '12',
-    targetCategory: 'Hipertensi',
-    createdBy: 'dr. Siti Rahma, Sp.PD',
-  })
-
-  const handleOpenAdd = () => {
-    setEditingId(null)
-    setFormData({
-      name: '',
-      code: '',
-      description: '',
-      durationWeeks: '12',
-      targetCategory: 'Hipertensi',
-      createdBy: 'dr. Siti Rahma, Sp.PD',
-    })
-    setOpenModal(true)
-  }
-
-  const handleOpenEdit = (program: HealthProgram) => {
-    setEditingId(program.id)
-    setFormData({
+  const onOpenEdit = (program: HealthProgram) => {
+    handleOpenEdit(program.id, {
       name: program.name,
       code: program.code,
       description: program.description,
@@ -102,54 +106,52 @@ export default function ProgramManagementView() {
       targetCategory: program.targetCategory,
       createdBy: program.createdBy,
     })
-    setOpenModal(true)
   }
 
   const handleSaveProgram = async () => {
-    if (!formData.name) return
-
-    if (editingId) {
-      const res = await updateProgramAction(editingId, {
-        name: formData.name,
-        code: formData.code,
-        description: formData.description,
-        durationWeeks: parseInt(formData.durationWeeks) || 12,
-        targetCategory: formData.targetCategory,
-      })
-
-      if (res.success) {
-        await loadData()
-        setToastMsg('Program berhasil diperbarui di database!')
-        setOpenModal(false)
-        setToastOpen(true)
-      } else {
-        setToastMsg(res.error || 'Gagal memperbarui program')
-        setToastOpen(true)
-      }
-    } else {
-      const res = await createProgramAction({
-        name: formData.name,
-        code: formData.code || `PRG-${formData.name.substring(0, 4).toUpperCase()}`,
-        description: formData.description || 'Program perawatan kesehatan terpimpin untuk pasien.',
-        durationWeeks: parseInt(formData.durationWeeks) || 12,
-        targetCategory: formData.targetCategory,
-      })
-
-      if (res.success) {
-        await loadData()
-        setToastMsg('Program baru berhasil dibuat di database!')
-        setOpenModal(false)
-        setToastOpen(true)
-      } else {
-        setToastMsg(res.error || 'Gagal membuat program')
-        setToastOpen(true)
-      }
+    if (!formData.name) {
+      showToast('Nama program wajib diisi', 'error')
+      return
     }
-  }
 
-  const handleDeleteRequest = (id: string) => {
-    setProgramToDelete(id)
-    setDeleteConfirmOpen(true)
+    setSubmitting(true)
+    try {
+      if (editingId) {
+        const res = await updateProgramAction(editingId, {
+          name: formData.name,
+          code: formData.code,
+          description: formData.description,
+          durationWeeks: parseInt(formData.durationWeeks) || 12,
+          targetCategory: formData.targetCategory,
+        })
+
+        if (res.success) {
+          await loadData()
+          handleCloseModal()
+          showToast('Program berhasil diperbarui di database!', 'success')
+        } else {
+          showToast(res.error || 'Gagal memperbarui program', 'error')
+        }
+      } else {
+        const res = await createProgramAction({
+          name: formData.name,
+          code: formData.code || `PRG-${formData.name.substring(0, 4).toUpperCase()}`,
+          description: formData.description || 'Program perawatan kesehatan terpimpin untuk pasien.',
+          durationWeeks: parseInt(formData.durationWeeks) || 12,
+          targetCategory: formData.targetCategory,
+        })
+
+        if (res.success) {
+          await loadData()
+          handleCloseModal()
+          showToast('Program baru berhasil dibuat di database!', 'success')
+        } else {
+          showToast(res.error || 'Gagal membuat program', 'error')
+        }
+      }
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleConfirmDelete = async () => {
@@ -157,13 +159,12 @@ export default function ProgramManagementView() {
       const res = await deleteProgramAction(programToDelete)
       if (res.success) {
         await loadData()
-        setToastMsg('Program berhasil dihapus dari database.')
+        showToast('Program berhasil dihapus dari database.', 'success')
       } else {
-        setToastMsg(res.error || 'Gagal menghapus program')
+        showToast(res.error || 'Gagal menghapus program', 'error')
       }
-      setToastOpen(true)
     }
-    setDeleteConfirmOpen(false)
+    handleCloseDelete()
   }
 
   const columns: Column<HealthProgram>[] = [
@@ -254,7 +255,7 @@ export default function ProgramManagementView() {
       renderCell: (program) => (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
           <Tooltip title="Edit Program">
-            <IconButton size="small" onClick={() => handleOpenEdit(program)}>
+            <IconButton size="small" onClick={() => onOpenEdit(program)}>
               <Edit size={16} />
             </IconButton>
           </Tooltip>
@@ -284,7 +285,7 @@ export default function ProgramManagementView() {
         <Button
           variant="contained"
           startIcon={<Plus size={18} />}
-          onClick={handleOpenAdd}
+          onClick={() => handleOpenAdd()}
         >
           Buat Program Baru
         </Button>
@@ -298,113 +299,99 @@ export default function ProgramManagementView() {
       />
 
       {/* Add/Edit Program Modal */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Program Kesehatan' : 'Rancang Program Baru'}</DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+      <CrudModalDialog
+        open={openModal}
+        onClose={handleCloseModal}
+        title={editingId ? 'Edit Program Kesehatan' : 'Rancang Program Baru'}
+        onSubmit={handleSaveProgram}
+        submitText={editingId ? 'Simpan Perubahan' : 'Simpan Program'}
+        submitting={submitting}
+      >
+        <TextField
+          label="Nama Program"
+          fullWidth
+          size="small"
+          value={formData.name}
+          onChange={(e) => updateFormData({ name: e.target.value })}
+        />
+
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6 }}>
             <TextField
-              label="Nama Program"
+              label="Kode Program"
               fullWidth
               size="small"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.code}
+              onChange={(e) => updateFormData({ code: e.target.value })}
             />
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Kode Program"
-                  fullWidth
-                  size="small"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Durasi (Minggu)"
-                  type="number"
-                  fullWidth
-                  size="small"
-                  value={formData.durationWeeks}
-                  onChange={(e) => setFormData({ ...formData, durationWeeks: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Kategori Target</InputLabel>
-                  <Select
-                    value={formData.targetCategory}
-                    label="Kategori Target"
-                    onChange={(e) => setFormData({ ...formData, targetCategory: e.target.value })}
-                  >
-                    <MenuItem value="Hipertensi">Hipertensi</MenuItem>
-                    <MenuItem value="Diabetes Melitus">Diabetes Melitus</MenuItem>
-                    <MenuItem value="Kardiovaskular">Kardiovaskular</MenuItem>
-                    <MenuItem value="Gizi & Nutrisi">Gizi & Nutrisi</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Dokter"
-                  fullWidth
-                  size="small"
-                  value={formData.createdBy}
-                  onChange={(e) => setFormData({ ...formData, createdBy: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-
+          </Grid>
+          <Grid size={{ xs: 6 }}>
             <TextField
-              label="Deskripsi & Goal Program"
-              multiline
-              rows={3}
+              label="Durasi (Minggu)"
+              type="number"
               fullWidth
               size="small"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              value={formData.durationWeeks}
+              onChange={(e) => updateFormData({ durationWeeks: e.target.value })}
             />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setOpenModal(false)} color="inherit">
-            Batal
-          </Button>
-          <Button onClick={handleSaveProgram} variant="contained">
-            {editingId ? 'Simpan Perubahan' : 'Simpan Program'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Kategori Target</InputLabel>
+              <Select
+                value={formData.targetCategory}
+                label="Kategori Target"
+                onChange={(e) => updateFormData({ targetCategory: e.target.value })}
+              >
+                <MenuItem value="Hipertensi">Hipertensi</MenuItem>
+                <MenuItem value="Diabetes Melitus">Diabetes Melitus</MenuItem>
+                <MenuItem value="Kardiovaskular">Kardiovaskular</MenuItem>
+                <MenuItem value="Gizi & Nutrisi">Gizi & Nutrisi</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 6 }}>
+            <TextField
+              label="Dokter"
+              fullWidth
+              size="small"
+              value={formData.createdBy}
+              onChange={(e) => updateFormData({ createdBy: e.target.value })}
+            />
+          </Grid>
+        </Grid>
+
+        <TextField
+          label="Deskripsi & Goal Program"
+          multiline
+          rows={3}
+          fullWidth
+          size="small"
+          value={formData.description}
+          onChange={(e) => updateFormData({ description: e.target.value })}
+        />
+      </CrudModalDialog>
 
       {/* Delete Confirmation Modal */}
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Konfirmasi Hapus</DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">
-            Apakah Anda yakin ingin menghapus program ini? Data tidak dapat dikembalikan.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteConfirmOpen(false)} color="inherit">Batal</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">Hapus Program</Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={deleteConfirmOpen}
+        title="Konfirmasi Hapus"
+        message="Apakah Anda yakin ingin menghapus program ini? Data tidak dapat dikembalikan."
+        confirmText="Hapus Program"
+        onClose={handleCloseDelete}
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* Toast Feedback */}
-      <Snackbar
+      <ToastFeedback
         open={toastOpen}
-        autoHideDuration={4000}
-        onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: '100%' }}>
-          {toastMsg}
-        </Alert>
-      </Snackbar>
+        message={toastMsg}
+        severity={toastSeverity}
+        onClose={hideToast}
+      />
     </Box>
   )
 }

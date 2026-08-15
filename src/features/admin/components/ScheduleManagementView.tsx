@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -9,17 +9,11 @@ import {
   TextField,
   InputAdornment,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   Grid,
-  Snackbar,
-  Alert,
   IconButton,
   Tooltip,
 } from '@mui/material'
@@ -27,6 +21,12 @@ import { Search, Plus, BellRing, Edit, Trash2 } from 'lucide-react'
 import AdminHeader from './AdminHeader'
 import SendReminderModal from './SendReminderModal'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
+import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
+import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog'
+import { ToastFeedback } from '@/src/shared/components/ToastFeedback'
+import { useCrudModal } from '@/src/shared/hooks/useCrudModal'
+import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm'
+import { useToast } from '@/src/shared/hooks/useToast'
 import {
   getSchedulesAction,
   getPatientsAction,
@@ -36,17 +36,60 @@ import {
 } from '../api/adminRepository'
 import { MedicationSchedule, PatientUser } from '../types/admin.types'
 
+interface ScheduleFormData {
+  patientId: string
+  medicationName: string
+  dosage: string
+  frequency: string
+  timeSlot: string
+  category: 'Obat Resep' | 'Suplemen' | 'Aktivitas Medis'
+  instructions: string
+}
+
+const initialScheduleFormData: ScheduleFormData = {
+  patientId: '',
+  medicationName: '',
+  dosage: '1 Tablet',
+  frequency: '1x Sehari',
+  timeSlot: '08:00',
+  category: 'Obat Resep',
+  instructions: '',
+}
+
 export default function ScheduleManagementView() {
   const [schedules, setSchedules] = useState<MedicationSchedule[]>([])
   const [patients, setPatients] = useState<PatientUser[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('Semua')
-  
-  const [openModal, setOpenModal] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [scheduleToDelete, setScheduleToDelete] = useState<string | null>(null)
+  // 1. Hook Form Modal Add/Edit
+  const {
+    openModal,
+    editingId,
+    formData,
+    handleOpenAdd,
+    handleOpenEdit,
+    handleCloseModal,
+    updateFormData,
+  } = useCrudModal<ScheduleFormData>(initialScheduleFormData)
+
+  // 2. Hook Konfirmasi Hapus
+  const {
+    open: deleteConfirmOpen,
+    itemToDelete: scheduleToDelete,
+    requestDelete: handleDeleteRequest,
+    closeDelete: handleCloseDelete,
+  } = useDeleteConfirm<string>()
+
+  // 3. Hook Feedback Notifikasi
+  const {
+    open: toastOpen,
+    message: toastMsg,
+    severity: toastSeverity,
+    showToast,
+    hideToast,
+  } = useToast()
 
   // Reminder Modal State
   const [reminderModalOpen, setReminderModalOpen] = useState(false)
@@ -60,49 +103,24 @@ export default function ScheduleManagementView() {
     patientName: '',
   })
 
-  // Toast Notification State
-  const [toastOpen, setToastOpen] = useState(false)
-  const [toastMsg, setToastMsg] = useState('')
-
-  const loadData = React.useCallback(async () => {
+  const loadData = useCallback(async () => {
     const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()])
     setSchedules(s)
     setPatients(p)
   }, [])
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true
-    const init = async () => {
-      const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()])
+    Promise.all([getSchedulesAction(), getPatientsAction()]).then(([s, p]) => {
       if (isMounted) {
         setSchedules(s)
         setPatients(p)
       }
-    }
-    init()
+    })
     return () => {
       isMounted = false
     }
   }, [])
-
-  // Form State
-  const [formData, setFormData] = useState<{
-    patientId: string
-    medicationName: string
-    dosage: string
-    frequency: string
-    timeSlot: string
-    category: 'Obat Resep' | 'Suplemen' | 'Aktivitas Medis'
-    instructions: string
-  }>({
-    patientId: '',
-    medicationName: '',
-    dosage: '1 Tablet',
-    frequency: '1x Sehari',
-    timeSlot: '08:00',
-    category: 'Obat Resep',
-    instructions: '',
-  })
 
   const filteredSchedules = schedules.filter((s) => {
     const matchesSearch =
@@ -112,23 +130,14 @@ export default function ScheduleManagementView() {
     return matchesSearch && matchesCategory
   })
 
-  const handleOpenAdd = () => {
-    setEditingId(null)
-    setFormData({
+  const onOpenAdd = () => {
+    handleOpenAdd({
       patientId: patients[0]?.id || 'usr_1',
-      medicationName: '',
-      dosage: '1 Tablet',
-      frequency: '1x Sehari',
-      timeSlot: '08:00',
-      category: 'Obat Resep',
-      instructions: '',
     })
-    setOpenModal(true)
   }
 
-  const handleOpenEdit = (schedule: MedicationSchedule) => {
-    setEditingId(schedule.id)
-    setFormData({
+  const onOpenEdit = (schedule: MedicationSchedule) => {
+    handleOpenEdit(schedule.id, {
       patientId: schedule.patientId,
       medicationName: schedule.medicationName,
       dosage: schedule.dosage,
@@ -137,63 +146,61 @@ export default function ScheduleManagementView() {
       category: schedule.category,
       instructions: schedule.instructions,
     })
-    setOpenModal(true)
   }
 
   const handleSaveSchedule = async () => {
-    if (!formData.medicationName) return
+    if (!formData.medicationName) {
+      showToast('Nama obat / suplemen wajib diisi', 'error')
+      return
+    }
 
     const timeSlotsArray = formData.timeSlot.split(',').map((s) => s.trim())
     const today = new Date().toISOString().split('T')[0]
 
-    if (editingId) {
-      const res = await updateScheduleAction(editingId, {
-        patientId: formData.patientId,
-        medicationName: formData.medicationName,
-        dosage: formData.dosage,
-        frequency: formData.frequency,
-        timeSlots: timeSlotsArray,
-        category: formData.category,
-        instructions: formData.instructions,
-      })
+    setSubmitting(true)
+    try {
+      if (editingId) {
+        const res = await updateScheduleAction(editingId, {
+          patientId: formData.patientId,
+          medicationName: formData.medicationName,
+          dosage: formData.dosage,
+          frequency: formData.frequency,
+          timeSlots: timeSlotsArray,
+          category: formData.category,
+          instructions: formData.instructions,
+        })
 
-      if (res.success) {
-        await loadData()
-        setToastMsg('Jadwal berhasil diperbarui di database!')
-        setOpenModal(false)
-        setToastOpen(true)
+        if (res.success) {
+          await loadData()
+          handleCloseModal()
+          showToast('Jadwal berhasil diperbarui di database!', 'success')
+        } else {
+          showToast(res.error || 'Gagal memperbarui jadwal', 'error')
+        }
       } else {
-        setToastMsg(res.error || 'Gagal memperbarui jadwal')
-        setToastOpen(true)
-      }
-    } else {
-      const res = await createScheduleAction({
-        patientId: formData.patientId || patients[0]?.id || 'usr_1',
-        medicationName: formData.medicationName,
-        dosage: formData.dosage,
-        frequency: formData.frequency,
-        timeSlots: timeSlotsArray,
-        startDate: today,
-        endDate: '2026-12-31',
-        category: formData.category,
-        instructions: formData.instructions || 'Diminum teratur sesuai petunjuk dokter.',
-      })
+        const res = await createScheduleAction({
+          patientId: formData.patientId || patients[0]?.id || 'usr_1',
+          medicationName: formData.medicationName,
+          dosage: formData.dosage,
+          frequency: formData.frequency,
+          timeSlots: timeSlotsArray,
+          startDate: today,
+          endDate: '2026-12-31',
+          category: formData.category,
+          instructions: formData.instructions || 'Diminum teratur sesuai petunjuk dokter.',
+        })
 
-      if (res.success) {
-        await loadData()
-        setToastMsg('Jadwal baru berhasil disimpan ke database!')
-        setOpenModal(false)
-        setToastOpen(true)
-      } else {
-        setToastMsg(res.error || 'Gagal membuat jadwal')
-        setToastOpen(true)
+        if (res.success) {
+          await loadData()
+          handleCloseModal()
+          showToast('Jadwal baru berhasil disimpan ke database!', 'success')
+        } else {
+          showToast(res.error || 'Gagal membuat jadwal', 'error')
+        }
       }
+    } finally {
+      setSubmitting(false)
     }
-  }
-
-  const handleDeleteRequest = (id: string) => {
-    setScheduleToDelete(id)
-    setDeleteConfirmOpen(true)
   }
 
   const handleConfirmDelete = async () => {
@@ -201,13 +208,12 @@ export default function ScheduleManagementView() {
       const res = await deleteScheduleAction(scheduleToDelete)
       if (res.success) {
         await loadData()
-        setToastMsg('Jadwal berhasil dihapus dari database.')
+        showToast('Jadwal berhasil dihapus dari database.', 'success')
       } else {
-        setToastMsg(res.error || 'Gagal menghapus jadwal')
+        showToast(res.error || 'Gagal menghapus jadwal', 'error')
       }
-      setToastOpen(true)
     }
-    setDeleteConfirmOpen(false)
+    handleCloseDelete()
   }
 
   const handleOpenReminder = (schedule: MedicationSchedule) => {
@@ -224,8 +230,7 @@ export default function ScheduleManagementView() {
 
   const handleSendSuccess = (channel: 'app' | 'whatsapp') => {
     const channelName = channel === 'whatsapp' ? 'WhatsApp' : 'Notifikasi App'
-    setToastMsg(`Pengingat obat berhasil dikirim ke ${reminderData.patientName} via ${channelName}!`)
-    setToastOpen(true)
+    showToast(`Pengingat obat berhasil dikirim ke ${reminderData.patientName} via ${channelName}!`, 'success')
   }
 
   const columns: Column<MedicationSchedule>[] = [
@@ -310,7 +315,7 @@ export default function ScheduleManagementView() {
       renderCell: (schedule) => (
         <Chip 
           label={schedule.status} 
-          size="small"
+          size="small" 
           color={schedule.status === 'Aktif' ? 'success' : 'default'}
         />
       ),
@@ -319,6 +324,7 @@ export default function ScheduleManagementView() {
       id: 'aksi',
       label: 'Aksi',
       align: 'right',
+      width: '10%',
       renderCell: (schedule) => (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
           <Tooltip title="Ingatkan Pasien">
@@ -327,7 +333,7 @@ export default function ScheduleManagementView() {
             </IconButton>
           </Tooltip>
           <Tooltip title="Edit Jadwal">
-            <IconButton size="small" onClick={() => handleOpenEdit(schedule)}>
+            <IconButton size="small" onClick={() => onOpenEdit(schedule)}>
               <Edit size={16} />
             </IconButton>
           </Tooltip>
@@ -381,7 +387,7 @@ export default function ScheduleManagementView() {
           <Button
             variant="contained"
             startIcon={<Plus size={18} />}
-            onClick={handleOpenAdd}
+            onClick={onOpenAdd}
           >
             Buat Jadwal Baru
           </Button>
@@ -396,119 +402,108 @@ export default function ScheduleManagementView() {
       />
 
       {/* Add/Edit Schedule Modal */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Jadwal Obat' : 'Buat Jadwal Baru'}</DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+      <CrudModalDialog
+        open={openModal}
+        onClose={handleCloseModal}
+        title={editingId ? 'Edit Jadwal Obat' : 'Buat Jadwal Baru'}
+        onSubmit={handleSaveSchedule}
+        submitText={editingId ? 'Simpan Perubahan' : 'Simpan Jadwal'}
+        submitting={submitting}
+      >
+        <FormControl fullWidth size="small">
+          <InputLabel>Pasien</InputLabel>
+          <Select
+            value={formData.patientId}
+            label="Pasien"
+            onChange={(e) => updateFormData({ patientId: e.target.value })}
+          >
+            {patients.map((p) => (
+              <MenuItem key={p.id} value={p.id}>
+                {p.name} ({p.id})
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          label="Nama Obat / Suplemen"
+          fullWidth
+          size="small"
+          value={formData.medicationName}
+          onChange={(e) => updateFormData({ medicationName: e.target.value })}
+        />
+
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6 }}>
+            <TextField
+              label="Dosis (misal: 1 Tablet)"
+              fullWidth
+              size="small"
+              value={formData.dosage}
+              onChange={(e) => updateFormData({ dosage: e.target.value })}
+            />
+          </Grid>
+          <Grid size={{ xs: 6 }}>
+            <TextField
+              label="Frekuensi (misal: 2x Sehari)"
+              fullWidth
+              size="small"
+              value={formData.frequency}
+              onChange={(e) => updateFormData({ frequency: e.target.value })}
+            />
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6 }}>
+            <TextField
+              label="Waktu Pengingat (HH:MM)"
+              fullWidth
+              size="small"
+              value={formData.timeSlot}
+              onChange={(e) => updateFormData({ timeSlot: e.target.value })}
+            />
+          </Grid>
+          <Grid size={{ xs: 6 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Pasien</InputLabel>
+              <InputLabel>Kategori</InputLabel>
               <Select
-                value={formData.patientId}
-                label="Pasien"
-                onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+                value={formData.category}
+                label="Kategori"
+                onChange={(e) =>
+                  updateFormData({
+                    category: e.target.value as ScheduleFormData['category'],
+                  })
+                }
               >
-                {patients.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {p.name} ({p.id})
-                  </MenuItem>
-                ))}
+                <MenuItem value="Obat Resep">Obat Resep</MenuItem>
+                <MenuItem value="Suplemen">Suplemen</MenuItem>
+                <MenuItem value="Aktivitas Medis">Aktivitas Medis</MenuItem>
               </Select>
             </FormControl>
+          </Grid>
+        </Grid>
 
-            <TextField
-              label="Nama Obat / Suplemen"
-              fullWidth
-              size="small"
-              value={formData.medicationName}
-              onChange={(e) => setFormData({ ...formData, medicationName: e.target.value })}
-            />
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Dosis (misal: 1 Tablet)"
-                  fullWidth
-                  size="small"
-                  value={formData.dosage}
-                  onChange={(e) => setFormData({ ...formData, dosage: e.target.value })}
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Frekuensi (misal: 2x Sehari)"
-                  fullWidth
-                  size="small"
-                  value={formData.frequency}
-                  onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Waktu Pengingat (HH:MM)"
-                  fullWidth
-                  size="small"
-                  value={formData.timeSlot}
-                  onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value })}
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Kategori</InputLabel>
-                  <Select
-                    value={formData.category}
-                    label="Kategori"
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        category: e.target.value as 'Obat Resep' | 'Suplemen' | 'Aktivitas Medis',
-                      })
-                    }
-                  >
-                    <MenuItem value="Obat Resep">Obat Resep</MenuItem>
-                    <MenuItem value="Suplemen">Suplemen</MenuItem>
-                    <MenuItem value="Aktivitas Medis">Aktivitas Medis</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-
-            <TextField
-              label="Petunjuk Khusus Penggunaan"
-              multiline
-              rows={2}
-              fullWidth
-              size="small"
-              value={formData.instructions}
-              onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setOpenModal(false)} color="inherit">
-            Batal
-          </Button>
-          <Button onClick={handleSaveSchedule} variant="contained">
-            {editingId ? 'Simpan Perubahan' : 'Simpan Jadwal'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <TextField
+          label="Petunjuk Khusus Penggunaan"
+          multiline
+          rows={2}
+          fullWidth
+          size="small"
+          value={formData.instructions}
+          onChange={(e) => updateFormData({ instructions: e.target.value })}
+        />
+      </CrudModalDialog>
       
       {/* Delete Confirmation Modal */}
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Konfirmasi Hapus</DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">
-            Apakah Anda yakin ingin menghapus jadwal ini? Data yang dihapus tidak dapat dikembalikan.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteConfirmOpen(false)} color="inherit">Batal</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">Hapus Jadwal</Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={deleteConfirmOpen}
+        title="Konfirmasi Hapus"
+        message="Apakah Anda yakin ingin menghapus jadwal ini? Data yang dihapus tidak dapat dikembalikan."
+        confirmText="Hapus Jadwal"
+        onClose={handleCloseDelete}
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* Send Reminder Modal */}
       <SendReminderModal
@@ -523,16 +518,12 @@ export default function ScheduleManagementView() {
       />
 
       {/* Toast Feedback */}
-      <Snackbar
+      <ToastFeedback
         open={toastOpen}
-        autoHideDuration={4000}
-        onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: '100%' }}>
-          {toastMsg}
-        </Alert>
-      </Snackbar>
+        message={toastMsg}
+        severity={toastSeverity}
+        onClose={hideToast}
+      />
     </Box>
   )
 }

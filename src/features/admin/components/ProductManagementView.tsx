@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -9,10 +9,6 @@ import {
   TextField,
   InputAdornment,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Select,
@@ -20,12 +16,16 @@ import {
   Grid,
   IconButton,
   Tooltip,
-  Snackbar,
-  Alert,
 } from '@mui/material'
 import { Search, Plus, Edit, Trash2, Tag } from 'lucide-react'
 import AdminHeader from './AdminHeader'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
+import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
+import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog'
+import { ToastFeedback } from '@/src/shared/components/ToastFeedback'
+import { useCrudModal } from '@/src/shared/hooks/useCrudModal'
+import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm'
+import { useToast } from '@/src/shared/hooks/useToast'
 import {
   getProductsAction,
   createProductAction,
@@ -34,56 +34,74 @@ import {
 } from '../api/adminRepository'
 import { MedicalProduct } from '../types/admin.types'
 
+interface ProductFormData {
+  name: string
+  category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan'
+  sku: string
+  stock: string
+  unit: string
+  price: string
+  description: string
+}
+
+const initialProductFormData: ProductFormData = {
+  name: '',
+  category: 'Obat Resep',
+  sku: '',
+  stock: '50',
+  unit: 'Tablet',
+  price: '20000',
+  description: '',
+}
+
 export default function ProductManagementView() {
   const [products, setProducts] = useState<MedicalProduct[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('Semua')
-  const [openModal, setOpenModal] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [productToDelete, setProductToDelete] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  const [toastOpen, setToastOpen] = useState(false)
-  const [toastMsg, setToastMsg] = useState('')
+  // 1. Hook Form Modal Add/Edit
+  const {
+    openModal,
+    editingId,
+    formData,
+    handleOpenAdd,
+    handleOpenEdit,
+    handleCloseModal,
+    updateFormData,
+  } = useCrudModal<ProductFormData>(initialProductFormData)
 
-  const loadData = React.useCallback(async () => {
+  // 2. Hook Konfirmasi Hapus
+  const {
+    open: deleteConfirmOpen,
+    itemToDelete: productToDelete,
+    requestDelete: handleDeleteRequest,
+    closeDelete: handleCloseDelete,
+  } = useDeleteConfirm<string>()
+
+  // 3. Hook Feedback Notifikasi
+  const {
+    open: toastOpen,
+    message: toastMsg,
+    severity: toastSeverity,
+    showToast,
+    hideToast,
+  } = useToast()
+
+  const loadData = useCallback(async () => {
     const data = await getProductsAction()
     setProducts(data)
   }, [])
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true
-    const init = async () => {
-      const data = await getProductsAction()
-      if (isMounted) {
-        setProducts(data)
-      }
-    }
-    init()
+    getProductsAction().then((data) => {
+      if (isMounted) setProducts(data)
+    })
     return () => {
       isMounted = false
     }
   }, [])
-
-  // Form State
-  const [formData, setFormData] = useState<{
-    name: string
-    category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan'
-    sku: string
-    stock: string
-    unit: string
-    price: string
-    description: string
-  }>({
-    name: '',
-    category: 'Obat Resep',
-    sku: '',
-    stock: '50',
-    unit: 'Tablet',
-    price: '20000',
-    description: '',
-  })
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
@@ -93,23 +111,8 @@ export default function ProductManagementView() {
     return matchesSearch && matchesCategory
   })
 
-  const handleOpenAdd = () => {
-    setEditingId(null)
-    setFormData({
-      name: '',
-      category: 'Obat Resep',
-      sku: '',
-      stock: '50',
-      unit: 'Tablet',
-      price: '20000',
-      description: '',
-    })
-    setOpenModal(true)
-  }
-
-  const handleOpenEdit = (product: MedicalProduct) => {
-    setEditingId(product.id)
-    setFormData({
+  const onOpenEdit = (product: MedicalProduct) => {
+    handleOpenEdit(product.id, {
       name: product.name,
       category: product.category,
       sku: product.sku,
@@ -118,65 +121,63 @@ export default function ProductManagementView() {
       price: product.price.toString(),
       description: product.description || '',
     })
-    setOpenModal(true)
   }
 
   const handleSaveProduct = async () => {
-    if (!formData.name) return
+    if (!formData.name) {
+      showToast('Nama produk wajib diisi', 'error')
+      return
+    }
 
     const stockNum = parseInt(formData.stock) || 0
     let status: 'Tersedia' | 'Stok Menipis' | 'Habis' = 'Tersedia'
     if (stockNum === 0) status = 'Habis'
     else if (stockNum < 20) status = 'Stok Menipis'
 
-    if (editingId) {
-      const res = await updateProductAction(editingId, {
-        name: formData.name,
-        category: formData.category,
-        sku: formData.sku,
-        stock: stockNum,
-        unit: formData.unit,
-        price: parseInt(formData.price) || 0,
-        status,
-        description: formData.description,
-      })
+    setSubmitting(true)
+    try {
+      if (editingId) {
+        const res = await updateProductAction(editingId, {
+          name: formData.name,
+          category: formData.category,
+          sku: formData.sku,
+          stock: stockNum,
+          unit: formData.unit,
+          price: parseInt(formData.price) || 0,
+          status,
+          description: formData.description,
+        })
 
-      if (res.success) {
-        await loadData()
-        setToastMsg('Produk berhasil diperbarui di database!')
-        setOpenModal(false)
-        setToastOpen(true)
+        if (res.success) {
+          await loadData()
+          handleCloseModal()
+          showToast('Produk berhasil diperbarui di database!', 'success')
+        } else {
+          showToast(res.error || 'Gagal memperbarui produk', 'error')
+        }
       } else {
-        setToastMsg(res.error || 'Gagal memperbarui produk')
-        setToastOpen(true)
-      }
-    } else {
-      const res = await createProductAction({
-        name: formData.name,
-        category: formData.category,
-        sku: formData.sku || `MED-${formData.name.substring(0, 3).toUpperCase()}-100`,
-        stock: stockNum,
-        unit: formData.unit,
-        price: parseInt(formData.price) || 10000,
-        status,
-        description: formData.description || 'Deskripsi produk medis.',
-      })
+        const res = await createProductAction({
+          name: formData.name,
+          category: formData.category,
+          sku: formData.sku || `MED-${formData.name.substring(0, 3).toUpperCase()}-100`,
+          stock: stockNum,
+          unit: formData.unit,
+          price: parseInt(formData.price) || 10000,
+          status,
+          description: formData.description || 'Deskripsi produk medis.',
+        })
 
-      if (res.success) {
-        await loadData()
-        setToastMsg('Produk baru berhasil disimpan ke database!')
-        setOpenModal(false)
-        setToastOpen(true)
-      } else {
-        setToastMsg(res.error || 'Gagal menambahkan produk')
-        setToastOpen(true)
+        if (res.success) {
+          await loadData()
+          handleCloseModal()
+          showToast('Produk baru berhasil disimpan ke database!', 'success')
+        } else {
+          showToast(res.error || 'Gagal menambahkan produk', 'error')
+        }
       }
+    } finally {
+      setSubmitting(false)
     }
-  }
-
-  const handleDeleteRequest = (id: string) => {
-    setProductToDelete(id)
-    setDeleteConfirmOpen(true)
   }
 
   const handleConfirmDelete = async () => {
@@ -184,13 +185,12 @@ export default function ProductManagementView() {
       const res = await deleteProductAction(productToDelete)
       if (res.success) {
         await loadData()
-        setToastMsg('Produk berhasil dihapus dari database.')
+        showToast('Produk berhasil dihapus dari database.', 'success')
       } else {
-        setToastMsg(res.error || 'Gagal menghapus produk')
+        showToast(res.error || 'Gagal menghapus produk', 'error')
       }
-      setToastOpen(true)
     }
-    setDeleteConfirmOpen(false)
+    handleCloseDelete()
   }
 
   const columns: Column<MedicalProduct>[] = [
@@ -265,7 +265,7 @@ export default function ProductManagementView() {
       renderCell: (product) => (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
           <Tooltip title="Edit Produk">
-            <IconButton size="small" onClick={() => handleOpenEdit(product)}>
+            <IconButton size="small" onClick={() => onOpenEdit(product)}>
               <Edit size={16} />
             </IconButton>
           </Tooltip>
@@ -320,7 +320,7 @@ export default function ProductManagementView() {
           <Button
             variant="contained"
             startIcon={<Plus size={18} />}
-            onClick={handleOpenAdd}
+            onClick={() => handleOpenAdd()}
           >
             Tambah Produk
           </Button>
@@ -335,128 +335,113 @@ export default function ProductManagementView() {
       />
 
       {/* Add/Edit Product Modal */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+      <CrudModalDialog
+        open={openModal}
+        onClose={handleCloseModal}
+        title={editingId ? 'Edit Produk' : 'Tambah Produk Baru'}
+        onSubmit={handleSaveProduct}
+        submitText={editingId ? 'Simpan Perubahan' : 'Tambah Produk'}
+        submitting={submitting}
+      >
+        <TextField
+          label="Nama Obat / Produk"
+          fullWidth
+          size="small"
+          value={formData.name}
+          onChange={(e) => updateFormData({ name: e.target.value })}
+        />
+
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Kategori</InputLabel>
+              <Select
+                value={formData.category}
+                label="Kategori"
+                onChange={(e) =>
+                  updateFormData({
+                    category: e.target.value as ProductFormData['category'],
+                  })
+                }
+              >
+                <MenuItem value="Obat Resep">Obat Resep</MenuItem>
+                <MenuItem value="Obat Bebas">Obat Bebas</MenuItem>
+                <MenuItem value="Suplemen">Suplemen</MenuItem>
+                <MenuItem value="Alat Kesehatan">Alat Kesehatan</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 6 }}>
             <TextField
-              label="Nama Obat / Produk"
+              label="Kode SKU (Opsional)"
               fullWidth
               size="small"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.sku}
+              onChange={(e) => updateFormData({ sku: e.target.value })}
             />
+          </Grid>
+        </Grid>
 
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Kategori</InputLabel>
-                  <Select
-                    value={formData.category}
-                    label="Kategori"
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        category: e.target.value as 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan',
-                      })
-                    }
-                  >
-                    <MenuItem value="Obat Resep">Obat Resep</MenuItem>
-                    <MenuItem value="Obat Bebas">Obat Bebas</MenuItem>
-                    <MenuItem value="Suplemen">Suplemen</MenuItem>
-                    <MenuItem value="Alat Kesehatan">Alat Kesehatan</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Kode SKU (Opsional)"
-                  fullWidth
-                  size="small"
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 4 }}>
-                <TextField
-                  label="Jumlah Stok"
-                  type="number"
-                  fullWidth
-                  size="small"
-                  value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                />
-              </Grid>
-              <Grid size={{ xs: 4 }}>
-                <TextField
-                  label="Satuan"
-                  fullWidth
-                  size="small"
-                  value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                />
-              </Grid>
-              <Grid size={{ xs: 4 }}>
-                <TextField
-                  label="Harga (Rp)"
-                  type="number"
-                  fullWidth
-                  size="small"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 4 }}>
             <TextField
-              label="Deskripsi / Indikasi Medis"
-              multiline
-              rows={3}
+              label="Jumlah Stok"
+              type="number"
               fullWidth
               size="small"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              value={formData.stock}
+              onChange={(e) => updateFormData({ stock: e.target.value })}
             />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setOpenModal(false)} color="inherit">
-            Batal
-          </Button>
-          <Button onClick={handleSaveProduct} variant="contained">
-            {editingId ? 'Simpan Perubahan' : 'Tambah Produk'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </Grid>
+          <Grid size={{ xs: 4 }}>
+            <TextField
+              label="Satuan"
+              fullWidth
+              size="small"
+              value={formData.unit}
+              onChange={(e) => updateFormData({ unit: e.target.value })}
+            />
+          </Grid>
+          <Grid size={{ xs: 4 }}>
+            <TextField
+              label="Harga (Rp)"
+              type="number"
+              fullWidth
+              size="small"
+              value={formData.price}
+              onChange={(e) => updateFormData({ price: e.target.value })}
+            />
+          </Grid>
+        </Grid>
+
+        <TextField
+          label="Deskripsi / Indikasi Medis"
+          multiline
+          rows={3}
+          fullWidth
+          size="small"
+          value={formData.description}
+          onChange={(e) => updateFormData({ description: e.target.value })}
+        />
+      </CrudModalDialog>
       
       {/* Delete Confirmation Modal */}
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Konfirmasi Hapus</DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">
-            Apakah Anda yakin ingin menghapus produk ini? Data yang dihapus tidak dapat dikembalikan.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteConfirmOpen(false)} color="inherit">Batal</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">Hapus Produk</Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={deleteConfirmOpen}
+        title="Konfirmasi Hapus"
+        message="Apakah Anda yakin ingin menghapus produk ini? Data yang dihapus tidak dapat dikembalikan."
+        confirmText="Hapus Produk"
+        onClose={handleCloseDelete}
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* Toast Feedback */}
-      <Snackbar
+      <ToastFeedback
         open={toastOpen}
-        autoHideDuration={4000}
-        onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: '100%' }}>
-          {toastMsg}
-        </Alert>
-      </Snackbar>
+        message={toastMsg}
+        severity={toastSeverity}
+        onClose={hideToast}
+      />
     </Box>
   )
 }

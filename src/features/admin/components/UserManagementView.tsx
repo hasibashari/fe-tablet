@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -10,17 +10,11 @@ import {
   InputAdornment,
   Chip,
   Avatar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   Grid,
-  Snackbar,
-  Alert,
   IconButton,
   Tooltip,
 } from '@mui/material'
@@ -28,6 +22,12 @@ import { Search, UserPlus, BellRing, Edit, Trash2, Phone, User, Activity } from 
 import AdminHeader from './AdminHeader'
 import SendReminderModal from './SendReminderModal'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
+import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
+import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog'
+import { ToastFeedback } from '@/src/shared/components/ToastFeedback'
+import { useCrudModal } from '@/src/shared/hooks/useCrudModal'
+import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm'
+import { useToast } from '@/src/shared/hooks/useToast'
 import {
   getPatientsAction,
   createPatientAction,
@@ -37,16 +37,61 @@ import {
 } from '../api/adminRepository'
 import { PatientUser } from '../types/admin.types'
 
+interface PatientFormData {
+  name: string
+  age: string
+  gender: 'Laki-laki' | 'Perempuan'
+  phone: string
+  email: string
+  riskLevel: 'Tinggi' | 'Sedang' | 'Rendah'
+  assignedDoctor: string
+  medicalNotes: string
+}
+
+const initialPatientFormData: PatientFormData = {
+  name: '',
+  age: '',
+  gender: 'Laki-laki',
+  phone: '',
+  email: '',
+  riskLevel: 'Rendah',
+  assignedDoctor: 'dr. Siti Rahma, Sp.PD',
+  medicalNotes: '',
+}
+
 export default function UserManagementView() {
   const [patients, setPatients] = useState<PatientUser[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [riskFilter, setRiskFilter] = useState<string>('Semua')
-  const [openModal, setOpenModal] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [patientToDelete, setPatientToDelete] = useState<string | null>(null)
+  // 1. Hook Form Modal Add/Edit
+  const {
+    openModal,
+    editingId,
+    formData,
+    handleOpenAdd,
+    handleOpenEdit,
+    handleCloseModal,
+    updateFormData,
+  } = useCrudModal<PatientFormData>(initialPatientFormData)
+
+  // 2. Hook Konfirmasi Hapus
+  const {
+    open: deleteConfirmOpen,
+    itemToDelete: patientToDelete,
+    requestDelete: handleDeleteRequest,
+    closeDelete: handleCloseDelete,
+  } = useDeleteConfirm<string>()
+
+  // 3. Hook Feedback Notifikasi
+  const {
+    open: toastOpen,
+    message: toastMsg,
+    severity: toastSeverity,
+    showToast,
+    hideToast,
+  } = useToast()
 
   // Reminder Modal State
   const [reminderModalOpen, setReminderModalOpen] = useState(false)
@@ -58,49 +103,20 @@ export default function UserManagementView() {
     patientName: '',
   })
 
-  // Toast Notification State
-  const [toastOpen, setToastOpen] = useState(false)
-  const [toastMsg, setToastMsg] = useState('')
-
-  const loadData = React.useCallback(async () => {
+  const loadData = useCallback(async () => {
     const data = await getPatientsAction()
     setPatients(data)
   }, [])
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true
-    const init = async () => {
-      const data = await getPatientsAction()
-      if (isMounted) {
-        setPatients(data)
-      }
-    }
-    init()
+    getPatientsAction().then((data) => {
+      if (isMounted) setPatients(data)
+    })
     return () => {
       isMounted = false
     }
   }, [])
-
-  // Form State
-  const [formData, setFormData] = useState<{
-    name: string
-    age: string
-    gender: 'Laki-laki' | 'Perempuan'
-    phone: string
-    email: string
-    riskLevel: 'Tinggi' | 'Sedang' | 'Rendah'
-    assignedDoctor: string
-    medicalNotes: string
-  }>({
-    name: '',
-    age: '',
-    gender: 'Laki-laki',
-    phone: '',
-    email: '',
-    riskLevel: 'Rendah',
-    assignedDoctor: 'dr. Siti Rahma, Sp.PD',
-    medicalNotes: '',
-  })
 
   const filteredPatients = patients.filter((p) => {
     const matchesSearch =
@@ -111,24 +127,8 @@ export default function UserManagementView() {
     return matchesSearch && matchesRisk
   })
 
-  const handleOpenAdd = () => {
-    setEditingId(null)
-    setFormData({
-      name: '',
-      age: '',
-      gender: 'Laki-laki',
-      phone: '',
-      email: '',
-      riskLevel: 'Rendah',
-      assignedDoctor: 'dr. Siti Rahma, Sp.PD',
-      medicalNotes: '',
-    })
-    setOpenModal(true)
-  }
-
-  const handleOpenEdit = (patient: PatientUser) => {
-    setEditingId(patient.id)
-    setFormData({
+  const onOpenEdit = (patient: PatientUser) => {
+    handleOpenEdit(patient.id, {
       name: patient.name,
       age: patient.age.toString(),
       gender: patient.gender,
@@ -138,63 +138,58 @@ export default function UserManagementView() {
       assignedDoctor: patient.assignedDoctor,
       medicalNotes: patient.medicalNotes || '',
     })
-    setOpenModal(true)
   }
 
   const handleSavePatient = async () => {
-    if (!formData.name || !formData.age) return
-    setSubmitting(true)
-
-    if (editingId) {
-      const res = await updatePatientAction(editingId, {
-        name: formData.name,
-        age: parseInt(formData.age) || 30,
-        gender: formData.gender,
-        phone: formData.phone,
-        email: formData.email,
-        riskLevel: formData.riskLevel,
-        assignedDoctor: formData.assignedDoctor,
-        medicalNotes: formData.medicalNotes,
-      })
-
-      if (res.success) {
-        await loadData()
-        setToastMsg('Data pasien berhasil diperbarui di database!')
-        setOpenModal(false)
-        setToastOpen(true)
-      } else {
-        setToastMsg(res.error || 'Gagal memperbarui pasien')
-        setToastOpen(true)
-      }
-    } else {
-      const res = await createPatientAction({
-        name: formData.name,
-        age: parseInt(formData.age) || 30,
-        gender: formData.gender,
-        phone: formData.phone || '0812-0000-0000',
-        email: formData.email || `${formData.name.toLowerCase().replace(/\s+/g, '.')}@email.com`,
-        riskLevel: formData.riskLevel,
-        assignedDoctor: formData.assignedDoctor,
-        medicalNotes: formData.medicalNotes,
-      })
-
-      if (res.success) {
-        await loadData()
-        setToastMsg('Pasien baru berhasil disimpan ke database!')
-        setOpenModal(false)
-        setToastOpen(true)
-      } else {
-        setToastMsg(res.error || 'Gagal menambahkan pasien')
-        setToastOpen(true)
-      }
+    if (!formData.name || !formData.age) {
+      showToast('Nama dan Usia pasien wajib diisi', 'error')
+      return
     }
 
-    setSubmitting(false)
-  }
+    setSubmitting(true)
+    try {
+      if (editingId) {
+        const res = await updatePatientAction(editingId, {
+          name: formData.name,
+          age: parseInt(formData.age) || 30,
+          gender: formData.gender,
+          phone: formData.phone,
+          email: formData.email,
+          riskLevel: formData.riskLevel,
+          assignedDoctor: formData.assignedDoctor,
+          medicalNotes: formData.medicalNotes,
+        })
 
-  const handleDeleteRequest = (id: string) => {
-    setPatientToDelete(id)
-    setDeleteConfirmOpen(true)
+        if (res.success) {
+          await loadData()
+          handleCloseModal()
+          showToast('Data pasien berhasil diperbarui di database!', 'success')
+        } else {
+          showToast(res.error || 'Gagal memperbarui pasien', 'error')
+        }
+      } else {
+        const res = await createPatientAction({
+          name: formData.name,
+          age: parseInt(formData.age) || 30,
+          gender: formData.gender,
+          phone: formData.phone || '0812-0000-0000',
+          email: formData.email || `${formData.name.toLowerCase().replace(/\s+/g, '.')}@email.com`,
+          riskLevel: formData.riskLevel,
+          assignedDoctor: formData.assignedDoctor,
+          medicalNotes: formData.medicalNotes,
+        })
+
+        if (res.success) {
+          await loadData()
+          handleCloseModal()
+          showToast('Pasien baru berhasil disimpan ke database!', 'success')
+        } else {
+          showToast(res.error || 'Gagal menambahkan pasien', 'error')
+        }
+      }
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleConfirmDelete = async () => {
@@ -202,13 +197,12 @@ export default function UserManagementView() {
       const res = await deletePatientAction(patientToDelete)
       if (res.success) {
         await loadData()
-        setToastMsg('Pasien berhasil dihapus dari database.')
+        showToast('Pasien berhasil dihapus dari database.', 'success')
       } else {
-        setToastMsg(res.error || 'Gagal menghapus pasien')
+        showToast(res.error || 'Gagal menghapus pasien', 'error')
       }
-      setToastOpen(true)
     }
-    setDeleteConfirmOpen(false)
+    handleCloseDelete()
   }
 
   const handleOpenReminder = (patient: PatientUser) => {
@@ -229,8 +223,7 @@ export default function UserManagementView() {
       await loadData()
     }
     const channelName = channel === 'whatsapp' ? 'WhatsApp' : 'Notifikasi App'
-    setToastMsg(`Pengingat berhasil dikirimkan ke ${reminderData.patientName} via ${channelName}!`)
-    setToastOpen(true)
+    showToast(`Pengingat berhasil dikirimkan ke ${reminderData.patientName} via ${channelName}!`, 'success')
   }
 
   const columns: Column<PatientUser>[] = [
@@ -342,7 +335,7 @@ export default function UserManagementView() {
             </IconButton>
           </Tooltip>
           <Tooltip title="Edit Pasien">
-            <IconButton size="small" onClick={() => handleOpenEdit(patient)}>
+            <IconButton size="small" onClick={() => onOpenEdit(patient)}>
               <Edit size={16} />
             </IconButton>
           </Tooltip>
@@ -396,7 +389,7 @@ export default function UserManagementView() {
           <Button
             variant="contained"
             startIcon={<UserPlus size={18} />}
-            onClick={handleOpenAdd}
+            onClick={() => handleOpenAdd()}
           >
             Tambah Pasien
           </Button>
@@ -411,124 +404,114 @@ export default function UserManagementView() {
       />
 
       {/* Add/Edit Patient Modal */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Data Pasien' : 'Tambah Pasien Baru'}</DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+      <CrudModalDialog
+        open={openModal}
+        onClose={handleCloseModal}
+        title={editingId ? 'Edit Data Pasien' : 'Tambah Pasien Baru'}
+        onSubmit={handleSavePatient}
+        submitText={editingId ? 'Simpan Perubahan' : 'Tambah Pasien'}
+        submitting={submitting}
+      >
+        <TextField
+          label="Nama Lengkap Pasien"
+          fullWidth
+          size="small"
+          value={formData.name}
+          onChange={(e) => updateFormData({ name: e.target.value })}
+        />
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6 }}>
             <TextField
-              label="Nama Lengkap Pasien"
+              label="Usia (Tahun)"
+              type="number"
               fullWidth
               size="small"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.age}
+              onChange={(e) => updateFormData({ age: e.target.value })}
             />
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Usia (Tahun)"
-                  type="number"
-                  fullWidth
-                  size="small"
-                  value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Jenis Kelamin</InputLabel>
-                  <Select
-                    value={formData.gender}
-                    label="Jenis Kelamin"
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'Laki-laki' | 'Perempuan' })}
-                  >
-                    <MenuItem value="Laki-laki">Laki-laki</MenuItem>
-                    <MenuItem value="Perempuan">Perempuan</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
+          </Grid>
+          <Grid size={{ xs: 6 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Jenis Kelamin</InputLabel>
+              <Select
+                value={formData.gender}
+                label="Jenis Kelamin"
+                onChange={(e) => updateFormData({ gender: e.target.value as PatientFormData['gender'] })}
+              >
+                <MenuItem value="Laki-laki">Laki-laki</MenuItem>
+                <MenuItem value="Perempuan">Perempuan</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
 
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Nomor WhatsApp"
-                  fullWidth
-                  size="small"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Alamat Email"
-                  fullWidth
-                  size="small"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Tingkat Risiko</InputLabel>
-                  <Select
-                    value={formData.riskLevel}
-                    label="Tingkat Risiko"
-                    onChange={(e) => setFormData({ ...formData, riskLevel: e.target.value as 'Tinggi' | 'Sedang' | 'Rendah' })}
-                  >
-                    <MenuItem value="Rendah">Risiko Rendah</MenuItem>
-                    <MenuItem value="Sedang">Risiko Sedang</MenuItem>
-                    <MenuItem value="Tinggi">Risiko Tinggi</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label="Dokter"
-                  fullWidth
-                  size="small"
-                  value={formData.assignedDoctor}
-                  onChange={(e) => setFormData({ ...formData, assignedDoctor: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6 }}>
             <TextField
-              label="Catatan Medis Awal"
-              multiline
-              rows={3}
+              label="Nomor WhatsApp"
               fullWidth
               size="small"
-              value={formData.medicalNotes}
-              onChange={(e) => setFormData({ ...formData, medicalNotes: e.target.value })}
+              value={formData.phone}
+              onChange={(e) => updateFormData({ phone: e.target.value })}
             />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setOpenModal(false)} color="inherit">
-            Batal
-          </Button>
-          <Button onClick={handleSavePatient} variant="contained" disabled={submitting}>
-            {editingId ? 'Simpan Perubahan' : 'Tambah Pasien'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </Grid>
+          <Grid size={{ xs: 6 }}>
+            <TextField
+              label="Alamat Email"
+              fullWidth
+              size="small"
+              value={formData.email}
+              onChange={(e) => updateFormData({ email: e.target.value })}
+            />
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Tingkat Risiko</InputLabel>
+              <Select
+                value={formData.riskLevel}
+                label="Tingkat Risiko"
+                onChange={(e) => updateFormData({ riskLevel: e.target.value as PatientFormData['riskLevel'] })}
+              >
+                <MenuItem value="Rendah">Risiko Rendah</MenuItem>
+                <MenuItem value="Sedang">Risiko Sedang</MenuItem>
+                <MenuItem value="Tinggi">Risiko Tinggi</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 6 }}>
+            <TextField
+              label="Dokter"
+              fullWidth
+              size="small"
+              value={formData.assignedDoctor}
+              onChange={(e) => updateFormData({ assignedDoctor: e.target.value })}
+            />
+          </Grid>
+        </Grid>
+
+        <TextField
+          label="Catatan Medis Awal"
+          multiline
+          rows={3}
+          fullWidth
+          size="small"
+          value={formData.medicalNotes}
+          onChange={(e) => updateFormData({ medicalNotes: e.target.value })}
+        />
+      </CrudModalDialog>
 
       {/* Delete Confirmation Modal */}
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Konfirmasi Hapus</DialogTitle>
-        <DialogContent>
-          <Typography color="text.secondary">
-            Apakah Anda yakin ingin menghapus pasien ini? Data tidak dapat dikembalikan.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteConfirmOpen(false)} color="inherit">Batal</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">Hapus Pasien</Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={deleteConfirmOpen}
+        title="Konfirmasi Hapus"
+        message="Apakah Anda yakin ingin menghapus pasien ini? Data tidak dapat dikembalikan."
+        confirmText="Hapus Pasien"
+        onClose={handleCloseDelete}
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* Send Reminder Modal */}
       <SendReminderModal
@@ -540,16 +523,12 @@ export default function UserManagementView() {
       />
 
       {/* Toast Feedback */}
-      <Snackbar
+      <ToastFeedback
         open={toastOpen}
-        autoHideDuration={4000}
-        onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setToastOpen(false)} severity="success" sx={{ width: '100%' }}>
-          {toastMsg}
-        </Alert>
-      </Snackbar>
+        message={toastMsg}
+        severity={toastSeverity}
+        onClose={hideToast}
+      />
     </Box>
   )
 }
