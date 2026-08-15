@@ -31,7 +31,7 @@ import {
   createProductAction,
   updateProductAction,
   deleteProductAction,
-} from '../api/adminRepository'
+} from '../api/productRepository'
 import { MedicalProduct } from '../types/admin.types'
 
 interface ProductFormData {

@@ -16,7 +16,8 @@ import {
 } from '@mui/material'
 import { Printer, TrendingUp, CheckCircle2, AlertCircle, FileSpreadsheet } from 'lucide-react'
 import AdminHeader from '../components/AdminHeader'
-import { getComplianceReportsAction, getPatientsAction } from '../api/adminRepository'
+import { getComplianceReportsAction } from '../api/complianceRepository'
+import { getPatientsAction } from '../api/patientRepository'
 import { ComplianceReport, PatientUser } from '../types/admin.types'
 
 export default function ReportAnalyticsView() {

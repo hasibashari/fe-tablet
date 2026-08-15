@@ -1,5 +1,3 @@
-'use server'
-
 export * from './adminStatsRepository'
 export * from './patientRepository'
 export * from './productRepository'

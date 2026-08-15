@@ -33,7 +33,7 @@ import {
   createAdminArticleAction,
   updateAdminArticleAction,
   deleteAdminArticleAction,
-} from '../api/adminRepository'
+} from '../api/articleRepository'
 import { HealthArticle } from '../types/admin.types'
 
 interface ArticleFormData {

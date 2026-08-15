@@ -29,7 +29,7 @@ import {
   createProgramAction,
   updateProgramAction,
   deleteProgramAction,
-} from '../api/adminRepository'
+} from '../api/programRepository'
 import { HealthProgram } from '../types/admin.types'
 
 interface ProgramFormData {

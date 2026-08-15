@@ -29,12 +29,12 @@ import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm'
 import { useToast } from '@/src/shared/hooks/useToast'
 import {
   getSchedulesAction,
-  getPatientsAction,
   createScheduleAction,
   updateScheduleAction,
   deleteScheduleAction,
   sendReminderNudgeAction,
-} from '../api/adminRepository'
+} from '../api/scheduleRepository'
+import { getPatientsAction } from '../api/patientRepository'
 import { MedicationSchedule, PatientUser } from '../types/admin.types'
 import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync'
 

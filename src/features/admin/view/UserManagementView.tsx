@@ -34,7 +34,7 @@ import {
   updatePatientAction,
   deletePatientAction,
   sendPatientReminderAction,
-} from '../api/adminRepository'
+} from '../api/patientRepository'
 import { PatientUser } from '../types/admin.types'
 
 interface PatientFormData {

@@ -28,7 +28,9 @@ import {
 import AdminHeader from '../components/AdminHeader'
 import StatCard from '@/src/shared/components/StatCard'
 import SendReminderModal from '../components/SendReminderModal'
-import { getAdminStatsAction, getPatientsAction, getComplianceReportsAction } from '../api/adminRepository'
+import { getAdminStatsAction } from '../api/adminStatsRepository'
+import { getPatientsAction } from '../api/patientRepository'
+import { getComplianceReportsAction } from '../api/complianceRepository'
 import { AdminStats, PatientUser, ComplianceReport } from '../types/admin.types'
 
 export default function AdminDashboardView() {
