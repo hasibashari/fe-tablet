@@ -48,18 +48,18 @@ export async function getArticlesAction(category?: string): Promise<Article[]> {
       FROM articles
       WHERE status = 'Terbit'
     `
-    const params: string[] = []
+    const params: unknown[] = []
 
     if (category && category !== 'ALL') {
-      sql += ` AND category = ?`
+      sql += ` AND category = $1`
       params.push(category)
     }
 
     sql += ` ORDER BY published_at DESC, created_at DESC`
 
-    const rows = db.prepare(sql).all(...params) as ArticleDbRow[]
+    const res = await db.query<ArticleDbRow>(sql, params)
 
-    return rows.map((r) => {
+    return res.rows.map((r) => {
       let author: Author | undefined
       if (r.author_name) {
         author = {
@@ -94,30 +94,29 @@ export async function getArticlesAction(category?: string): Promise<Article[]> {
 export async function getArticleByIdAction(id: string): Promise<Article | null> {
   try {
     // Increment view count
-    db.prepare(`UPDATE articles SET views = views + 1 WHERE id = ?`).run(id)
+    await db.query(`UPDATE articles SET views = views + 1 WHERE id = $1`, [id])
 
-    const row = db
-      .prepare(
-        `SELECT id, title, summary, lead_paragraph, image_url, image_caption, read_time, category, status, views, published_at,
-                author_id, author_name, author_role, author_avatar, author_bio, key_takeaways, tags
-         FROM articles 
-         WHERE id = ?`
-      )
-      .get(id) as ArticleDbRow | undefined
+    const res = await db.query<ArticleDbRow>(
+      `SELECT id, title, summary, lead_paragraph, image_url, image_caption, read_time, category, status, views, published_at,
+              author_id, author_name, author_role, author_avatar, author_bio, key_takeaways, tags
+       FROM articles 
+       WHERE id = $1`,
+      [id]
+    )
+    const row = res.rows[0]
 
     if (!row) return null
 
     // Fetch structured sections
-    const sectionRows = db
-      .prepare(
-        `SELECT heading, subheading, paragraphs, callout_type, callout_title, callout_text, bullet_points
-         FROM article_sections
-         WHERE article_id = ?
-         ORDER BY order_index ASC`
-      )
-      .all(id) as ArticleSectionDbRow[]
+    const sectionRes = await db.query<ArticleSectionDbRow>(
+      `SELECT heading, subheading, paragraphs, callout_type, callout_title, callout_text, bullet_points
+       FROM article_sections
+       WHERE article_id = $1
+       ORDER BY order_index ASC`,
+      [id]
+    )
 
-    const sections: ContentSection[] = sectionRows.map((sec) => ({
+    const sections: ContentSection[] = sectionRes.rows.map((sec) => ({
       heading: sec.heading || undefined,
       subheading: sec.subheading || undefined,
       paragraphs: sec.paragraphs ? JSON.parse(sec.paragraphs) : [],
@@ -164,20 +163,20 @@ export async function getArticleByIdAction(id: string): Promise<Article | null> 
 
 export async function getRelatedArticlesAction(currentId: string, limit: number = 3): Promise<Article[]> {
   try {
-    const current = db.prepare(`SELECT category FROM articles WHERE id = ?`).get(currentId) as { category: string } | undefined
+    const currentRes = await db.query<{ category: string }>(`SELECT category FROM articles WHERE id = $1`, [currentId])
+    const current = currentRes.rows[0]
     const category = current?.category || ''
 
-    const rows = db
-      .prepare(
-        `SELECT id, title, summary, image_url, read_time, category, published_at, author_name, author_avatar
-         FROM articles 
-         WHERE id != ? AND status = 'Terbit'
-         ORDER BY CASE WHEN category = ? THEN 0 ELSE 1 END, published_at DESC
-         LIMIT ?`
-      )
-      .all(currentId, category, limit) as Partial<ArticleDbRow>[]
+    const res = await db.query<Partial<ArticleDbRow>>(
+      `SELECT id, title, summary, image_url, read_time, category, published_at, author_name, author_avatar
+       FROM articles 
+       WHERE id != $1 AND status = 'Terbit'
+       ORDER BY CASE WHEN category = $2 THEN 0 ELSE 1 END, published_at DESC
+       LIMIT $3`,
+      [currentId, category, limit]
+    )
 
-    return rows.map((r) => ({
+    return res.rows.map((r) => ({
       id: r.id || '',
       title: r.title || '',
       summary: r.summary || '',
@@ -204,15 +203,17 @@ export async function toggleArticleBookmarkAction(
   articleId: string
 ): Promise<{ success: boolean; isBookmarked: boolean }> {
   try {
-    const existing = db
-      .prepare(`SELECT id FROM user_bookmarks WHERE user_id = ? AND article_id = ?`)
-      .get(userId, articleId) as UserBookmarkRow | undefined
+    const existingRes = await db.query<UserBookmarkRow>(
+      `SELECT id FROM user_bookmarks WHERE user_id = $1 AND article_id = $2`,
+      [userId, articleId]
+    )
+    const existing = existingRes.rows[0]
 
     if (existing) {
-      db.prepare(`DELETE FROM user_bookmarks WHERE id = ?`).run(existing.id)
+      await db.query(`DELETE FROM user_bookmarks WHERE id = $1`, [existing.id])
       return { success: true, isBookmarked: false }
     } else {
-      db.prepare(`INSERT INTO user_bookmarks (user_id, article_id) VALUES (?, ?)`).run(userId, articleId)
+      await db.query(`INSERT INTO user_bookmarks (user_id, article_id) VALUES ($1, $2)`, [userId, articleId])
       return { success: true, isBookmarked: true }
     }
   } catch (error) {
@@ -223,10 +224,11 @@ export async function toggleArticleBookmarkAction(
 
 export async function isArticleBookmarkedAction(userId: string, articleId: string): Promise<boolean> {
   try {
-    const existing = db
-      .prepare(`SELECT id FROM user_bookmarks WHERE user_id = ? AND article_id = ?`)
-      .get(userId, articleId)
-    return Boolean(existing)
+    const existingRes = await db.query(
+      `SELECT id FROM user_bookmarks WHERE user_id = $1 AND article_id = $2`,
+      [userId, articleId]
+    )
+    return existingRes.rows.length > 0
   } catch {
     return false
   }

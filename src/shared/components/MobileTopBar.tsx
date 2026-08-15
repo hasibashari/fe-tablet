@@ -30,7 +30,7 @@ export default function MobileTopBar({
         height: 60,
         px: 2,
         bgcolor: '#ffffff',
-        borderBottom: '1px solid #eceae4',
+        borderBottom: '1px solid #e2e8f0',
         position: 'sticky',
         top: 0,
         zIndex: 1100,
@@ -89,10 +89,10 @@ export default function MobileTopBar({
           height: 44,
           borderRadius: '6px',
           color: '#1c1c1c',
-          border: '1px solid #eceae4',
-          bgcolor: '#f7f4ed',
+          border: '1px solid #e2e8f0',
+          bgcolor: '#f8fafc',
           '&:hover': {
-            bgcolor: '#eceae4',
+            bgcolor: '#f1f5f9',
           },
           '&:active': {
             opacity: 0.8,

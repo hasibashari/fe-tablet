@@ -17,12 +17,12 @@ interface UserProfileRow {
 
 export async function getUserProfileAction(userId: string = 'usr_1'): Promise<UserProfile | null> {
   try {
-    const row = db
-      .prepare(
-        `SELECT id, name, email, phone, avatar, date_of_birth, blood_type, height, weight 
-         FROM users WHERE id = ?`
-      )
-      .get(userId) as UserProfileRow | undefined
+    const res = await db.query<UserProfileRow>(
+      `SELECT id, name, email, phone, avatar, date_of_birth, blood_type, height, weight 
+       FROM users WHERE id = $1`,
+      [userId]
+    )
+    const row = res.rows[0]
 
     if (!row) return null
 
@@ -48,29 +48,28 @@ export async function updateUserProfileAction(
   data: Partial<UserProfile>
 ): Promise<{ success: boolean; profile?: UserProfile; error?: string }> {
   try {
-    const updateStmt = db.prepare(`
-      UPDATE users 
-      SET 
-        name = COALESCE(?, name),
-        email = COALESCE(?, email),
-        phone = COALESCE(?, phone),
-        date_of_birth = COALESCE(?, date_of_birth),
-        height = COALESCE(?, height),
-        weight = COALESCE(?, weight),
-        blood_type = COALESCE(?, blood_type),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `)
-
-    updateStmt.run(
-      data.name ?? null,
-      data.email ?? null,
-      data.phone ?? null,
-      data.dateOfBirth ?? null,
-      data.height ?? null,
-      data.weight ?? null,
-      data.bloodType ?? null,
-      userId
+    await db.query(
+      `UPDATE users 
+       SET 
+         name = COALESCE($1, name),
+         email = COALESCE($2, email),
+         phone = COALESCE($3, phone),
+         date_of_birth = COALESCE($4, date_of_birth),
+         height = COALESCE($5, height),
+         weight = COALESCE($6, weight),
+         blood_type = COALESCE($7, blood_type),
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $8`,
+      [
+        data.name ?? null,
+        data.email ?? null,
+        data.phone ?? null,
+        data.dateOfBirth ?? null,
+        data.height ?? null,
+        data.weight ?? null,
+        data.bloodType ?? null,
+        userId,
+      ]
     )
 
     const updated = await getUserProfileAction(userId)

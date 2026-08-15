@@ -54,35 +54,35 @@ export default function EducationView() {
             sx={{
               fontWeight: 700,
               color: 'text.primary',
-              fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
+              fontSize: { xs: '1.35rem', sm: '1.6rem', md: '1.8rem', lg: '2.125rem' },
             }}
           >
             Health Education
           </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5 }}>
+          <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
             Read the latest articles to improve your well-being.
           </Typography>
         </Box>
       </Box>
 
-      {/* 3-Column Grid */}
+      {/* Responsive Article Grid */}
       {loading ? (
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Skeleton variant="rounded" height={380} sx={{ borderRadius: 2 }} />
+        <Grid container spacing={{ xs: 2.5, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Skeleton variant="rounded" height={360} sx={{ borderRadius: 2 }} />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Skeleton variant="rounded" height={380} sx={{ borderRadius: 2 }} />
+          <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Skeleton variant="rounded" height={360} sx={{ borderRadius: 2 }} />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Skeleton variant="rounded" height={380} sx={{ borderRadius: 2 }} />
+          <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Skeleton variant="rounded" height={360} sx={{ borderRadius: 2 }} />
           </Grid>
         </Grid>
       ) : (
         <>
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2.5, md: 3 }}>
             {paginatedArticles.map((article) => (
-              <Grid key={article.id} size={{ xs: 12, md: 4 }}>
+              <Grid key={article.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                 <ArticleCard article={article} />
               </Grid>
             ))}

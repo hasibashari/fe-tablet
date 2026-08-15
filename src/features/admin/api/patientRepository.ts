@@ -17,9 +17,9 @@ interface PatientDbRow {
   last_active: string | null
   join_date: string
   doctor_name: string | null
-  active_schedules_count: number
-  total_logs: number
-  completed_logs: number
+  active_schedules_count: string | number
+  total_logs: string | number
+  completed_logs: string | number
 }
 
 interface DoctorRow {
@@ -32,7 +32,7 @@ interface DoctorRow {
 // ============================================================
 export async function getPatientsAction(): Promise<PatientUser[]> {
   try {
-    const rows = db.prepare(`
+    const res = await db.query<PatientDbRow>(`
       SELECT 
         u.id, u.name, u.age, u.gender, u.phone, u.email,
         p.risk_level, p.status, p.medical_notes, p.last_reminder_sent, p.last_active, p.join_date,
@@ -45,10 +45,13 @@ export async function getPatientsAction(): Promise<PatientUser[]> {
       LEFT JOIN users doc ON u.assigned_doctor_id = doc.id
       WHERE u.role = 'patient'
       ORDER BY p.join_date DESC, u.name ASC
-    `).all() as PatientDbRow[]
+    `)
 
-    return rows.map((r) => {
-      const adherenceRate = r.total_logs > 0 ? Math.round((r.completed_logs / r.total_logs) * 100) : 80
+    return res.rows.map((r) => {
+      const totalLogs = Number(r.total_logs) || 0
+      const completedLogs = Number(r.completed_logs) || 0
+      const adherenceRate = totalLogs > 0 ? Math.round((completedLogs / totalLogs) * 100) : 80
+
       return {
         id: r.id,
         name: r.name,
@@ -59,7 +62,7 @@ export async function getPatientsAction(): Promise<PatientUser[]> {
         riskLevel: r.risk_level,
         status: r.status,
         assignedDoctor: r.doctor_name || 'dr. Siti Rahma, Sp.PD',
-        activeSchedulesCount: r.active_schedules_count,
+        activeSchedulesCount: Number(r.active_schedules_count) || 0,
         adherenceRate,
         lastActive: r.last_active || 'Hari ini',
         joinDate: r.join_date,
@@ -86,32 +89,35 @@ export async function createPatientAction(data: {
   try {
     const newId = `PAT-${Date.now().toString().slice(-3)}`
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}`
-    const defaultDoctor = db.prepare(`SELECT id, name FROM users WHERE role = 'admin' LIMIT 1`).get() as DoctorRow | undefined
+    const defaultDoctorRes = await db.query<DoctorRow>(`SELECT id, name FROM users WHERE role = 'admin' LIMIT 1`)
+    const defaultDoctor = defaultDoctorRes.rows[0]
 
-    db.transaction(() => {
-      db.prepare(`
-        INSERT INTO users (id, name, email, role, phone, avatar, age, gender, assigned_doctor_id)
-        VALUES (?, ?, ?, 'patient', ?, ?, ?, ?, ?)
-      `).run(
-        newId,
-        data.name,
-        data.email,
-        data.phone,
-        avatarUrl,
-        data.age,
-        data.gender,
-        defaultDoctor?.id || null
+    await db.transaction(async (client) => {
+      await client.query(
+        `INSERT INTO users (id, name, email, role, phone, avatar, age, gender, assigned_doctor_id)
+         VALUES ($1, $2, $3, 'patient', $4, $5, $6, $7, $8)`,
+        [
+          newId,
+          data.name,
+          data.email,
+          data.phone,
+          avatarUrl,
+          data.age,
+          data.gender,
+          defaultDoctor?.id || null,
+        ]
       )
 
-      db.prepare(`
-        INSERT INTO patient_profiles (user_id, risk_level, status, medical_notes, join_date, last_active)
-        VALUES (?, ?, 'Aktif', ?, date('now'), 'Baru bergabung')
-      `).run(
-        newId,
-        data.riskLevel,
-        data.medicalNotes || null
+      await client.query(
+        `INSERT INTO patient_profiles (user_id, risk_level, status, medical_notes, join_date, last_active)
+         VALUES ($1, $2, 'Aktif', $3, CURRENT_DATE::text, 'Baru bergabung')`,
+        [
+          newId,
+          data.riskLevel,
+          data.medicalNotes || null,
+        ]
       )
-    })()
+    })
 
     const patients = await getPatientsAction()
     const created = patients.find((p) => p.id === newId)
@@ -128,44 +134,46 @@ export async function updatePatientAction(
   data: Partial<PatientUser>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    db.transaction(() => {
+    await db.transaction(async (client) => {
       if (data.name || data.email || data.phone || data.age || data.gender) {
-        db.prepare(`
-          UPDATE users 
-          SET 
-            name = COALESCE(?, name),
-            email = COALESCE(?, email),
-            phone = COALESCE(?, phone),
-            age = COALESCE(?, age),
-            gender = COALESCE(?, gender),
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `).run(
-          data.name ?? null,
-          data.email ?? null,
-          data.phone ?? null,
-          data.age ?? null,
-          data.gender ?? null,
-          patientId
+        await client.query(
+          `UPDATE users 
+           SET 
+             name = COALESCE($1, name),
+             email = COALESCE($2, email),
+             phone = COALESCE($3, phone),
+             age = COALESCE($4, age),
+             gender = COALESCE($5, gender),
+             updated_at = CURRENT_TIMESTAMP
+           WHERE id = $6`,
+          [
+            data.name ?? null,
+            data.email ?? null,
+            data.phone ?? null,
+            data.age ?? null,
+            data.gender ?? null,
+            patientId,
+          ]
         )
       }
 
       if (data.riskLevel || data.status || data.medicalNotes) {
-        db.prepare(`
-          UPDATE patient_profiles
-          SET 
-            risk_level = COALESCE(?, risk_level),
-            status = COALESCE(?, status),
-            medical_notes = COALESCE(?, medical_notes)
-          WHERE user_id = ?
-        `).run(
-          data.riskLevel ?? null,
-          data.status ?? null,
-          data.medicalNotes ?? null,
-          patientId
+        await client.query(
+          `UPDATE patient_profiles
+           SET 
+             risk_level = COALESCE($1, risk_level),
+             status = COALESCE($2, status),
+             medical_notes = COALESCE($3, medical_notes)
+           WHERE user_id = $4`,
+          [
+            data.riskLevel ?? null,
+            data.status ?? null,
+            data.medicalNotes ?? null,
+            patientId,
+          ]
         )
       }
-    })()
+    })
 
     return { success: true }
   } catch (error: unknown) {
@@ -177,7 +185,7 @@ export async function updatePatientAction(
 
 export async function deletePatientAction(patientId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    db.prepare(`DELETE FROM users WHERE id = ?`).run(patientId)
+    await db.query(`DELETE FROM users WHERE id = $1`, [patientId])
     return { success: true }
   } catch (error: unknown) {
     console.error('Error deleting patient:', error)
@@ -193,7 +201,7 @@ export async function sendPatientReminderAction(
   try {
     const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
     const nowStr = message ? `Hari ini, ${timeStr} (${message})` : `Hari ini, ${timeStr}`
-    db.prepare(`UPDATE patient_profiles SET last_reminder_sent = ? WHERE user_id = ?`).run(nowStr, patientId)
+    await db.query(`UPDATE patient_profiles SET last_reminder_sent = $1 WHERE user_id = $2`, [nowStr, patientId])
     return { success: true }
   } catch (error) {
     console.error('Error sending reminder nudge:', error)

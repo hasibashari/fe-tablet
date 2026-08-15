@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import HealthLineChart from '../components/HealthLineChart'
 import MedicationAlertBanner from '../components/MedicationAlertBanner'
+import PWAInstallBanner from '../components/PWAInstallBanner'
 import {
   getTodayReminders,
   toggleReminderStatus,
@@ -12,6 +13,7 @@ import {
   Reminder,
   AdminNudge,
 } from '@/src/features/schedule'
+
 import { useAuth } from '@/src/features/auth'
 import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync'
 import {
@@ -273,8 +275,12 @@ export default function DashboardView() {
 
   return (
     <Box sx={{ pb: 5, width: '100%' }}>
+      {/* PWA Promotion Banner */}
+      <PWAInstallBanner />
+
       {/* 1. TOP HIGH-PRIORITY MEDICATION & ADMIN ALERT BANNER */}
       <MedicationAlertBanner
+
         reminder={nextReminder}
         adminNudge={adminNudge}
         isOpen={alertOpen && (Boolean(adminNudge) || (!snoozedUntil && Boolean(nextReminder)))}
@@ -284,36 +290,36 @@ export default function DashboardView() {
       />
 
       {/* Welcome Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 2.5, sm: 3, md: 4 } }}>
         <Typography
           variant="h4"
           component="h1"
           sx={{
             fontWeight: 700,
             color: 'text.primary',
-            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
+            fontSize: { xs: '1.35rem', sm: '1.6rem', md: '1.8rem', lg: '2.125rem' },
           }}
         >
           Dashboard Pasien
         </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5 }}>
+        <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
           Selamat datang kembali! Pantau kepatuhan konsumsi obat dan rencana terapi hari ini.
         </Typography>
       </Box>
 
       {/* Main 2-Column Grid */}
-      <Grid container spacing={{ xs: 3, lg: 4 }}>
-        {/* LEFT COLUMN (70%) */}
-        <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-          <Stack spacing={4}>
+      <Grid container spacing={{ xs: 2.5, md: 3, lg: 3.5, xl: 4 }}>
+        {/* LEFT COLUMN (Full width on laptop, 60-66% on wide desktop) */}
+        <Grid size={{ xs: 12, lg: 7, xl: 8 }}>
+          <Stack spacing={{ xs: 3, md: 3.5, lg: 4 }}>
             {/* Medication Trend Chart */}
-            <HealthLineChart />
+            <HealthLineChart patientId={userId} />
 
             {/* Today's Focus Section (Clean: 3-Slot Time Strip & Navigation) */}
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5, flexWrap: 'wrap', gap: 1.5 }}>
                 <Box>
-                  <Typography variant="h5" component="h2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  <Typography variant="h5" component="h2" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '1.15rem', sm: '1.35rem', md: '1.5rem' } }}>
                     Fokus Pengobatan Hari Ini
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
@@ -348,9 +354,9 @@ export default function DashboardView() {
 
               {loading ? (
                 <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 4 }}><Skeleton variant="rounded" height={85} sx={{ borderRadius: 2 }} /></Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}><Skeleton variant="rounded" height={85} sx={{ borderRadius: 2 }} /></Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}><Skeleton variant="rounded" height={85} sx={{ borderRadius: 2 }} /></Grid>
+                  <Grid size={{ xs: 12, sm: 4, md: 4, lg: 4 }}><Skeleton variant="rounded" height={85} sx={{ borderRadius: 2 }} /></Grid>
+                  <Grid size={{ xs: 12, sm: 4, md: 4, lg: 4 }}><Skeleton variant="rounded" height={85} sx={{ borderRadius: 2 }} /></Grid>
+                  <Grid size={{ xs: 12, sm: 4, md: 4, lg: 4 }}><Skeleton variant="rounded" height={85} sx={{ borderRadius: 2 }} /></Grid>
                 </Grid>
               ) : (
                 <Grid container spacing={2}>
@@ -359,11 +365,11 @@ export default function DashboardView() {
                     const isPending = slot.status.state === 'pending'
 
                     return (
-                      <Grid key={slot.id} size={{ xs: 12, sm: 4 }}>
+                      <Grid key={slot.id} size={{ xs: 12, sm: 4, md: 4, lg: 4 }}>
                         <Card
                           elevation={0}
                           sx={{
-                            p: 2.25,
+                            p: { xs: 1.75, sm: 2, lg: 2.25 },
                             borderRadius: 2,
                             border: '1px solid',
                             borderColor: isPending ? 'primary.main' : isDone ? 'success.light' : 'divider',
@@ -414,8 +420,8 @@ export default function DashboardView() {
           </Stack>
         </Grid>
 
-        {/* RIGHT COLUMN (30%) */}
-        <Grid size={{ xs: 12, md: 5, lg: 4 }}>
+        {/* RIGHT COLUMN (Full width on laptop, 34-40% on wide desktop) */}
+        <Grid size={{ xs: 12, lg: 5, xl: 4 }}>
           <Stack spacing={3}>
             {/* Widget 1: Daily Adherence Summary Widget */}
             <Card

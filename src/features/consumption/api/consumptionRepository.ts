@@ -36,33 +36,34 @@ export async function getConsumptionLogsAction(
     let sql = `
       SELECT id, reminder_id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, notes, taken_by 
       FROM consumption_logs 
-      WHERE patient_id = ?
+      WHERE patient_id = $1
     `
-    const params: (string | number)[] = [patientId]
+    const params: unknown[] = [patientId]
+    let paramIndex = 2
 
     // Date range filter
     if (range !== 'ALL') {
       const days = range === '7_DAYS' ? 7 : range === '14_DAYS' ? 14 : 30
-      sql += ` AND scheduled_date >= date('now', '-${days} days')`
+      sql += ` AND scheduled_date >= TO_CHAR(CURRENT_DATE - INTERVAL '${days} days', 'YYYY-MM-DD')`
     }
 
     // Category filter
     if (category !== 'ALL') {
-      sql += ` AND category = ?`
+      sql += ` AND category = $${paramIndex++}`
       params.push(category)
     }
 
     // Status filter
     if (status !== 'ALL') {
-      sql += ` AND status = ?`
+      sql += ` AND status = $${paramIndex++}`
       params.push(status)
     }
 
     sql += ` ORDER BY scheduled_date DESC, scheduled_time DESC`
 
-    const rows = db.prepare(sql).all(...params) as ConsumptionLogRow[]
+    const res = await db.query<ConsumptionLogRow>(sql, params)
 
-    return rows.map((r) => ({
+    return res.rows.map((r) => ({
       id: r.id,
       reminderId: r.reminder_id || undefined,
       title: r.title,
@@ -83,13 +84,13 @@ export async function getConsumptionLogsAction(
 
 export async function getConsumptionStatsAction(patientId: string = 'usr_1'): Promise<ConsumptionStats> {
   try {
-    const rows = db
-      .prepare(
-        `SELECT scheduled_date, status 
-         FROM consumption_logs 
-         WHERE patient_id = ?`
-      )
-      .all(patientId) as { scheduled_date: string; status: ConsumptionStatus }[]
+    const res = await db.query<{ scheduled_date: string; status: ConsumptionStatus }>(
+      `SELECT scheduled_date, status 
+       FROM consumption_logs 
+       WHERE patient_id = $1`,
+      [patientId]
+    )
+    const rows = res.rows
 
     const total = rows.length
     if (total === 0) {
@@ -164,20 +165,21 @@ export async function logManualConsumptionAction(data: {
     const today = new Date().toISOString().split('T')[0]
     const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
 
-    db.prepare(`
-      INSERT INTO consumption_logs (
+    await db.query(
+      `INSERT INTO consumption_logs (
         id, patient_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, notes, taken_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ON_TIME', ?, 'Pasien Mandiri')
-    `).run(
-      id,
-      data.patientId,
-      data.title,
-      data.category,
-      data.dosage || null,
-      today,
-      nowTime,
-      nowTime,
-      data.notes || null
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'ON_TIME', $9, 'Pasien Mandiri')`,
+      [
+        id,
+        data.patientId,
+        data.title,
+        data.category,
+        data.dosage || null,
+        today,
+        nowTime,
+        nowTime,
+        data.notes || null,
+      ]
     )
 
     return { success: true, logId: id }

@@ -34,3 +34,11 @@ export interface AdminNudge {
   status: 'UNREAD' | 'READ' | 'DISMISSED'
   sentAt: string
 }
+
+export interface AdherenceTrendPoint {
+  day: string
+  date: string
+  adherence: number
+  totalReminders: number
+  completedReminders: number
+}

@@ -20,15 +20,15 @@ interface ProductDbRow {
 // ============================================================
 export async function getProductsAction(): Promise<MedicalProduct[]> {
   try {
-    const rows = db.prepare(`SELECT * FROM products ORDER BY name ASC`).all() as ProductDbRow[]
-    return rows.map((r) => ({
+    const res = await db.query<ProductDbRow>(`SELECT * FROM products ORDER BY name ASC`)
+    return res.rows.map((r) => ({
       id: r.id,
       name: r.name,
       category: r.category,
       sku: r.sku,
-      stock: r.stock,
+      stock: Number(r.stock) || 0,
       unit: r.unit,
-      price: r.price,
+      price: Number(r.price) || 0,
       status: r.status,
       description: r.description || '',
     }))
@@ -50,19 +50,20 @@ export async function createProductAction(data: {
 }): Promise<{ success: boolean; product?: MedicalProduct; error?: string }> {
   try {
     const newId = `PRD-${Date.now().toString().slice(-3)}`
-    db.prepare(`
-      INSERT INTO products (id, name, category, sku, stock, unit, price, status, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      newId,
-      data.name,
-      data.category,
-      data.sku,
-      data.stock,
-      data.unit,
-      data.price,
-      data.status,
-      data.description || null
+    await db.query(
+      `INSERT INTO products (id, name, category, sku, stock, unit, price, status, description)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        newId,
+        data.name,
+        data.category,
+        data.sku,
+        data.stock,
+        data.unit,
+        data.price,
+        data.status,
+        data.description || null,
+      ]
     )
 
     const created: MedicalProduct = {
@@ -89,29 +90,30 @@ export async function updateProductAction(
   data: Partial<MedicalProduct>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    db.prepare(`
-      UPDATE products
-      SET
-        name = COALESCE(?, name),
-        category = COALESCE(?, category),
-        sku = COALESCE(?, sku),
-        stock = COALESCE(?, stock),
-        unit = COALESCE(?, unit),
-        price = COALESCE(?, price),
-        status = COALESCE(?, status),
-        description = COALESCE(?, description),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(
-      data.name ?? null,
-      data.category ?? null,
-      data.sku ?? null,
-      data.stock ?? null,
-      data.unit ?? null,
-      data.price ?? null,
-      data.status ?? null,
-      data.description ?? null,
-      productId
+    await db.query(
+      `UPDATE products
+       SET
+         name = COALESCE($1, name),
+         category = COALESCE($2, category),
+         sku = COALESCE($3, sku),
+         stock = COALESCE($4, stock),
+         unit = COALESCE($5, unit),
+         price = COALESCE($6, price),
+         status = COALESCE($7, status),
+         description = COALESCE($8, description),
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $9`,
+      [
+        data.name ?? null,
+        data.category ?? null,
+        data.sku ?? null,
+        data.stock ?? null,
+        data.unit ?? null,
+        data.price ?? null,
+        data.status ?? null,
+        data.description ?? null,
+        productId,
+      ]
     )
     return { success: true }
   } catch (error: unknown) {
@@ -123,7 +125,7 @@ export async function updateProductAction(
 
 export async function deleteProductAction(productId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    db.prepare(`DELETE FROM products WHERE id = ?`).run(productId)
+    await db.query(`DELETE FROM products WHERE id = $1`, [productId])
     return { success: true }
   } catch (error: unknown) {
     console.error('Error deleting product:', error)

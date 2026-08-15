@@ -30,25 +30,25 @@ export default function Navbar() {
         isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3 border-b border-hairline' : 'bg-transparent py-5'
       )}
     >
-      <div className="container mx-auto px-6 max-w-7xl flex items-center justify-between">
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="bg-primary text-white p-1.5 rounded-lg group-hover:bg-primary-active transition-colors shadow-sm">
-            <Cross size={24} />
+            <Cross size={22} />
           </div>
           <span className="text-xl font-bold text-ink tracking-tight">Medi<span className="text-primary">Core</span></span>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Desktop Nav (>= lg) */}
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
           <Link href="/#science" className="text-sm font-medium text-body hover:text-primary transition-colors">The Science</Link>
           <Link href="/#ingredients" className="text-sm font-medium text-body hover:text-primary transition-colors">Ingredients</Link>
           <Link href="/#trials" className="text-sm font-medium text-body hover:text-primary transition-colors">Clinical Trials</Link>
           <Link href="/#about" className="text-sm font-medium text-body hover:text-primary transition-colors">About Us</Link>
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3">
           {isAuthenticated && user ? (
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 rounded-full py-1.5 pl-2 pr-3">
+            <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 rounded-full py-1.5 pl-2 pr-3">
               <Avatar
                 src={user.avatar}
                 alt={user.name}
@@ -108,10 +108,11 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile Toggle */}
+        {/* Mobile Toggle (< lg) */}
         <button
-          className="md:hidden text-ink p-2"
+          className="lg:hidden text-ink p-2 cursor-pointer"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle Menu"
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -119,7 +120,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-white border-b border-hairline shadow-lg py-4 px-6 flex flex-col gap-4 md:hidden">
+        <div className="absolute top-full left-0 right-0 bg-white border-b border-hairline shadow-lg py-4 px-6 flex flex-col gap-4 lg:hidden">
           <Link href="/#science" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-body py-2 border-b border-hairline-soft">The Science</Link>
           <Link href="/#ingredients" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-body py-2 border-b border-hairline-soft">Ingredients</Link>
           <Link href="/#trials" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-body py-2 border-b border-hairline-soft">Clinical Trials</Link>

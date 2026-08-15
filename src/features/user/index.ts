@@ -3,5 +3,8 @@ export { default as DashboardView } from './view/DashboardView'
 export { default as ProfileView } from './view/ProfileView'
 export { default as HealthLineChart } from './components/HealthLineChart'
 export { default as MedicationAlertBanner } from './components/MedicationAlertBanner'
+export { PWAInstallBanner } from './components/PWAInstallBanner'
+export type { PWAInstallBannerProps } from './components/PWAInstallBanner'
 export * from './types'
 export * from './api/getProfile'
+

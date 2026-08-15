@@ -161,8 +161,8 @@ export default function AdminDashboardView() {
       </Card>
 
       {/* KPI Cards Grid */}
-      <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+      <Grid container spacing={{ xs: 2, sm: 2.5 }} sx={{ mb: { xs: 2.5, md: 3.5 } }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
           <StatCard
             title="Total Pasien Terdaftar"
             value={stats.totalPatients}
@@ -185,7 +185,7 @@ export default function AdminDashboardView() {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
           <StatCard
             title="Jadwal Obat Aktif"
             value={stats.activeSchedules}
@@ -196,7 +196,7 @@ export default function AdminDashboardView() {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
           <StatCard
             title="Rata-rata Kepatuhan"
             value={`${stats.adherenceRate}%`}
@@ -214,7 +214,7 @@ export default function AdminDashboardView() {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
           <StatCard
             title="Pasien Risiko Tinggi"
             value={highRiskPatients.length.toString()}
@@ -228,9 +228,9 @@ export default function AdminDashboardView() {
       </Grid>
 
       {/* Main Content Grid: Compliance Chart & High Risk Patients */}
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2.5, md: 3 }}>
         {/* Compliance Trend Visualizer */}
-        <Grid size={{ xs: 12, md: 7, lg: 8 }}>
+        <Grid size={{ xs: 12, lg: 7, xl: 8 }}>
           <Card
             sx={{
               p: 2.5,
@@ -303,7 +303,7 @@ export default function AdminDashboardView() {
         </Grid>
 
         {/* High Risk Patients Alert Box */}
-        <Grid size={{ xs: 12, md: 5, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 5, xl: 4 }}>
           <Card
             sx={{
               p: 2.5,

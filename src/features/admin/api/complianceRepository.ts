@@ -5,9 +5,9 @@ import { ComplianceReport } from '../types/admin.types'
 
 interface ComplianceReportRow {
   date: string
-  taken_count: number
-  missed_count: number
-  total: number
+  taken_count: string | number
+  missed_count: string | number
+  total: string | number
 }
 
 // ============================================================
@@ -15,7 +15,7 @@ interface ComplianceReportRow {
 // ============================================================
 export async function getComplianceReportsAction(): Promise<ComplianceReport[]> {
   try {
-    const rows = db.prepare(`
+    const res = await db.query<ComplianceReportRow>(`
       SELECT 
         scheduled_date as date,
         SUM(CASE WHEN status IN ('ON_TIME', 'LATE') THEN 1 ELSE 0 END) as taken_count,
@@ -25,7 +25,8 @@ export async function getComplianceReportsAction(): Promise<ComplianceReport[]> 
       GROUP BY scheduled_date
       ORDER BY scheduled_date ASC
       LIMIT 14
-    `).all() as ComplianceReportRow[]
+    `)
+    const rows = res.rows
 
     if (rows.length === 0) {
       return [
@@ -36,11 +37,14 @@ export async function getComplianceReportsAction(): Promise<ComplianceReport[]> 
     }
 
     return rows.map((r) => {
-      const percentage = r.total > 0 ? Math.round((r.taken_count / r.total) * 100) : 100
+      const total = Number(r.total) || 0
+      const takenCount = Number(r.taken_count) || 0
+      const missedCount = Number(r.missed_count) || 0
+      const percentage = total > 0 ? Math.round((takenCount / total) * 100) : 100
       return {
         date: r.date,
-        takenCount: r.taken_count,
-        missedCount: r.missed_count,
+        takenCount,
+        missedCount,
         adherencePercentage: percentage,
       }
     })

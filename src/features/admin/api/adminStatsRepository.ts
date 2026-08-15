@@ -4,12 +4,12 @@ import db from '@/src/lib/db/client'
 import { AdminStats } from '../types/admin.types'
 
 interface CountRow {
-  c: number
+  c: string | number
 }
 
 interface AdherenceSummaryRow {
-  total: number
-  completed: number
+  total: string | number
+  completed: string | number
 }
 
 // ============================================================
@@ -17,22 +17,33 @@ interface AdherenceSummaryRow {
 // ============================================================
 export async function getAdminStatsAction(): Promise<AdminStats> {
   try {
-    const totalPatients = (db.prepare(`SELECT count(*) as c FROM patient_profiles`).get() as CountRow | undefined)?.c || 0
-    const activeSchedules = (db.prepare(`SELECT count(*) as c FROM medication_schedules WHERE status = 'Aktif'`).get() as CountRow | undefined)?.c || 0
-    
-    const adherenceRow = db.prepare(`
+    const patientsRes = await db.query<CountRow>(`SELECT count(*) as c FROM patient_profiles`)
+    const totalPatients = Number(patientsRes.rows[0]?.c) || 0
+
+    const schedulesRes = await db.query<CountRow>(`SELECT count(*) as c FROM medication_schedules WHERE status = 'Aktif'`)
+    const activeSchedules = Number(schedulesRes.rows[0]?.c) || 0
+
+    const adherenceRes = await db.query<AdherenceSummaryRow>(`
       SELECT 
         COUNT(*) as total,
         SUM(CASE WHEN status IN ('ON_TIME', 'LATE') THEN 1.0 ELSE 0.0 END) as completed
       FROM consumption_logs
-    `).get() as AdherenceSummaryRow | undefined
-    const adherenceRate = adherenceRow && adherenceRow.total > 0
-      ? +(adherenceRow.completed / adherenceRow.total * 100).toFixed(1)
+    `)
+    const adherenceRow = adherenceRes.rows[0]
+    const totalLogs = Number(adherenceRow?.total) || 0
+    const completedLogs = Number(adherenceRow?.completed) || 0
+    const adherenceRate = totalLogs > 0
+      ? +(completedLogs / totalLogs * 100).toFixed(1)
       : 88.5
 
-    const publishedArticles = (db.prepare(`SELECT count(*) as c FROM articles WHERE status = 'Terbit'`).get() as CountRow | undefined)?.c || 0
-    const activePrograms = (db.prepare(`SELECT count(*) as c FROM health_programs WHERE status = 'Aktif'`).get() as CountRow | undefined)?.c || 0
-    const lowStockProducts = (db.prepare(`SELECT count(*) as c FROM products WHERE stock <= 10 OR status = 'Stok Menipis'`).get() as CountRow | undefined)?.c || 0
+    const articlesRes = await db.query<CountRow>(`SELECT count(*) as c FROM articles WHERE status = 'Terbit'`)
+    const publishedArticles = Number(articlesRes.rows[0]?.c) || 0
+
+    const programsRes = await db.query<CountRow>(`SELECT count(*) as c FROM health_programs WHERE status = 'Aktif'`)
+    const activePrograms = Number(programsRes.rows[0]?.c) || 0
+
+    const productsRes = await db.query<CountRow>(`SELECT count(*) as c FROM products WHERE stock <= 10 OR status = 'Stok Menipis'`)
+    const lowStockProducts = Number(productsRes.rows[0]?.c) || 0
 
     return {
       totalPatients,

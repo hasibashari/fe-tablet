@@ -1,57 +1,67 @@
-import Database from 'better-sqlite3'
-import path from 'path'
-import fs from 'fs'
-
-const DATA_DIR = path.join(process.cwd(), 'data')
-const DB_PATH = path.join(DATA_DIR, 'app.db')
-
-// Ensure directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true })
-}
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg'
 
 // Global declaration for Next.js hot-reloading singleton
 declare global {
-  var __sqlite_db: Database.Database | undefined
+  var __pg_pool: Pool | undefined
 }
 
-function createDatabaseConnection(): Database.Database {
-  const db = new Database(DB_PATH, {
-    verbose: process.env.NODE_ENV === 'development' ? undefined : undefined,
+function createDatabasePool(): Pool {
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is not defined')
+  }
+
+  const pool = new Pool({
+    connectionString,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
   })
 
-  // Optimize performance and enforce integrity
-  db.pragma('journal_mode = WAL')
-  db.pragma('foreign_keys = ON')
-  db.pragma('synchronous = NORMAL')
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle PostgreSQL client:', err)
+  })
 
-  // Ensure admin_nudges table exists
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS admin_nudges (
-        id TEXT PRIMARY KEY,
-        patient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        sender_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-        sender_name TEXT NOT NULL,
-        sender_role TEXT NOT NULL,
-        schedule_id TEXT REFERENCES medication_schedules(id) ON DELETE SET NULL,
-        medication_name TEXT,
-        dosage TEXT,
-        time_slot TEXT,
-        message TEXT NOT NULL,
-        channel TEXT NOT NULL DEFAULT 'app' CHECK(channel IN ('app', 'whatsapp')),
-        status TEXT NOT NULL DEFAULT 'UNREAD' CHECK(status IN ('UNREAD', 'READ', 'DISMISSED')),
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE INDEX IF NOT EXISTS idx_nudges_patient_status ON admin_nudges(patient_id, status);
-  `)
-
-  return db
+  return pool
 }
 
-const db = global.__sqlite_db || createDatabaseConnection()
+export const pool = global.__pg_pool || createDatabasePool()
 
 if (process.env.NODE_ENV !== 'production') {
-  global.__sqlite_db = db
+  global.__pg_pool = pool
+}
+
+export async function query<T extends QueryResultRow = QueryResultRow>(
+  text: string,
+  params?: unknown[]
+): Promise<QueryResult<T>> {
+  return pool.query<T>(text, params)
+}
+
+export async function transaction<T>(
+  callback: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const result = await callback(client)
+    await client.query('COMMIT')
+    return result
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+export const db = {
+  query,
+  transaction,
+  pool,
 }
 
 export default db

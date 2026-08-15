@@ -24,23 +24,30 @@ interface ScheduleDbRow {
 export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
   try {
     const today = new Date().toISOString().split('T')[0]
-    const rows = db.prepare(`
+    const res = await db.query<ScheduleDbRow>(`
       SELECT 
         s.*, 
         u.name as patient_name
       FROM medication_schedules s
       JOIN users u ON s.patient_id = u.id
       ORDER BY s.start_date DESC
-    `).all() as ScheduleDbRow[]
+    `)
+    const rows = res.rows
 
-    return rows.map((r) => {
-      const timeSlots = db
-        .prepare(`SELECT time FROM schedule_time_slots WHERE schedule_id = ? ORDER BY time ASC`)
-        .all(r.id) as { time: string }[]
+    const result: MedicationSchedule[] = []
 
-      const todayReminders = db
-        .prepare(`SELECT status FROM reminders WHERE schedule_id = ? AND date = ?`)
-        .all(r.id, today) as { status: string }[]
+    for (const r of rows) {
+      const timeSlotsRes = await db.query<{ time: string }>(
+        `SELECT time FROM schedule_time_slots WHERE schedule_id = $1 ORDER BY time ASC`,
+        [r.id]
+      )
+      const timeSlots = timeSlotsRes.rows
+
+      const todayRemindersRes = await db.query<{ status: string }>(
+        `SELECT status FROM reminders WHERE schedule_id = $1 AND date = $2`,
+        [r.id, today]
+      )
+      const todayReminders = todayRemindersRes.rows
 
       let todayStatus: 'COMPLETED' | 'PENDING' | 'NO_REMINDER' = 'NO_REMINDER'
       if (todayReminders.length > 0) {
@@ -48,7 +55,7 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
         todayStatus = allCompleted ? 'COMPLETED' : 'PENDING'
       }
 
-      return {
+      result.push({
         id: r.id,
         patientId: r.patient_id,
         patientName: r.patient_name || 'Pasien',
@@ -63,8 +70,10 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
         instructions: r.instructions || '',
         lastReminderSent: r.last_reminder_sent || undefined,
         todayStatus,
-      }
-    })
+      })
+    }
+
+    return result
   } catch (error) {
     console.error('Error in getSchedulesAction:', error)
     return []
@@ -88,43 +97,46 @@ export async function sendReminderNudgeAction(data: {
     const nowIso = new Date().toISOString()
     const nowFormatted = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
 
-    db.transaction(() => {
+    await db.transaction(async (client) => {
       // 1. Insert into admin_nudges
-      db.prepare(`
-        INSERT INTO admin_nudges (
+      await client.query(
+        `INSERT INTO admin_nudges (
           id, patient_id, sender_id, sender_name, sender_role, schedule_id, medication_name, dosage, time_slot, message, channel, status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNREAD', ?)
-      `).run(
-        newId,
-        data.patientId,
-        data.senderId ?? null,
-        data.senderName,
-        data.senderRole,
-        data.scheduleId ?? null,
-        data.medicationName ?? null,
-        data.dosage ?? null,
-        data.timeSlot ?? null,
-        data.message,
-        data.channel,
-        nowIso
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'UNREAD', $12)`,
+        [
+          newId,
+          data.patientId,
+          data.senderId ?? null,
+          data.senderName,
+          data.senderRole,
+          data.scheduleId ?? null,
+          data.medicationName ?? null,
+          data.dosage ?? null,
+          data.timeSlot ?? null,
+          data.message,
+          data.channel,
+          nowIso,
+        ]
       )
 
       // 2. Update last_reminder_sent on patient_profiles
-      db.prepare(`
-        UPDATE patient_profiles 
-        SET last_reminder_sent = ?
-        WHERE user_id = ?
-      `).run(nowFormatted, data.patientId)
+      await client.query(
+        `UPDATE patient_profiles 
+         SET last_reminder_sent = $1
+         WHERE user_id = $2`,
+        [nowFormatted, data.patientId]
+      )
 
       // 3. Update last_reminder_sent on medication_schedules if scheduleId provided
       if (data.scheduleId) {
-        db.prepare(`
-          UPDATE medication_schedules 
-          SET last_reminder_sent = ?
-          WHERE id = ?
-        `).run(nowFormatted, data.scheduleId)
+        await client.query(
+          `UPDATE medication_schedules 
+           SET last_reminder_sent = $1
+           WHERE id = $2`,
+          [nowFormatted, data.scheduleId]
+        )
       }
-    })()
+    })
 
     return { success: true, nudgeId: newId }
   } catch (error: unknown) {
@@ -148,45 +160,56 @@ export async function createScheduleAction(data: {
   try {
     const newId = `SCH-${Date.now().toString().slice(-3)}`
 
-    db.transaction(() => {
-      db.prepare(`
-        INSERT INTO medication_schedules (
+    await db.transaction(async (client) => {
+      await client.query(
+        `INSERT INTO medication_schedules (
           id, patient_id, medication_name, dosage, frequency, start_date, end_date, status, category, instructions
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Aktif', ?, ?)
-      `).run(
-        newId,
-        data.patientId,
-        data.medicationName,
-        data.dosage,
-        data.frequency,
-        data.startDate,
-        data.endDate,
-        data.category,
-        data.instructions || null
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'Aktif', $8, $9)`,
+        [
+          newId,
+          data.patientId,
+          data.medicationName,
+          data.dosage,
+          data.frequency,
+          data.startDate,
+          data.endDate,
+          data.category,
+          data.instructions || null,
+        ]
       )
 
       for (const slot of data.timeSlots) {
-        db.prepare(`INSERT INTO schedule_time_slots (schedule_id, time) VALUES (?, ?)`).run(newId, slot)
+        await client.query(`INSERT INTO schedule_time_slots (schedule_id, time) VALUES ($1, $2)`, [newId, slot])
       }
 
       // Generate initial today reminder for this schedule
       const today = new Date().toISOString().split('T')[0]
       for (const slot of data.timeSlots) {
-        db.prepare(`
-          INSERT OR REPLACE INTO reminders (id, patient_id, schedule_id, title, description, date, time, status, type)
-          VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
-        `).run(
-          `rem-${newId}-${slot.replace(':', '')}`,
-          data.patientId,
-          newId,
-          data.medicationName,
-          data.instructions || data.dosage,
-          today,
-          slot,
-          data.category === 'Aktivitas Medis' ? 'CHECKUP' : 'MEDICATION'
+        await client.query(
+          `INSERT INTO reminders (id, patient_id, schedule_id, title, description, date, time, status, type)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', $8)
+           ON CONFLICT (id) DO UPDATE SET
+             patient_id = EXCLUDED.patient_id,
+             schedule_id = EXCLUDED.schedule_id,
+             title = EXCLUDED.title,
+             description = EXCLUDED.description,
+             date = EXCLUDED.date,
+             time = EXCLUDED.time,
+             status = EXCLUDED.status,
+             type = EXCLUDED.type`,
+          [
+            `rem-${newId}-${slot.replace(':', '')}`,
+            data.patientId,
+            newId,
+            data.medicationName,
+            data.instructions || data.dosage,
+            today,
+            slot,
+            data.category === 'Aktivitas Medis' ? 'CHECKUP' : 'MEDICATION',
+          ]
         )
       }
-    })()
+    })
 
     const schedules = await getSchedulesAction()
     const created = schedules.find((s) => s.id === newId)
@@ -203,21 +226,18 @@ export async function updateScheduleAction(
   data: Partial<MedicationSchedule>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    db.transaction(() => {
+    await db.transaction(async (client) => {
       // 1. Fetch current schedule data for fallback references
-      const current = db
-        .prepare(`SELECT * FROM medication_schedules WHERE id = ?`)
-        .get(scheduleId) as
-        | {
-            id: string
-            patient_id: string
-            medication_name: string
-            dosage: string
-            frequency: string
-            category: string
-            instructions: string | null
-          }
-        | undefined
+      const currentRes = await client.query<{
+        id: string
+        patient_id: string
+        medication_name: string
+        dosage: string
+        frequency: string
+        category: string
+        instructions: string | null
+      }>(`SELECT * FROM medication_schedules WHERE id = $1`, [scheduleId])
+      const current = currentRes.rows[0]
 
       if (!current) {
         throw new Error('Jadwal tidak ditemukan')
@@ -230,90 +250,104 @@ export async function updateScheduleAction(
       const instructions = data.instructions !== undefined ? data.instructions : current.instructions
 
       // 2. Update master medication schedule
-      db.prepare(`
-        UPDATE medication_schedules
-        SET
-          patient_id = COALESCE(?, patient_id),
-          medication_name = COALESCE(?, medication_name),
-          dosage = COALESCE(?, dosage),
-          frequency = COALESCE(?, frequency),
-          start_date = COALESCE(?, start_date),
-          end_date = COALESCE(?, end_date),
-          status = COALESCE(?, status),
-          category = COALESCE(?, category),
-          instructions = COALESCE(?, instructions),
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(
-        data.patientId ?? null,
-        data.medicationName ?? null,
-        data.dosage ?? null,
-        data.frequency ?? null,
-        data.startDate ?? null,
-        data.endDate ?? null,
-        data.status ?? null,
-        data.category ?? null,
-        data.instructions ?? null,
-        scheduleId
+      await client.query(
+        `UPDATE medication_schedules
+         SET
+           patient_id = COALESCE($1, patient_id),
+           medication_name = COALESCE($2, medication_name),
+           dosage = COALESCE($3, dosage),
+           frequency = COALESCE($4, frequency),
+           start_date = COALESCE($5, start_date),
+           end_date = COALESCE($6, end_date),
+           status = COALESCE($7, status),
+           category = COALESCE($8, category),
+           instructions = COALESCE($9, instructions),
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = $10`,
+        [
+          data.patientId ?? null,
+          data.medicationName ?? null,
+          data.dosage ?? null,
+          data.frequency ?? null,
+          data.startDate ?? null,
+          data.endDate ?? null,
+          data.status ?? null,
+          data.category ?? null,
+          data.instructions ?? null,
+          scheduleId,
+        ]
       )
 
       // 3. Update time slots if provided
       if (data.timeSlots && Array.isArray(data.timeSlots)) {
-        db.prepare(`DELETE FROM schedule_time_slots WHERE schedule_id = ?`).run(scheduleId)
+        await client.query(`DELETE FROM schedule_time_slots WHERE schedule_id = $1`, [scheduleId])
         for (const slot of data.timeSlots) {
-          db.prepare(`INSERT INTO schedule_time_slots (schedule_id, time) VALUES (?, ?)`).run(scheduleId, slot)
+          await client.query(`INSERT INTO schedule_time_slots (schedule_id, time) VALUES ($1, $2)`, [scheduleId, slot])
         }
 
         // 4. Synchronize today's reminders
         const today = new Date().toISOString().split('T')[0]
 
         // Remove pending reminders for today that are no longer in new time slots
-        db.prepare(`
-          DELETE FROM reminders 
-          WHERE schedule_id = ? AND date = ? AND status = 'PENDING'
-        `).run(scheduleId, today)
+        await client.query(
+          `DELETE FROM reminders 
+           WHERE schedule_id = $1 AND date = $2 AND status = 'PENDING'`,
+          [scheduleId, today]
+        )
 
         // Find which slots are already completed today
-        const completedSlots = db
-          .prepare(`SELECT time FROM reminders WHERE schedule_id = ? AND date = ? AND status = 'COMPLETED'`)
-          .all(scheduleId, today) as { time: string }[]
-        const completedTimeSet = new Set(completedSlots.map((c) => c.time))
+        const completedSlotsRes = await client.query<{ time: string }>(
+          `SELECT time FROM reminders WHERE schedule_id = $1 AND date = $2 AND status = 'COMPLETED'`,
+          [scheduleId, today]
+        )
+        const completedTimeSet = new Set(completedSlotsRes.rows.map((c) => c.time))
 
         // Create new pending reminders for slots that are not already completed
         for (const slot of data.timeSlots) {
           if (!completedTimeSet.has(slot)) {
-            db.prepare(`
-              INSERT OR REPLACE INTO reminders (id, patient_id, schedule_id, title, description, date, time, status, type)
-              VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
-            `).run(
-              `rem-${scheduleId}-${slot.replace(':', '')}`,
-              patientId,
-              scheduleId,
-              medicationName,
-              instructions || dosage,
-              today,
-              slot,
-              category === 'Aktivitas Medis' ? 'CHECKUP' : 'MEDICATION'
+            await client.query(
+              `INSERT INTO reminders (id, patient_id, schedule_id, title, description, date, time, status, type)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', $8)
+               ON CONFLICT (id) DO UPDATE SET
+                 patient_id = EXCLUDED.patient_id,
+                 schedule_id = EXCLUDED.schedule_id,
+                 title = EXCLUDED.title,
+                 description = EXCLUDED.description,
+                 date = EXCLUDED.date,
+                 time = EXCLUDED.time,
+                 status = EXCLUDED.status,
+                 type = EXCLUDED.type`,
+              [
+                `rem-${scheduleId}-${slot.replace(':', '')}`,
+                patientId,
+                scheduleId,
+                medicationName,
+                instructions || dosage,
+                today,
+                slot,
+                category === 'Aktivitas Medis' ? 'CHECKUP' : 'MEDICATION',
+              ]
             )
           }
         }
       }
 
       // 5. Update title, description, and type for all existing reminders linked to this schedule
-      db.prepare(`
-        UPDATE reminders
-        SET
-          title = ?,
-          description = ?,
-          type = ?
-        WHERE schedule_id = ?
-      `).run(
-        medicationName,
-        instructions || dosage,
-        category === 'Aktivitas Medis' ? 'CHECKUP' : 'MEDICATION',
-        scheduleId
+      await client.query(
+        `UPDATE reminders
+         SET
+           title = $1,
+           description = $2,
+           type = $3
+         WHERE schedule_id = $4`,
+        [
+          medicationName,
+          instructions || dosage,
+          category === 'Aktivitas Medis' ? 'CHECKUP' : 'MEDICATION',
+          scheduleId,
+        ]
       )
-    })()
+    })
 
     return { success: true }
   } catch (error: unknown) {
@@ -325,11 +359,11 @@ export async function updateScheduleAction(
 
 export async function deleteScheduleAction(scheduleId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    db.transaction(() => {
-      db.prepare(`DELETE FROM reminders WHERE schedule_id = ?`).run(scheduleId)
-      db.prepare(`DELETE FROM schedule_time_slots WHERE schedule_id = ?`).run(scheduleId)
-      db.prepare(`DELETE FROM medication_schedules WHERE id = ?`).run(scheduleId)
-    })()
+    await db.transaction(async (client) => {
+      await client.query(`DELETE FROM reminders WHERE schedule_id = $1`, [scheduleId])
+      await client.query(`DELETE FROM schedule_time_slots WHERE schedule_id = $1`, [scheduleId])
+      await client.query(`DELETE FROM medication_schedules WHERE id = $1`, [scheduleId])
+    })
     return { success: true }
   } catch (error: unknown) {
     console.error('Error deleting schedule:', error)

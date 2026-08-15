@@ -1,8 +1,6 @@
 # Entity Relationship Diagram (ERD) & Database Specification
 
-Dokumentasi rancangan database relasional untuk aplikasi Tablet Kesehatan menggunakan **Native SQLite (`better-sqlite3` / SQLite driver)** tanpa ORM.
-
----
+Dokumentasi rancangan database relasional untuk aplikasi Tablet Kesehatan menggunakan **PostgreSQL (Neon Database)** dengan driver resmi **`pg` (`node-postgres`)** tanpa ORM.
 
 ## 1. Visual ER Diagram (Mermaid)
 
@@ -626,36 +624,39 @@ CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON user_bookmarks(user_id);
 
 ---
 
-## 4. Pola Implementasi Native SQLite Driver (Tanpa ORM)
+## 4. Pola Implementasi Native PostgreSQL Driver (`pg`) Tanpa ORM
 
-Untuk menghubungkan Next.js dengan Native SQLite secara clean sesuai arsitektur proyek:
+Untuk menghubungkan Next.js dengan Neon PostgreSQL secara clean dan scalable sesuai arsitektur proyek:
 
 ```
 src/
 ├── lib/
 │   └── db/
-│       ├── client.ts         # Inisialisasi koneksi better-sqlite3 singleton
-│       ├── schema.sql        # Skrip DDL di atas
-│       ├── init.ts           # Runner pembuatan tabel otomatis
-│       └── seed.ts           # Runner pengisian data mockup awal
+│       ├── client.ts         # Inisialisasi koneksi pg.Pool singleton & helpers
+│       ├── schema.sql        # Skrip DDL PostgreSQL
+│       ├── init.ts           # Runner pembuatan tabel di Neon PostgreSQL
+│       └── seed.ts           # Runner pengisian data mockup awal ke Neon
 └── features/
     └── [feature]/
         └── api/
-            └── [entity]Repository.ts  # Fungsi query SQL murni (SELECT, INSERT, UPDATE)
+            └── [entity]Repository.ts  # Fungsi query SQL murni dengan parameter $1, $2 (async/await)
 ```
 
-### Contoh Pola Query Native:
+### Contoh Pola Query Native dengan `pg`:
 ```ts
 import db from '@/src/lib/db/client'
 import { Article } from '../types'
 
-export function findArticleById(id: string): Article | null {
-  const row = db.prepare('SELECT * FROM articles WHERE id = ?').get(id) as any
+export async function findArticleById(id: string): Promise<Article | null> {
+  const rowRes = await db.query('SELECT * FROM articles WHERE id = $1', [id])
+  const row = rowRes.rows[0]
   if (!row) return null
 
-  const sections = db.prepare(
-    'SELECT * FROM article_sections WHERE article_id = ? ORDER BY order_index ASC'
-  ).all(id) as any[]
+  const sectionsRes = await db.query(
+    'SELECT * FROM article_sections WHERE article_id = $1 ORDER BY order_index ASC',
+    [id]
+  )
+  const sections = sectionsRes.rows
 
   return {
     ...row,

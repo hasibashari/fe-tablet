@@ -1,7 +1,14 @@
 'use server'
 
 import db from '@/src/lib/db/client'
-import { Reminder, ReminderStatus, ReminderType, DailyProgressStats, AdminNudge } from '../types'
+import {
+  Reminder,
+  ReminderStatus,
+  ReminderType,
+  DailyProgressStats,
+  AdminNudge,
+  AdherenceTrendPoint,
+} from '../types'
 
 interface ReminderRow {
   id: string
@@ -16,24 +23,23 @@ interface ReminderRow {
 }
 
 interface DailyStatsRow {
-  total: number
-  completed: number
-  pending: number
-  missed: number
+  total: string | number
+  completed: string | number
+  pending: string | number
+  missed: string | number
 }
 
 export async function getRemindersAction(patientId: string = 'usr_1'): Promise<Reminder[]> {
   try {
-    const rows = db
-      .prepare(
-        `SELECT id, title, description, date, time, status, type 
-         FROM reminders 
-         WHERE patient_id = ? 
-         ORDER BY date ASC, time ASC`
-      )
-      .all(patientId) as ReminderRow[]
+    const res = await db.query<ReminderRow>(
+      `SELECT id, title, description, date, time, status, type 
+       FROM reminders 
+       WHERE patient_id = $1 
+       ORDER BY date ASC, time ASC`,
+      [patientId]
+    )
 
-    return rows.map((r) => ({
+    return res.rows.map((r) => ({
       id: r.id,
       title: r.title,
       description: r.description || undefined,
@@ -53,16 +59,15 @@ export async function getRemindersByDateAction(
   patientId: string = 'usr_1'
 ): Promise<Reminder[]> {
   try {
-    const rows = db
-      .prepare(
-        `SELECT id, title, description, date, time, status, type 
-         FROM reminders 
-         WHERE patient_id = ? AND date = ?
-         ORDER BY time ASC`
-      )
-      .all(patientId, dateStr) as ReminderRow[]
+    const res = await db.query<ReminderRow>(
+      `SELECT id, title, description, date, time, status, type 
+       FROM reminders 
+       WHERE patient_id = $1 AND date = $2
+       ORDER BY time ASC`,
+      [patientId, dateStr]
+    )
 
-    return rows.map((r) => ({
+    return res.rows.map((r) => ({
       id: r.id,
       title: r.title,
       description: r.description || undefined,
@@ -85,43 +90,54 @@ export async function toggleReminderStatusAction(
   try {
     const newStatus: ReminderStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
 
-    const reminder = db
-      .prepare(`SELECT * FROM reminders WHERE id = ?`)
-      .get(reminderId) as ReminderRow | undefined
+    const reminderRes = await db.query<ReminderRow>(`SELECT * FROM reminders WHERE id = $1`, [reminderId])
+    const reminder = reminderRes.rows[0]
 
     if (!reminder) {
       return { success: false, newStatus: currentStatus as ReminderStatus, error: 'Reminder tidak ditemukan' }
     }
 
-    db.transaction(() => {
+    await db.transaction(async (client) => {
       // 1. Update reminder status
-      db.prepare(`UPDATE reminders SET status = ? WHERE id = ?`).run(newStatus, reminderId)
+      await client.query(`UPDATE reminders SET status = $1 WHERE id = $2`, [newStatus, reminderId])
 
       // 2. Sync to consumption_logs
       const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
       const logId = `log-rem-${reminderId}`
 
       if (newStatus === 'COMPLETED') {
-        db.prepare(
-          `INSERT OR REPLACE INTO consumption_logs (
+        await client.query(
+          `INSERT INTO consumption_logs (
             id, patient_id, reminder_id, schedule_id, title, category, scheduled_date, scheduled_time, taken_at, status, taken_by
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ON_TIME', 'Pasien Mandiri')`
-        ).run(
-          logId,
-          patientId,
-          reminderId,
-          reminder.schedule_id || null,
-          reminder.title,
-          reminder.type,
-          reminder.date,
-          reminder.time,
-          nowTime
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'ON_TIME', 'Pasien Mandiri')
+          ON CONFLICT (id) DO UPDATE SET
+            patient_id = EXCLUDED.patient_id,
+            reminder_id = EXCLUDED.reminder_id,
+            schedule_id = EXCLUDED.schedule_id,
+            title = EXCLUDED.title,
+            category = EXCLUDED.category,
+            scheduled_date = EXCLUDED.scheduled_date,
+            scheduled_time = EXCLUDED.scheduled_time,
+            taken_at = EXCLUDED.taken_at,
+            status = EXCLUDED.status,
+            taken_by = EXCLUDED.taken_by`,
+          [
+            logId,
+            patientId,
+            reminderId,
+            reminder.schedule_id || null,
+            reminder.title,
+            reminder.type,
+            reminder.date,
+            reminder.time,
+            nowTime,
+          ]
         )
       } else {
         // Remove or mark pending in consumption log
-        db.prepare(`DELETE FROM consumption_logs WHERE id = ? OR reminder_id = ?`).run(logId, reminderId)
+        await client.query(`DELETE FROM consumption_logs WHERE id = $1 OR reminder_id = $2`, [logId, reminderId])
       }
-    })()
+    })
 
     return { success: true, newStatus }
   } catch (error: unknown) {
@@ -138,22 +154,22 @@ export async function getDailyProgressStatsAction(
   try {
     const targetDate = dateStr || new Date().toISOString().split('T')[0]
 
-    const stats = db
-      .prepare(
-        `SELECT 
-           COUNT(*) as total,
-           SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-           SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending,
-           SUM(CASE WHEN status = 'MISSED' THEN 1 ELSE 0 END) as missed
-         FROM reminders 
-         WHERE patient_id = ? AND date = ?`
-      )
-      .get(patientId, targetDate) as DailyStatsRow | undefined
+    const res = await db.query<DailyStatsRow>(
+      `SELECT 
+         COUNT(*) as total,
+         SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+         SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending,
+         SUM(CASE WHEN status = 'MISSED' THEN 1 ELSE 0 END) as missed
+       FROM reminders 
+       WHERE patient_id = $1 AND date = $2`,
+      [patientId, targetDate]
+    )
+    const stats = res.rows[0]
 
-    const total = stats?.total || 0
-    const completed = stats?.completed || 0
-    const pending = stats?.pending || 0
-    const missed = stats?.missed || 0
+    const total = Number(stats?.total) || 0
+    const completed = Number(stats?.completed) || 0
+    const pending = Number(stats?.pending) || 0
+    const missed = Number(stats?.missed) || 0
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
 
     return {
@@ -187,14 +203,14 @@ interface NudgeRow {
 
 export async function getActiveNudgeAction(patientId: string = 'usr_1'): Promise<AdminNudge | null> {
   try {
-    const row = db
-      .prepare(
-        `SELECT * FROM admin_nudges 
-         WHERE patient_id = ? AND status = 'UNREAD' 
-         ORDER BY created_at DESC 
-         LIMIT 1`
-      )
-      .get(patientId) as NudgeRow | undefined
+    const res = await db.query<NudgeRow>(
+      `SELECT * FROM admin_nudges 
+       WHERE patient_id = $1 AND status = 'UNREAD' 
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      [patientId]
+    )
+    const row = res.rows[0]
 
     if (!row) return null
 
@@ -226,11 +242,76 @@ export async function getActiveNudgeAction(patientId: string = 'usr_1'): Promise
 
 export async function dismissNudgeAction(nudgeId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    db.prepare(`UPDATE admin_nudges SET status = 'DISMISSED' WHERE id = ?`).run(nudgeId)
+    await db.query(`UPDATE admin_nudges SET status = 'DISMISSED' WHERE id = $1`, [nudgeId])
     return { success: true }
   } catch (error: unknown) {
     console.error('Error dismissing nudge:', error)
     const errMsg = error instanceof Error ? error.message : 'Gagal menutup pengingat.'
     return { success: false, error: errMsg }
+  }
+}
+
+export async function getAdherenceTrendAction(
+  patientId: string = 'usr_1',
+  days: number = 7
+): Promise<AdherenceTrendPoint[]> {
+  try {
+    const result: AdherenceTrendPoint[] = []
+    const now = new Date()
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+
+      const dateStr = d.toISOString().split('T')[0]
+      const dayLabel = d.toLocaleDateString('id-ID', { weekday: 'short' })
+      const dateLabel = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+
+      const reminderRes = await db.query<{ total: string | number; completed: string | number | null }>(
+        `SELECT 
+           COUNT(*) as total,
+           SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
+         FROM reminders 
+         WHERE patient_id = $1 AND date = $2`,
+        [patientId, dateStr]
+      )
+      const reminderStats = reminderRes.rows[0]
+
+      const logRes = await db.query<{ total_logs: string | number; completed_logs: string | number | null }>(
+        `SELECT 
+           COUNT(*) as total_logs,
+           SUM(CASE WHEN status IN ('ON_TIME', 'LATE') THEN 1 ELSE 0 END) as completed_logs
+         FROM consumption_logs 
+         WHERE patient_id = $1 AND scheduled_date = $2`,
+        [patientId, dateStr]
+      )
+      const logStats = logRes.rows[0]
+
+      let total = Number(reminderStats?.total) || 0
+      let completed = Number(reminderStats?.completed) || 0
+
+      const totalLogs = Number(logStats?.total_logs) || 0
+      const completedLogs = Number(logStats?.completed_logs) || 0
+
+      if (total === 0 && totalLogs > 0) {
+        total = totalLogs
+        completed = completedLogs
+      }
+
+      const adherence = total > 0 ? Math.round((completed / total) * 100) : 100
+
+      result.push({
+        day: dayLabel,
+        date: dateLabel,
+        adherence,
+        totalReminders: total,
+        completedReminders: completed,
+      })
+    }
+
+    return result
+  } catch (error) {
+    console.error('Error in getAdherenceTrendAction:', error)
+    return []
   }
 }

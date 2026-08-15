@@ -34,7 +34,7 @@ export default function UserLayout({
 
   return (
     <AuthGuard>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f7f4ed' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f8fafc' }}>
         {/* Mobile Top App Bar (< md) */}
         <MobileTopBar
           onOpenSidebar={handleDrawerToggle}
@@ -56,7 +56,7 @@ export default function UserLayout({
               flexGrow: 1,
               minWidth: 0,
               width: { xs: '100%', md: 'calc(100% - 260px)' },
-              p: { xs: 2, sm: 3, md: 4 },
+              p: { xs: 2, sm: 2.5, md: 3, lg: 3.5, xl: 4 },
               minHeight: '100%',
               boxSizing: 'border-box',
             }}

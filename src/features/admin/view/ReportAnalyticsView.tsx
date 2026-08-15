@@ -106,7 +106,7 @@ export default function ReportAnalyticsView() {
       </Card>
 
       {/* Summary KPI row */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, sm: 2.5 }} sx={{ mb: { xs: 2.5, md: 3.5 } }}>
         <Grid size={{ xs: 12, sm: 4 }}>
           <Card sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
@@ -160,10 +160,10 @@ export default function ReportAnalyticsView() {
       </Grid>
 
       {/* Detail Breakdown Grid */}
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2.5, md: 3 }}>
         {/* Table breakdown */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ p: 3 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Card sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
             <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
               Rincian Kepatuhan Konsumsi Harian Pasien
             </Typography>
@@ -197,7 +197,7 @@ export default function ReportAnalyticsView() {
         </Grid>
 
         {/* Patient Adherence Leaderboard (Lower visual hierarchy) */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Card sx={{ p: 3, bgcolor: 'background.default', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
             <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 700, mb: 2 }}>
               Distribusi Kepatuhan Pasien

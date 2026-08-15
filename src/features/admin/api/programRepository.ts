@@ -9,7 +9,7 @@ interface ProgramDbRow {
   code: string
   description: string | null
   duration_weeks: number
-  enrolled_count: number
+  enrolled_count: string | number
   status: 'Aktif' | 'Draf' | 'Arsip'
   target_category: string
   creator_name: string | null
@@ -25,7 +25,7 @@ interface DoctorRow {
 // ============================================================
 export async function getProgramsAction(): Promise<HealthProgram[]> {
   try {
-    const rows = db.prepare(`
+    const res = await db.query<ProgramDbRow>(`
       SELECT 
         p.*,
         (SELECT count(*) FROM health_program_enrollments WHERE program_id = p.id) as enrolled_count,
@@ -33,15 +33,15 @@ export async function getProgramsAction(): Promise<HealthProgram[]> {
       FROM health_programs p
       LEFT JOIN users u ON p.created_by = u.id
       ORDER BY p.created_at DESC
-    `).all() as ProgramDbRow[]
+    `)
 
-    return rows.map((r) => ({
+    return res.rows.map((r) => ({
       id: r.id,
       name: r.name,
       code: r.code,
       description: r.description || '',
-      durationWeeks: r.duration_weeks,
-      enrolledPatientsCount: r.enrolled_count,
+      durationWeeks: Number(r.duration_weeks) || 4,
+      enrolledPatientsCount: Number(r.enrolled_count) || 0,
       status: r.status,
       targetCategory: r.target_category,
       createdBy: r.creator_name || 'dr. Siti Rahma',
@@ -62,20 +62,22 @@ export async function createProgramAction(data: {
 }): Promise<{ success: boolean; program?: HealthProgram; error?: string }> {
   try {
     const newId = `PRG-${Date.now().toString().slice(-3)}`
-    const defaultDoctor = db.prepare(`SELECT id FROM users WHERE role = 'admin' LIMIT 1`).get() as DoctorRow | undefined
+    const defaultDoctorRes = await db.query<DoctorRow>(`SELECT id FROM users WHERE role = 'admin' LIMIT 1`)
+    const defaultDoctor = defaultDoctorRes.rows[0]
 
-    db.prepare(`
-      INSERT INTO health_programs (id, name, code, description, duration_weeks, status, target_category, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      newId,
-      data.name,
-      data.code,
-      data.description || null,
-      data.durationWeeks,
-      data.status || 'Aktif',
-      data.targetCategory,
-      defaultDoctor?.id || null
+    await db.query(
+      `INSERT INTO health_programs (id, name, code, description, duration_weeks, status, target_category, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        newId,
+        data.name,
+        data.code,
+        data.description || null,
+        data.durationWeeks,
+        data.status || 'Aktif',
+        data.targetCategory,
+        defaultDoctor?.id || null,
+      ]
     )
 
     const programs = await getProgramsAction()
@@ -93,25 +95,26 @@ export async function updateProgramAction(
   data: Partial<HealthProgram>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    db.prepare(`
-      UPDATE health_programs
-      SET
-        name = COALESCE(?, name),
-        code = COALESCE(?, code),
-        description = COALESCE(?, description),
-        duration_weeks = COALESCE(?, duration_weeks),
-        status = COALESCE(?, status),
-        target_category = COALESCE(?, target_category),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(
-      data.name ?? null,
-      data.code ?? null,
-      data.description ?? null,
-      data.durationWeeks ?? null,
-      data.status ?? null,
-      data.targetCategory ?? null,
-      programId
+    await db.query(
+      `UPDATE health_programs
+       SET
+         name = COALESCE($1, name),
+         code = COALESCE($2, code),
+         description = COALESCE($3, description),
+         duration_weeks = COALESCE($4, duration_weeks),
+         status = COALESCE($5, status),
+         target_category = COALESCE($6, target_category),
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $7`,
+      [
+        data.name ?? null,
+        data.code ?? null,
+        data.description ?? null,
+        data.durationWeeks ?? null,
+        data.status ?? null,
+        data.targetCategory ?? null,
+        programId,
+      ]
     )
     return { success: true }
   } catch (error: unknown) {
@@ -123,7 +126,7 @@ export async function updateProgramAction(
 
 export async function deleteProgramAction(programId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    db.prepare(`DELETE FROM health_programs WHERE id = ?`).run(programId)
+    await db.query(`DELETE FROM health_programs WHERE id = $1`, [programId])
     return { success: true }
   } catch (error: unknown) {
     console.error('Error deleting program:', error)

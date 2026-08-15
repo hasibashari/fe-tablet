@@ -29,34 +29,32 @@ export async function loginUserAction(
     const normalizedEmail = credentials.email.trim().toLowerCase()
 
     // 1. Check direct email match
-    let row = db
-      .prepare(
-        `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
-         FROM users WHERE lower(email) = ?`
-      )
-      .get(normalizedEmail) as UserDbRow | undefined
+    const res = await db.query<UserDbRow>(
+      `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
+       FROM users WHERE lower(email) = $1`,
+      [normalizedEmail]
+    )
+    let row = res.rows[0]
 
     // 2. If not found by exact email, support roleHint / role keyword fallback
     if (!row) {
       if (normalizedEmail.includes('admin') || credentials.roleHint === 'admin') {
-        row = db
-          .prepare(
-            `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
-             FROM users WHERE role = 'admin' LIMIT 1`
-          )
-          .get() as UserDbRow | undefined
+        const adminRes = await db.query<UserDbRow>(
+          `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
+           FROM users WHERE role = 'admin' LIMIT 1`
+        )
+        row = adminRes.rows[0]
       } else if (
         normalizedEmail.includes('budi') ||
         normalizedEmail.includes('patient') ||
         normalizedEmail.includes('user') ||
         credentials.roleHint === 'patient'
       ) {
-        row = db
-          .prepare(
-            `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
-             FROM users WHERE role = 'patient' LIMIT 1`
-          )
-          .get() as UserDbRow | undefined
+        const patientRes = await db.query<UserDbRow>(
+          `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
+           FROM users WHERE role = 'patient' LIMIT 1`
+        )
+        row = patientRes.rows[0]
       }
     }
 
@@ -70,7 +68,11 @@ export async function loginUserAction(
     // Resolve doctor name if patient
     let doctorName: string | undefined
     if (row.assigned_doctor_id) {
-      const doc = db.prepare(`SELECT name FROM users WHERE id = ?`).get(row.assigned_doctor_id) as DoctorDbRow | undefined
+      const docRes = await db.query<DoctorDbRow>(
+        `SELECT name FROM users WHERE id = $1`,
+        [row.assigned_doctor_id]
+      )
+      const doc = docRes.rows[0]
       if (doc) doctorName = doc.name
     }
 
@@ -100,12 +102,12 @@ export async function quickLoginAction(
   role: UserRole
 ): Promise<{ success: boolean; user?: AuthUser; redirectTo: string }> {
   try {
-    const row = db
-      .prepare(
-        `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
-         FROM users WHERE role = ? ORDER BY id ASC LIMIT 1`
-      )
-      .get(role) as UserDbRow | undefined
+    const res = await db.query<UserDbRow>(
+      `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
+       FROM users WHERE role = $1 ORDER BY id ASC LIMIT 1`,
+      [role]
+    )
+    const row = res.rows[0]
 
     if (!row) {
       throw new Error(`No user found for role ${role}`)
@@ -113,7 +115,11 @@ export async function quickLoginAction(
 
     let doctorName: string | undefined
     if (row.assigned_doctor_id) {
-      const doc = db.prepare(`SELECT name FROM users WHERE id = ?`).get(row.assigned_doctor_id) as DoctorDbRow | undefined
+      const docRes = await db.query<DoctorDbRow>(
+        `SELECT name FROM users WHERE id = $1`,
+        [row.assigned_doctor_id]
+      )
+      const doc = docRes.rows[0]
       if (doc) doctorName = doc.name
     }
 
@@ -153,39 +159,39 @@ export async function registerPatientAction(
       return { success: false, error: 'Nama dan Email wajib diisi.' }
     }
 
-    const existing = db.prepare(`SELECT id FROM users WHERE lower(email) = ?`).get(data.email.toLowerCase())
-    if (existing) {
+    const existingRes = await db.query(`SELECT id FROM users WHERE lower(email) = $1`, [data.email.toLowerCase()])
+    if (existingRes.rows.length > 0) {
       return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain.' }
     }
 
     const newId = `PAT-${Date.now().toString().slice(-4)}`
-    const defaultDoctor = db.prepare(`SELECT id, name FROM users WHERE role = 'admin' LIMIT 1`).get() as DoctorDbRow | undefined
-
-    const insertUser = db.prepare(`
-      INSERT INTO users (id, name, email, role, phone, gender, age, assigned_doctor_id, avatar)
-      VALUES (?, ?, ?, 'patient', ?, ?, ?, ?, ?)
-    `)
-
-    const insertProfile = db.prepare(`
-      INSERT INTO patient_profiles (user_id, risk_level, status, medical_notes, join_date)
-      VALUES (?, 'Rendah', 'Aktif', 'Pasien baru terdaftar secara mandiri', date('now'))
-    `)
+    const defaultDoctorRes = await db.query<DoctorDbRow>(`SELECT id, name FROM users WHERE role = 'admin' LIMIT 1`)
+    const defaultDoctor = defaultDoctorRes.rows[0]
 
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}`
 
-    db.transaction(() => {
-      insertUser.run(
-        newId,
-        data.name,
-        data.email.toLowerCase(),
-        data.phone || null,
-        data.gender || 'Laki-laki',
-        data.age || 30,
-        defaultDoctor?.id || null,
-        avatarUrl
+    await db.transaction(async (client) => {
+      await client.query(
+        `INSERT INTO users (id, name, email, role, phone, gender, age, assigned_doctor_id, avatar)
+         VALUES ($1, $2, $3, 'patient', $4, $5, $6, $7, $8)`,
+        [
+          newId,
+          data.name,
+          data.email.toLowerCase(),
+          data.phone || null,
+          data.gender || 'Laki-laki',
+          data.age || 30,
+          defaultDoctor?.id || null,
+          avatarUrl,
+        ]
       )
-      insertProfile.run(newId)
-    })()
+
+      await client.query(
+        `INSERT INTO patient_profiles (user_id, risk_level, status, medical_notes, join_date)
+         VALUES ($1, 'Rendah', 'Aktif', 'Pasien baru terdaftar secara mandiri', CURRENT_DATE::text)`,
+        [newId]
+      )
+    })
 
     const authUser: AuthUser = {
       id: newId,

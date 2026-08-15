@@ -31,6 +31,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { DEMO_ACCOUNTS } from '../api/mockAuthData'
 import { UserRole } from '../types/auth.types'
+import { usePWA } from '@/src/shared/hooks/usePWA'
 
 export function LoginForm() {
   const router = useRouter()
@@ -38,17 +39,22 @@ export function LoginForm() {
   const redirectParam = searchParams.get('redirect')
 
   const { login, quickLogin } = useAuth()
+  const { isPWA } = usePWA()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [selectedRoleHint, setSelectedRoleHint] = useState<UserRole>('admin')
+  const [selectedRoleHint, setSelectedRoleHint] = useState<UserRole>('patient')
   const [loading, setLoading] = useState(false)
   const [quickLoadingRole, setQuickLoadingRole] = useState<UserRole | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successRole, setSuccessRole] = useState<string | null>(null)
 
   const handleSelectDemo = (demoEmail: string, demoPass: string, role: UserRole) => {
+    if (isPWA && role === 'admin') {
+      setErrorMessage('Akun Administrator hanya dapat diakses melalui browser komputer/laptop.')
+      return
+    }
     setEmail(demoEmail)
     setPassword(demoPass)
     setSelectedRoleHint(role)
@@ -56,6 +62,10 @@ export function LoginForm() {
   }
 
   const handleQuickLogin = async (role: UserRole) => {
+    if (isPWA && role === 'admin') {
+      setErrorMessage('Akun Administrator hanya dapat diakses melalui browser komputer/laptop.')
+      return
+    }
     setQuickLoadingRole(role)
     setErrorMessage(null)
     try {
@@ -81,6 +91,11 @@ export function LoginForm() {
       return
     }
 
+    if (isPWA && (email.toLowerCase().includes('admin') || selectedRoleHint === 'admin')) {
+      setErrorMessage('Akun Administrator hanya dapat diakses melalui browser komputer/laptop. Silakan gunakan akun Pasien.')
+      return
+    }
+
     setLoading(true)
     setErrorMessage(null)
 
@@ -92,6 +107,11 @@ export function LoginForm() {
       })
 
       if (res.success && res.redirectTo) {
+        if (isPWA && res.redirectTo.includes('admin')) {
+          setErrorMessage('Akun Administrator hanya dapat diakses melalui browser komputer/laptop.')
+          setLoading(false)
+          return
+        }
         const target = redirectParam || res.redirectTo
         setSuccessRole(res.redirectTo.includes('admin') ? 'Admin / Dokter' : 'Pasien')
         setTimeout(() => {
@@ -106,6 +126,7 @@ export function LoginForm() {
       setLoading(false)
     }
   }
+
 
   return (
     <Box sx={{ width: '100%', maxWidth: '440px', mx: 'auto' }}>
@@ -145,6 +166,7 @@ export function LoginForm() {
             const isSelected = email === demo.email
             const isDemoLoading = quickLoadingRole === demo.role
             const Icon = demo.role === 'admin' ? ShieldCheck : User
+            const isAdminPWARestricted = isPWA && demo.role === 'admin'
 
             return (
               <Paper
@@ -156,13 +178,18 @@ export function LoginForm() {
                   borderRadius: 2,
                   border: '1.5px solid',
                   borderColor: isSelected ? 'primary.main' : 'divider',
-                  bgcolor: isSelected ? 'rgba(14, 165, 233, 0.04)' : 'background.paper',
-                  cursor: 'pointer',
+                  bgcolor: isAdminPWARestricted
+                    ? 'rgba(241, 245, 249, 0.6)'
+                    : isSelected
+                    ? 'rgba(14, 165, 233, 0.04)'
+                    : 'background.paper',
+                  cursor: isAdminPWARestricted ? 'not-allowed' : 'pointer',
+                  opacity: isAdminPWARestricted ? 0.65 : 1,
                   transition: 'all 0.2s ease',
                   position: 'relative',
                   '&:hover': {
-                    borderColor: 'primary.main',
-                    boxShadow: '0 4px 12px rgba(14, 165, 233, 0.1)',
+                    borderColor: isAdminPWARestricted ? 'divider' : 'primary.main',
+                    boxShadow: isAdminPWARestricted ? 'none' : '0 4px 12px rgba(14, 165, 233, 0.1)',
                   },
                 }}
               >
@@ -178,41 +205,60 @@ export function LoginForm() {
                   >
                     <Icon size={16} />
                   </Box>
-                  <Button
-                    size="small"
-                    variant="text"
-                    disabled={isDemoLoading}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleQuickLogin(demo.role)
-                    }}
-                    sx={{
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      p: '2px 8px',
-                      minWidth: 0,
-                      borderRadius: 9999,
-                      color: demo.role === 'admin' ? 'primary.main' : 'success.main',
-                      bgcolor: demo.role === 'admin' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                      '&:hover': {
-                        bgcolor: demo.role === 'admin' ? 'primary.main' : 'success.main',
-                        color: 'white',
-                      },
-                    }}
-                  >
-                    {isDemoLoading ? <CircularProgress size={12} color="inherit" /> : 'Masuk ➔'}
-                  </Button>
+                  {isAdminPWARestricted ? (
+                    <Chip
+                      label="Desktop Only"
+                      size="small"
+                      sx={{
+                        fontSize: '0.62rem',
+                        fontWeight: 700,
+                        height: 20,
+                        bgcolor: 'rgba(245, 158, 11, 0.15)',
+                        color: '#b45309',
+                      }}
+                    />
+                  ) : (
+                    <Button
+                      size="small"
+                      variant="text"
+                      disabled={isDemoLoading}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleQuickLogin(demo.role)
+                      }}
+                      sx={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        p: '2px 8px',
+                        minWidth: 0,
+                        borderRadius: 9999,
+                        color: demo.role === 'admin' ? 'primary.main' : 'success.main',
+                        bgcolor: demo.role === 'admin' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                        '&:hover': {
+                          bgcolor: demo.role === 'admin' ? 'primary.main' : 'success.main',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      {isDemoLoading ? <CircularProgress size={12} color="inherit" /> : 'Masuk ➔'}
+                    </Button>
+                  )}
                 </Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.primary' }}>
                   {demo.label}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25, fontSize: '0.72rem', lineHeight: 1.2 }}>
-                  {demo.role === 'admin' ? 'Ke /admin/dashboard' : 'Ke /user/dashboard'}
+                  {isAdminPWARestricted
+                    ? 'Buka di peramban desktop'
+                    : demo.role === 'admin'
+                    ? 'Ke /admin/dashboard'
+                    : 'Ke /user/dashboard'}
                 </Typography>
               </Paper>
             )
           })}
         </Box>
+
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', my: 2.5 }}>

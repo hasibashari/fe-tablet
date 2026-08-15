@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react'
 import { Box, Chip } from '@mui/material'
-import { AdminSidebar } from '@/src/features/admin'
+import { AdminSidebar, AdminPWABlocker } from '@/src/features/admin'
 import { AuthGuard } from '@/src/features/auth'
 import MobileTopBar from '@/src/shared/components/MobileTopBar'
+import { usePWA } from '@/src/shared/hooks/usePWA'
 
 export default function AdminLayout({
   children,
@@ -12,6 +13,11 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { isPWA } = usePWA()
+
+  if (isPWA) {
+    return <AdminPWABlocker />
+  }
 
   const handleDrawerToggle = () => {
     setMobileOpen((prev) => !prev)
@@ -56,7 +62,7 @@ export default function AdminLayout({
               flexGrow: 1,
               minWidth: 0,
               width: { xs: '100%', md: 'calc(100% - 260px)' },
-              p: { xs: 2, sm: 3, md: 4 },
+              p: { xs: 2, sm: 2.5, md: 3, lg: 3.5, xl: 4 },
               minHeight: '100%',
               boxSizing: 'border-box',
             }}
@@ -70,3 +76,4 @@ export default function AdminLayout({
     </AuthGuard>
   )
 }
+

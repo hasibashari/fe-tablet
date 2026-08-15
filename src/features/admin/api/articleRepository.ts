@@ -22,14 +22,21 @@ interface ArticleDbRow {
 // ============================================================
 export async function getAdminArticlesAction(): Promise<HealthArticle[]> {
   try {
-    const rows = db.prepare(`SELECT * FROM articles ORDER BY published_at DESC, created_at DESC`).all() as ArticleDbRow[]
-    return rows.map((r) => {
+    const res = await db.query<ArticleDbRow>(`SELECT * FROM articles ORDER BY published_at DESC, created_at DESC`)
+    const rows = res.rows
+
+    const result: HealthArticle[] = []
+
+    for (const r of rows) {
       let content = r.lead_paragraph || ''
       try {
-        const sections = db.prepare(`SELECT paragraphs FROM article_sections WHERE article_id = ? ORDER BY order_index ASC`).all(r.id) as { paragraphs: string }[]
-        if (sections.length > 0) {
+        const sectionsRes = await db.query<{ paragraphs: string }>(
+          `SELECT paragraphs FROM article_sections WHERE article_id = $1 ORDER BY order_index ASC`,
+          [r.id]
+        )
+        if (sectionsRes.rows.length > 0) {
           const allParagraphs: string[] = []
-          for (const s of sections) {
+          for (const s of sectionsRes.rows) {
             if (s.paragraphs) {
               const parsed = JSON.parse(s.paragraphs)
               if (Array.isArray(parsed)) allParagraphs.push(...parsed)
@@ -43,20 +50,22 @@ export async function getAdminArticlesAction(): Promise<HealthArticle[]> {
         // fallback to lead_paragraph
       }
 
-      return {
+      result.push({
         id: r.id,
         title: r.title,
         category: r.category as HealthArticle['category'],
         author: r.author_name || 'dr. Sarah Jenkins',
         publishDate: r.published_at,
         status: r.status as HealthArticle['status'],
-        views: r.views,
+        views: Number(r.views) || 0,
         summary: r.summary,
         readTime: r.read_time,
         imageUrl: r.image_url,
         content: content || r.summary,
-      }
-    })
+      })
+    }
+
+    return result
   } catch (error) {
     console.error('Error in getAdminArticlesAction:', error)
     return []
@@ -87,32 +96,34 @@ export async function createAdminArticleAction(data: {
     const finalLead = data.summary
     const finalContent = data.content?.trim() || data.summary
 
-    db.transaction(() => {
-      db.prepare(`
-        INSERT INTO articles (
+    await db.transaction(async (client) => {
+      await client.query(
+        `INSERT INTO articles (
           id, title, summary, lead_paragraph, image_url, read_time, category, status, views, published_at, author_name
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
-      `).run(
-        newId,
-        data.title,
-        data.summary,
-        finalLead,
-        finalImageUrl,
-        data.readTime,
-        data.category,
-        data.status || 'Terbit',
-        today,
-        data.author || 'dr. Sarah Jenkins, Sp.GK'
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10)`,
+        [
+          newId,
+          data.title,
+          data.summary,
+          finalLead,
+          finalImageUrl,
+          data.readTime,
+          data.category,
+          data.status || 'Terbit',
+          today,
+          data.author || 'dr. Sarah Jenkins, Sp.GK',
+        ]
       )
 
       const paragraphs = finalContent.split('\n\n').map((p) => p.trim()).filter(Boolean)
       if (paragraphs.length > 0) {
-        db.prepare(`
-          INSERT INTO article_sections (article_id, order_index, heading, paragraphs)
-          VALUES (?, 1, 'Pembahasan Edukasi', ?)
-        `).run(newId, JSON.stringify(paragraphs))
+        await client.query(
+          `INSERT INTO article_sections (article_id, order_index, heading, paragraphs)
+           VALUES ($1, 1, 'Pembahasan Edukasi', $2)`,
+          [newId, JSON.stringify(paragraphs)]
+        )
       }
-    })()
+    })
 
     const created: HealthArticle = {
       id: newId,
@@ -141,41 +152,49 @@ export async function updateAdminArticleAction(
   data: Partial<HealthArticle>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    db.transaction(() => {
-      db.prepare(`
-        UPDATE articles
-        SET
-          title = COALESCE(?, title),
-          category = COALESCE(?, category),
-          summary = COALESCE(?, summary),
-          read_time = COALESCE(?, read_time),
-          status = COALESCE(?, status),
-          author_name = COALESCE(?, author_name),
-          image_url = COALESCE(?, image_url),
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(
-        data.title ?? null,
-        data.category ?? null,
-        data.summary ?? null,
-        data.readTime ?? null,
-        data.status ?? null,
-        data.author ?? null,
-        data.imageUrl ?? null,
-        articleId
+    await db.transaction(async (client) => {
+      await client.query(
+        `UPDATE articles
+         SET
+           title = COALESCE($1, title),
+           category = COALESCE($2, category),
+           summary = COALESCE($3, summary),
+           read_time = COALESCE($4, read_time),
+           status = COALESCE($5, status),
+           author_name = COALESCE($6, author_name),
+           image_url = COALESCE($7, image_url),
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = $8`,
+        [
+          data.title ?? null,
+          data.category ?? null,
+          data.summary ?? null,
+          data.readTime ?? null,
+          data.status ?? null,
+          data.author ?? null,
+          data.imageUrl ?? null,
+          articleId,
+        ]
       )
 
       if (data.content !== undefined) {
         const paragraphs = data.content.split('\n\n').map((p) => p.trim()).filter(Boolean)
-        const existingSection = db.prepare(`SELECT id FROM article_sections WHERE article_id = ? ORDER BY order_index ASC LIMIT 1`).get(articleId) as { id: number } | undefined
+        const existingSectionRes = await client.query<{ id: number }>(
+          `SELECT id FROM article_sections WHERE article_id = $1 ORDER BY order_index ASC LIMIT 1`,
+          [articleId]
+        )
+        const existingSection = existingSectionRes.rows[0]
         
         if (existingSection) {
-          db.prepare(`UPDATE article_sections SET paragraphs = ? WHERE id = ?`).run(JSON.stringify(paragraphs), existingSection.id)
+          await client.query(`UPDATE article_sections SET paragraphs = $1 WHERE id = $2`, [JSON.stringify(paragraphs), existingSection.id])
         } else if (paragraphs.length > 0) {
-          db.prepare(`INSERT INTO article_sections (article_id, order_index, heading, paragraphs) VALUES (?, 1, 'Pembahasan Edukasi', ?)`).run(articleId, JSON.stringify(paragraphs))
+          await client.query(
+            `INSERT INTO article_sections (article_id, order_index, heading, paragraphs) VALUES ($1, 1, 'Pembahasan Edukasi', $2)`,
+            [articleId, JSON.stringify(paragraphs)]
+          )
         }
       }
-    })()
+    })
 
     return { success: true }
   } catch (error: unknown) {
@@ -187,7 +206,7 @@ export async function updateAdminArticleAction(
 
 export async function deleteAdminArticleAction(articleId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    db.prepare(`DELETE FROM articles WHERE id = ?`).run(articleId)
+    await db.query(`DELETE FROM articles WHERE id = $1`, [articleId])
     return { success: true }
   } catch (error: unknown) {
     console.error('Error deleting article:', error)

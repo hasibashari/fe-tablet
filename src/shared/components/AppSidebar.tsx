@@ -61,7 +61,7 @@ export default function AppSidebar({
   const sidebarContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Header Section */}
-      <Box sx={{ mb: 3, pb: 2, borderBottom: '1px solid #eceae4', px: 1 }}>
+      <Box sx={{ mb: 3, pb: 2, borderBottom: '1px solid #e2e8f0', px: 1 }}>
         <Box
           component={Link}
           href={brandHref}
@@ -166,7 +166,7 @@ export default function AppSidebar({
 
       {footerAction && (
         <>
-          <Divider sx={{ my: 1.5, borderColor: '#eceae4' }} />
+          <Divider sx={{ my: 1.5, borderColor: '#e2e8f0' }} />
           <Box sx={{ pt: 0.5 }}>{footerAction}</Box>
         </>
       )}
@@ -188,8 +188,8 @@ export default function AppSidebar({
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
-            borderColor: '#eceae4',
-            backgroundColor: '#f7f4ed',
+            borderColor: '#e2e8f0',
+            backgroundColor: '#ffffff',
             px: 1.5,
             py: 2,
           },
@@ -206,7 +206,7 @@ export default function AppSidebar({
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
-            borderColor: '#eceae4',
+            borderColor: '#e2e8f0',
             backgroundColor: '#ffffff',
             px: 1.5,
             py: 2,
