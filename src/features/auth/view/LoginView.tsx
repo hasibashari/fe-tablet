@@ -3,8 +3,8 @@
 import React, { Suspense } from 'react'
 import { Box, Typography, CircularProgress } from '@mui/material'
 import { ShieldCheck, Clock, HeartPulse } from 'lucide-react'
-import { AuthSplitLayout } from './AuthSplitLayout'
-import { LoginForm } from './LoginForm'
+import { AuthSplitLayout } from '../components/AuthSplitLayout'
+import { LoginForm } from '../components/LoginForm'
 
 export function LoginView() {
   const featureItems = [

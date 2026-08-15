@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { Article } from '../types'
 import { getArticles } from '../api/getArticles'
-import ArticleCard from './ArticleCard'
+import ArticleCard from '../components/ArticleCard'
 import { Box, Typography, Grid, Skeleton } from '@mui/material'
 import { BookOpen } from 'lucide-react'
 import Pagination from '@/src/shared/components/Pagination'

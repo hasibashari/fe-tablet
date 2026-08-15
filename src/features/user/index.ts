@@ -1,6 +1,6 @@
 export { default as DailyProgress } from './components/DailyProgress'
-export { default as DashboardView } from './components/DashboardView'
-export { default as ProfileView } from './components/ProfileView'
+export { default as DashboardView } from './view/DashboardView'
+export { default as ProfileView } from './view/ProfileView'
 export { default as HealthLineChart } from './components/HealthLineChart'
 export { default as MedicationAlertBanner } from './components/MedicationAlertBanner'
 export * from './types'

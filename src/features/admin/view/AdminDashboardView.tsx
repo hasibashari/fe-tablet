@@ -25,9 +25,9 @@ import {
   ChevronRight,
   BellRing,
 } from 'lucide-react'
-import AdminHeader from './AdminHeader'
+import AdminHeader from '../components/AdminHeader'
 import StatCard from '@/src/shared/components/StatCard'
-import SendReminderModal from './SendReminderModal'
+import SendReminderModal from '../components/SendReminderModal'
 import { getAdminStatsAction, getPatientsAction, getComplianceReportsAction } from '../api/adminRepository'
 import { AdminStats, PatientUser, ComplianceReport } from '../types/admin.types'
 

@@ -16,7 +16,7 @@ import {
   Tooltip,
 } from '@mui/material'
 import { Plus, Activity, Edit, Trash2, Users, Calendar } from 'lucide-react'
-import AdminHeader from './AdminHeader'
+import AdminHeader from '../components/AdminHeader'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
 import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
 import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog'

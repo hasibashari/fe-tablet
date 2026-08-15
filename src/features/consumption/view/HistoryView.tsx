@@ -30,8 +30,8 @@ import {
   getConsumptionLogs,
   calculateConsumptionStats,
 } from '../api/getConsumptionHistory'
-import ConsumptionStatsCard from './ConsumptionStatsCard'
-import HistoryTimelineItem from './HistoryTimelineItem'
+import ConsumptionStatsCard from '../components/ConsumptionStatsCard'
+import HistoryTimelineItem from '../components/HistoryTimelineItem'
 import Pagination from '@/src/shared/components/Pagination'
 
 export default function HistoryView() {

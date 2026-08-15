@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Article } from '../types'
 import { getArticleById, getRelatedArticles, toggleArticleBookmark, isArticleBookmarked } from '../api/getArticles'
 import { useAuth } from '@/src/features/auth/context/AuthContext'
-import ArticleCard from './ArticleCard'
+import ArticleCard from '../components/ArticleCard'
 import {
   Box,
   Typography,

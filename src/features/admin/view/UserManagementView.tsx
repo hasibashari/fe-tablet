@@ -19,8 +19,8 @@ import {
   Tooltip,
 } from '@mui/material'
 import { Search, UserPlus, BellRing, Edit, Trash2, Phone, User, Activity } from 'lucide-react'
-import AdminHeader from './AdminHeader'
-import SendReminderModal from './SendReminderModal'
+import AdminHeader from '../components/AdminHeader'
+import SendReminderModal from '../components/SendReminderModal'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
 import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
 import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog'

@@ -3,8 +3,8 @@
 import React, { Suspense } from 'react'
 import { Box, Typography, CircularProgress } from '@mui/material'
 import { UserCheck, BellRing, Activity, ShieldCheck } from 'lucide-react'
-import { AuthSplitLayout } from './AuthSplitLayout'
-import { RegisterForm } from './RegisterForm'
+import { AuthSplitLayout } from '../components/AuthSplitLayout'
+import { RegisterForm } from '../components/RegisterForm'
 
 export function RegisterView() {
   const featureItems = [

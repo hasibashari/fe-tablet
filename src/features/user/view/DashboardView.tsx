@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
-import HealthLineChart from './HealthLineChart'
-import MedicationAlertBanner, { AdminNudge } from './MedicationAlertBanner'
+import HealthLineChart from '../components/HealthLineChart'
+import MedicationAlertBanner, { AdminNudge } from '../components/MedicationAlertBanner'
 import { getTodayReminders, toggleReminderStatus, Reminder } from '@/src/features/schedule'
 import {
   Box,
