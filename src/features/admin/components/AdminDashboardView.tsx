@@ -28,10 +28,42 @@ import {
 import AdminHeader from './AdminHeader'
 import StatCard from '@/src/shared/components/StatCard'
 import SendReminderModal from './SendReminderModal'
-import { mockAdminStats, initialPatients, mockComplianceReports } from '../api/mockAdminData'
+import { getAdminStatsAction, getPatientsAction, getComplianceReportsAction } from '../api/adminRepository'
+import { AdminStats, PatientUser, ComplianceReport } from '../types/admin.types'
 
 export default function AdminDashboardView() {
-  const highRiskPatients = initialPatients.filter((p) => p.riskLevel === 'Tinggi')
+  const [stats, setStats] = useState<AdminStats>({
+    totalPatients: 0,
+    activeSchedules: 0,
+    adherenceRate: 0,
+    publishedArticles: 0,
+    activePrograms: 0,
+    lowStockProducts: 0,
+  })
+  const [patients, setPatients] = useState<PatientUser[]>([])
+  const [reports, setReports] = useState<ComplianceReport[]>([])
+
+  React.useEffect(() => {
+    let isMounted = true
+    const fetchData = async () => {
+      const [s, p, r] = await Promise.all([
+        getAdminStatsAction(),
+        getPatientsAction(),
+        getComplianceReportsAction(),
+      ])
+      if (isMounted) {
+        setStats(s)
+        setPatients(p)
+        setReports(r)
+      }
+    }
+    fetchData()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const highRiskPatients = patients.filter((p) => p.riskLevel === 'Tinggi')
 
   // Reminder Modal State
   const [reminderModalOpen, setReminderModalOpen] = useState(false)
@@ -131,7 +163,7 @@ export default function AdminDashboardView() {
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
             title="Total Pasien Terdaftar"
-            value={mockAdminStats.totalPatients}
+            value={stats.totalPatients}
             icon={Users}
             iconBgColor="primary.light"
             iconColor="var(--mui-palette-primary-main)"
@@ -154,25 +186,25 @@ export default function AdminDashboardView() {
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
             title="Jadwal Obat Aktif"
-            value={mockAdminStats.activeSchedules}
+            value={stats.activeSchedules}
             icon={CalendarCheck}
             iconBgColor="primary.light"
             iconColor="var(--mui-palette-primary-main)"
-            subtitle="148 pasien aktif"
+            subtitle={`${stats.totalPatients} pasien aktif`}
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
             title="Rata-rata Kepatuhan"
-            value={`${mockAdminStats.adherenceRate}%`}
+            value={`${stats.adherenceRate}%`}
             icon={TrendingUp}
             iconBgColor="success.light"
             iconColor="var(--mui-palette-success-main)"
             subtitle={
               <LinearProgress
                 variant="determinate"
-                value={mockAdminStats.adherenceRate}
+                value={stats.adherenceRate}
                 color="success"
                 sx={{ height: 5, borderRadius: 1, mt: 0.5 }}
               />
@@ -228,7 +260,7 @@ export default function AdminDashboardView() {
 
             {/* Bar Chart Visualizer */}
             <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 190, pt: 3, pb: 1, px: 2 }}>
-              {mockComplianceReports.map((report) => (
+              {reports.map((report) => (
                 <Box key={report.date} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
                   <Typography variant="caption" color="text.primary" sx={{ fontWeight: 700, mb: 0.75 }}>
                     {report.adherencePercentage.toFixed(0)}%

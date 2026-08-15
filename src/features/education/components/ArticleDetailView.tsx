@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Article } from '../types'
-import { getArticleById, getRelatedArticles } from '../api/getArticles'
+import { getArticleById, getRelatedArticles, toggleArticleBookmark, isArticleBookmarked } from '../api/getArticles'
+import { useAuth } from '@/src/features/auth/context/AuthContext'
 import ArticleCard from './ArticleCard'
 import {
   Box,
@@ -51,6 +52,9 @@ export default function ArticleDetailView({ articleId }: ArticleDetailViewProps)
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState('')
 
+  const { user } = useAuth()
+  const userId = user?.id || 'usr_1'
+
   useEffect(() => {
     let isMounted = true
     const fetchData = async () => {
@@ -59,9 +63,13 @@ export default function ArticleDetailView({ articleId }: ArticleDetailViewProps)
       if (isMounted) {
         setArticle(data)
         if (data) {
-          const related = await getRelatedArticles(data.id, 3)
+          const [related, bookmarkStatus] = await Promise.all([
+            getRelatedArticles(data.id, 3),
+            isArticleBookmarked(userId, data.id),
+          ])
           if (isMounted) {
             setRelatedArticles(related)
+            setBookmarked(bookmarkStatus)
           }
         }
         setLoading(false)
@@ -71,7 +79,7 @@ export default function ArticleDetailView({ articleId }: ArticleDetailViewProps)
     return () => {
       isMounted = false
     }
-  }, [articleId])
+  }, [articleId, userId])
 
   const handleShare = async () => {
     if (typeof window !== 'undefined') {
@@ -93,13 +101,16 @@ export default function ArticleDetailView({ articleId }: ArticleDetailViewProps)
     }
   }
 
-  const handleBookmarkToggle = () => {
-    setBookmarked((prev) => {
-      const next = !prev
-      setSnackbarMessage(next ? 'Article saved to your bookmarks' : 'Article removed from bookmarks')
+  const handleBookmarkToggle = async () => {
+    if (!article) return
+    const res = await toggleArticleBookmark(userId, article.id)
+    if (res.success) {
+      setBookmarked(res.isBookmarked)
+      setSnackbarMessage(
+        res.isBookmarked ? 'Article saved to your bookmarks' : 'Article removed from bookmarks'
+      )
       setSnackbarOpen(true)
-      return next
-    })
+    }
   }
 
   const handleLikeToggle = () => {

@@ -1,23 +1,38 @@
 import { Reminder } from '../types'
-import { MOCK_REMINDERS } from '../../../shared/constants/mockData'
+import {
+  getRemindersAction,
+  getRemindersByDateAction,
+  toggleReminderStatusAction,
+  getDailyProgressStatsAction,
+} from './scheduleRepository'
 
-/**
- * Simulasi fetch data dari API backend.
- * Ke depannya, function ini akan dimodifikasi untuk menggunakan axios/fetch ke server.
- */
-
-export const getReminders = async (): Promise<Reminder[]> => {
-  // Simulasi network delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
-  return MOCK_REMINDERS
+export const getReminders = async (patientId: string = 'usr_1'): Promise<Reminder[]> => {
+  return await getRemindersAction(patientId)
 }
 
-export const getRemindersByDate = async (dateStr: string): Promise<Reminder[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return MOCK_REMINDERS.filter((reminder) => reminder.date === dateStr)
+export const getRemindersByDate = async (
+  dateStr: string,
+  patientId: string = 'usr_1'
+): Promise<Reminder[]> => {
+  return await getRemindersByDateAction(dateStr, patientId)
 }
 
-export const getTodayReminders = async (): Promise<Reminder[]> => {
+export const getTodayReminders = async (patientId: string = 'usr_1'): Promise<Reminder[]> => {
   const today = new Date().toISOString().split('T')[0]
-  return getRemindersByDate(today)
+  return await getRemindersByDateAction(today, patientId)
+}
+
+export const toggleReminderStatus = async (
+  reminderId: string,
+  currentStatus: string,
+  patientId: string = 'usr_1'
+) => {
+  return await toggleReminderStatusAction(reminderId, currentStatus, patientId)
+}
+
+export const getDailyProgressStats = async (
+  patientId: string = 'usr_1',
+  dateStr?: string
+) => {
+  return await getDailyProgressStatsAction(patientId, dateStr)
 }

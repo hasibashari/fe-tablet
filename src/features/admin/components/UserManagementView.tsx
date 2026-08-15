@@ -28,15 +28,22 @@ import { Search, UserPlus, BellRing, Edit, Trash2, Phone, User, Activity } from 
 import AdminHeader from './AdminHeader'
 import SendReminderModal from './SendReminderModal'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
-import { initialPatients } from '../api/mockAdminData'
+import {
+  getPatientsAction,
+  createPatientAction,
+  updatePatientAction,
+  deletePatientAction,
+  sendPatientReminderAction,
+} from '../api/adminRepository'
 import { PatientUser } from '../types/admin.types'
 
 export default function UserManagementView() {
-  const [patients, setPatients] = useState<PatientUser[]>(initialPatients)
+  const [patients, setPatients] = useState<PatientUser[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [riskFilter, setRiskFilter] = useState<string>('Semua')
   const [openModal, setOpenModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [patientToDelete, setPatientToDelete] = useState<string | null>(null)
@@ -44,6 +51,7 @@ export default function UserManagementView() {
   // Reminder Modal State
   const [reminderModalOpen, setReminderModalOpen] = useState(false)
   const [reminderData, setReminderData] = useState<{
+    patientId?: string
     patientName: string
     patientPhone?: string
   }>({
@@ -53,6 +61,25 @@ export default function UserManagementView() {
   // Toast Notification State
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+
+  const loadData = React.useCallback(async () => {
+    const data = await getPatientsAction()
+    setPatients(data)
+  }, [])
+
+  React.useEffect(() => {
+    let isMounted = true
+    const init = async () => {
+      const data = await getPatientsAction()
+      if (isMounted) {
+        setPatients(data)
+      }
+    }
+    init()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -114,51 +141,55 @@ export default function UserManagementView() {
     setOpenModal(true)
   }
 
-  const handleSavePatient = () => {
+  const handleSavePatient = async () => {
     if (!formData.name || !formData.age) return
+    setSubmitting(true)
 
     if (editingId) {
-      setPatients((prev) =>
-        prev.map((p) =>
-          p.id === editingId
-            ? {
-              ...p,
-              name: formData.name,
-              age: parseInt(formData.age) || 30,
-              gender: formData.gender,
-              phone: formData.phone,
-              email: formData.email,
-              riskLevel: formData.riskLevel,
-              assignedDoctor: formData.assignedDoctor,
-              medicalNotes: formData.medicalNotes,
-            }
-            : p
-        )
-      )
-      setToastMsg('Data pasien berhasil diperbarui!')
+      const res = await updatePatientAction(editingId, {
+        name: formData.name,
+        age: parseInt(formData.age) || 30,
+        gender: formData.gender,
+        phone: formData.phone,
+        email: formData.email,
+        riskLevel: formData.riskLevel,
+        assignedDoctor: formData.assignedDoctor,
+        medicalNotes: formData.medicalNotes,
+      })
+
+      if (res.success) {
+        await loadData()
+        setToastMsg('Data pasien berhasil diperbarui di database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal memperbarui pasien')
+        setToastOpen(true)
+      }
     } else {
-      const created: PatientUser = {
-        id: `PAT-00${patients.length + 1}`,
+      const res = await createPatientAction({
         name: formData.name,
         age: parseInt(formData.age) || 30,
         gender: formData.gender,
         phone: formData.phone || '0812-0000-0000',
         email: formData.email || `${formData.name.toLowerCase().replace(/\s+/g, '.')}@email.com`,
         riskLevel: formData.riskLevel,
-        status: 'Aktif',
         assignedDoctor: formData.assignedDoctor,
-        activeSchedulesCount: 0,
-        adherenceRate: 100,
-        lastActive: 'Baru saja',
-        joinDate: 'Hari ini',
         medicalNotes: formData.medicalNotes,
+      })
+
+      if (res.success) {
+        await loadData()
+        setToastMsg('Pasien baru berhasil disimpan ke database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal menambahkan pasien')
+        setToastOpen(true)
       }
-      setPatients([created, ...patients])
-      setToastMsg('Pasien baru berhasil ditambahkan!')
     }
 
-    setOpenModal(false)
-    setToastOpen(true)
+    setSubmitting(false)
   }
 
   const handleDeleteRequest = (id: string) => {
@@ -166,10 +197,15 @@ export default function UserManagementView() {
     setDeleteConfirmOpen(true)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (patientToDelete) {
-      setPatients(patients.filter((p) => p.id !== patientToDelete))
-      setToastMsg('Pasien berhasil dihapus.')
+      const res = await deletePatientAction(patientToDelete)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Pasien berhasil dihapus dari database.')
+      } else {
+        setToastMsg(res.error || 'Gagal menghapus pasien')
+      }
       setToastOpen(true)
     }
     setDeleteConfirmOpen(false)
@@ -177,15 +213,23 @@ export default function UserManagementView() {
 
   const handleOpenReminder = (patient: PatientUser) => {
     setReminderData({
+      patientId: patient.id,
       patientName: patient.name,
       patientPhone: patient.phone,
     })
     setReminderModalOpen(true)
   }
 
-  const handleSendSuccess = (channel: 'app' | 'whatsapp') => {
+  const handleSendReminderSuccess = async (channel: 'app' | 'whatsapp') => {
+    if (reminderData.patientId) {
+      await sendPatientReminderAction(
+        reminderData.patientId,
+        `Pengingat dikirim melalui ${channel}`
+      )
+      await loadData()
+    }
     const channelName = channel === 'whatsapp' ? 'WhatsApp' : 'Notifikasi App'
-    setToastMsg(`Pengingat berhasil dikirim ke ${reminderData.patientName} via ${channelName}!`)
+    setToastMsg(`Pengingat berhasil dikirimkan ke ${reminderData.patientName} via ${channelName}!`)
     setToastOpen(true)
   }
 
@@ -466,7 +510,7 @@ export default function UserManagementView() {
           <Button onClick={() => setOpenModal(false)} color="inherit">
             Batal
           </Button>
-          <Button onClick={handleSavePatient} variant="contained">
+          <Button onClick={handleSavePatient} variant="contained" disabled={submitting}>
             {editingId ? 'Simpan Perubahan' : 'Tambah Pasien'}
           </Button>
         </DialogActions>
@@ -492,7 +536,7 @@ export default function UserManagementView() {
         onClose={() => setReminderModalOpen(false)}
         patientName={reminderData.patientName}
         patientPhone={reminderData.patientPhone}
-        onSendSuccess={handleSendSuccess}
+        onSendSuccess={handleSendReminderSuccess}
       />
 
       {/* Toast Feedback */}

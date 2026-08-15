@@ -23,14 +23,19 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material'
-import { Search, Plus, FileText, Eye, Edit, Trash2, Clock } from 'lucide-react'
+import { Search, Plus, Eye, Edit, Trash2, Clock } from 'lucide-react'
 import AdminHeader from './AdminHeader'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
-import { initialArticles } from '../api/mockAdminData'
+import {
+  getAdminArticlesAction,
+  createAdminArticleAction,
+  updateAdminArticleAction,
+  deleteAdminArticleAction,
+} from '../api/adminRepository'
 import { HealthArticle } from '../types/admin.types'
 
 export default function ArticleManagementView() {
-  const [articles, setArticles] = useState<HealthArticle[]>(initialArticles)
+  const [articles, setArticles] = useState<HealthArticle[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('Semua')
   const [openModal, setOpenModal] = useState(false)
@@ -41,6 +46,25 @@ export default function ArticleManagementView() {
 
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+
+  const loadData = React.useCallback(async () => {
+    const data = await getAdminArticlesAction()
+    setArticles(data)
+  }, [])
+
+  React.useEffect(() => {
+    let isMounted = true
+    const init = async () => {
+      const data = await getAdminArticlesAction()
+      if (isMounted) {
+        setArticles(data)
+      }
+    }
+    init()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -93,44 +117,48 @@ export default function ArticleManagementView() {
     setOpenModal(true)
   }
 
-  const handleSaveArticle = () => {
+  const handleSaveArticle = async () => {
     if (!formData.title) return
 
     if (editingId) {
-      setArticles((prev) =>
-        prev.map((a) =>
-          a.id === editingId
-            ? {
-                ...a,
-                title: formData.title,
-                category: formData.category,
-                author: formData.author,
-                summary: formData.summary,
-                readTime: formData.readTime,
-                status: formData.status,
-              }
-            : a
-        )
-      )
-      setToastMsg('Artikel berhasil diperbarui!')
-    } else {
-      const created: HealthArticle = {
-        id: `ART-${articles.length + 101}`,
+      const res = await updateAdminArticleAction(editingId, {
         title: formData.title,
         category: formData.category,
         author: formData.author,
-        publishDate: new Date().toISOString().split('T')[0],
+        summary: formData.summary,
+        readTime: formData.readTime,
         status: formData.status,
-        views: formData.status === 'Terbit' ? 12 : 0,
+      })
+
+      if (res.success) {
+        await loadData()
+        setToastMsg('Artikel berhasil diperbarui di database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal memperbarui artikel')
+        setToastOpen(true)
+      }
+    } else {
+      const res = await createAdminArticleAction({
+        title: formData.title,
+        category: formData.category,
+        author: formData.author,
         summary: formData.summary || 'Ringkasan artikel edukasi kesehatan untuk pasien.',
         readTime: formData.readTime,
-      }
-      setArticles([created, ...articles])
-      setToastMsg('Artikel baru berhasil diterbitkan!')
-    }
+        status: formData.status,
+      })
 
-    setOpenModal(false)
-    setToastOpen(true)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Artikel baru berhasil disimpan ke database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal menambahkan artikel')
+        setToastOpen(true)
+      }
+    }
   }
 
   const handleDeleteRequest = (id: string) => {
@@ -138,10 +166,15 @@ export default function ArticleManagementView() {
     setDeleteConfirmOpen(true)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (articleToDelete) {
-      setArticles(articles.filter((a) => a.id !== articleToDelete))
-      setToastMsg('Artikel berhasil dihapus.')
+      const res = await deleteAdminArticleAction(articleToDelete)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Artikel berhasil dihapus dari database.')
+      } else {
+        setToastMsg(res.error || 'Gagal menghapus artikel')
+      }
       setToastOpen(true)
     }
     setDeleteConfirmOpen(false)

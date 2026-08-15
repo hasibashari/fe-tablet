@@ -10,4 +10,5 @@ export { default as ReportAnalyticsView } from './components/ReportAnalyticsView
 export { default as AdminProfileView } from './components/AdminProfileView'
 
 export * from './types/admin.types'
+export * from './api/adminRepository'
 export * from './api/mockAdminData'

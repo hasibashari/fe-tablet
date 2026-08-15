@@ -16,19 +16,41 @@ import {
 } from '@mui/material'
 import { Printer, TrendingUp, CheckCircle2, AlertCircle, FileSpreadsheet } from 'lucide-react'
 import AdminHeader from './AdminHeader'
-import { mockComplianceReports, initialPatients } from '../api/mockAdminData'
+import { getComplianceReportsAction, getPatientsAction } from '../api/adminRepository'
+import { ComplianceReport, PatientUser } from '../types/admin.types'
 
 export default function ReportAnalyticsView() {
   const [period, setPeriod] = useState('7-hari')
+  const [reports, setReports] = useState<ComplianceReport[]>([])
+  const [patients, setPatients] = useState<PatientUser[]>([])
 
-  const totalTaken = mockComplianceReports.reduce((acc, curr) => acc + curr.takenCount, 0)
-  const totalMissed = mockComplianceReports.reduce((acc, curr) => acc + curr.missedCount, 0)
-  const overallRate = ((totalTaken / (totalTaken + totalMissed)) * 100).toFixed(1)
+  React.useEffect(() => {
+    let isMounted = true
+    const fetchReports = async () => {
+      const [r, p] = await Promise.all([
+        getComplianceReportsAction(),
+        getPatientsAction(),
+      ])
+      if (isMounted) {
+        setReports(r)
+        setPatients(p)
+      }
+    }
+    fetchReports()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const totalTaken = reports.reduce((acc, curr) => acc + curr.takenCount, 0)
+  const totalMissed = reports.reduce((acc, curr) => acc + curr.missedCount, 0)
+  const totalSum = totalTaken + totalMissed
+  const overallRate = totalSum > 0 ? ((totalTaken / totalSum) * 100).toFixed(1) : '100.0'
 
   const handleExportCSV = () => {
     const csvContent =
       'data:text/csv;charset=utf-8,Hari,Diminum,Terlewat,Persentase Kepatuhan\n' +
-      mockComplianceReports
+      reports
         .map((r) => `${r.date},${r.takenCount},${r.missedCount},${r.adherencePercentage}%`)
         .join('\n')
     const encodedUri = encodeURI(csvContent)
@@ -145,7 +167,7 @@ export default function ReportAnalyticsView() {
               Rincian Kepatuhan Konsumsi Harian Pasien
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {mockComplianceReports.map((report) => (
+              {reports.map((report) => (
                 <Box key={report.date} sx={{ pb: 1.5, borderBottom: 1, borderColor: 'divider' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                     <Typography variant="subtitle2" color="text.primary">
@@ -180,7 +202,7 @@ export default function ReportAnalyticsView() {
               Distribusi Kepatuhan Pasien
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {initialPatients.slice(0, 5).map((p) => (
+              {patients.slice(0, 5).map((p) => (
                 <Box key={p.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box>
                     <Typography variant="subtitle2" color="text.primary">

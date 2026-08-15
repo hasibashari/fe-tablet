@@ -26,11 +26,16 @@ import {
 import { Search, Plus, Edit, Trash2, Tag } from 'lucide-react'
 import AdminHeader from './AdminHeader'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
-import { initialProducts } from '../api/mockAdminData'
+import {
+  getProductsAction,
+  createProductAction,
+  updateProductAction,
+  deleteProductAction,
+} from '../api/adminRepository'
 import { MedicalProduct } from '../types/admin.types'
 
 export default function ProductManagementView() {
-  const [products, setProducts] = useState<MedicalProduct[]>(initialProducts)
+  const [products, setProducts] = useState<MedicalProduct[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('Semua')
   const [openModal, setOpenModal] = useState(false)
@@ -41,6 +46,25 @@ export default function ProductManagementView() {
 
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+
+  const loadData = React.useCallback(async () => {
+    const data = await getProductsAction()
+    setProducts(data)
+  }, [])
+
+  React.useEffect(() => {
+    let isMounted = true
+    const init = async () => {
+      const data = await getProductsAction()
+      if (isMounted) {
+        setProducts(data)
+      }
+    }
+    init()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -97,7 +121,7 @@ export default function ProductManagementView() {
     setOpenModal(true)
   }
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!formData.name) return
 
     const stockNum = parseInt(formData.stock) || 0
@@ -106,27 +130,28 @@ export default function ProductManagementView() {
     else if (stockNum < 20) status = 'Stok Menipis'
 
     if (editingId) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editingId
-            ? {
-                ...p,
-                name: formData.name,
-                category: formData.category,
-                sku: formData.sku,
-                stock: stockNum,
-                unit: formData.unit,
-                price: parseInt(formData.price) || 0,
-                status,
-                description: formData.description,
-              }
-            : p
-        )
-      )
-      setToastMsg('Produk berhasil diperbarui!')
+      const res = await updateProductAction(editingId, {
+        name: formData.name,
+        category: formData.category,
+        sku: formData.sku,
+        stock: stockNum,
+        unit: formData.unit,
+        price: parseInt(formData.price) || 0,
+        status,
+        description: formData.description,
+      })
+
+      if (res.success) {
+        await loadData()
+        setToastMsg('Produk berhasil diperbarui di database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal memperbarui produk')
+        setToastOpen(true)
+      }
     } else {
-      const created: MedicalProduct = {
-        id: `PRD-${products.length + 101}`,
+      const res = await createProductAction({
         name: formData.name,
         category: formData.category,
         sku: formData.sku || `MED-${formData.name.substring(0, 3).toUpperCase()}-100`,
@@ -134,14 +159,19 @@ export default function ProductManagementView() {
         unit: formData.unit,
         price: parseInt(formData.price) || 10000,
         status,
-        description: formData.description || 'Deskripsi obat / suplemen medis.',
-      }
-      setProducts([created, ...products])
-      setToastMsg('Produk baru berhasil ditambahkan!')
-    }
+        description: formData.description || 'Deskripsi produk medis.',
+      })
 
-    setOpenModal(false)
-    setToastOpen(true)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Produk baru berhasil disimpan ke database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal menambahkan produk')
+        setToastOpen(true)
+      }
+    }
   }
 
   const handleDeleteRequest = (id: string) => {
@@ -149,10 +179,15 @@ export default function ProductManagementView() {
     setDeleteConfirmOpen(true)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (productToDelete) {
-      setProducts(products.filter((p) => p.id !== productToDelete))
-      setToastMsg('Produk berhasil dihapus.')
+      const res = await deleteProductAction(productToDelete)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Produk berhasil dihapus dari database.')
+      } else {
+        setToastMsg(res.error || 'Gagal menghapus produk')
+      }
       setToastOpen(true)
     }
     setDeleteConfirmOpen(false)

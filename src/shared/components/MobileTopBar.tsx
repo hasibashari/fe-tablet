@@ -65,11 +65,18 @@ export default function MobileTopBar({
         >
           <Cross size={18} />
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2, color: '#1c1c1c' }}>
-            {brandTitle}
-          </Typography>
-          {badge}
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2, color: '#1c1c1c' }}>
+              {brandTitle}
+            </Typography>
+            {badge}
+          </Box>
+          {brandSubtitle && (
+            <Typography variant="caption" sx={{ fontSize: '0.65rem', color: '#6b6964', lineHeight: 1 }}>
+              {brandSubtitle}
+            </Typography>
+          )}
         </Box>
       </Box>
 

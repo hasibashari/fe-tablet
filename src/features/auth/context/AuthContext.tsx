@@ -9,7 +9,11 @@ import {
   RegisterCredentials,
   UserRole,
 } from '../types/auth.types'
-import { MOCK_ADMIN_USER, MOCK_PATIENT_USER } from '../api/mockAuthData'
+import {
+  loginUserAction,
+  quickLoginAction,
+  registerPatientAction,
+} from '../api/authRepository'
 
 const AUTH_STORAGE_KEY = 'medicore_auth_user'
 
@@ -26,21 +30,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize from localStorage on client side
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY)
-      if (stored) {
-        const parsedUser: AuthUser = JSON.parse(stored)
-        setState({
-          user: parsedUser,
-          isAuthenticated: true,
-          isLoading: false,
-        })
-        return
+    let isMounted = true
+    const initAuth = async () => {
+      try {
+        const stored = typeof window !== 'undefined' ? localStorage.getItem(AUTH_STORAGE_KEY) : null
+        if (stored) {
+          const parsedUser: AuthUser = JSON.parse(stored)
+          if (isMounted) {
+            setState({
+              user: parsedUser,
+              isAuthenticated: true,
+              isLoading: false,
+            })
+            return
+          }
+        }
+      } catch {
+        // ignore storage parsing error
       }
-    } catch {
-      // ignore storage parsing error
+      if (isMounted) {
+        setState((prev) => ({ ...prev, isLoading: false }))
+      }
     }
-    setState((prev) => ({ ...prev, isLoading: false }))
+
+    initAuth()
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const saveUserSession = (user: AuthUser) => {
@@ -58,35 +74,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string; redirectTo?: string }> => {
-      // Simulate network latency
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      const normalizedEmail = credentials.email.trim().toLowerCase()
-
-      if (normalizedEmail.includes('admin') || credentials.roleHint === 'admin') {
-        saveUserSession(MOCK_ADMIN_USER)
-        return { success: true, redirectTo: '/admin/dashboard' }
+      const res = await loginUserAction(credentials)
+      if (res.success && res.user) {
+        saveUserSession(res.user)
+        return { success: true, redirectTo: res.redirectTo }
       }
-
-      if (normalizedEmail.includes('budi') || normalizedEmail.includes('patient') || normalizedEmail.includes('user') || credentials.roleHint === 'patient') {
-        saveUserSession(MOCK_PATIENT_USER)
-        return { success: true, redirectTo: '/user/dashboard' }
-      }
-
-      // Default fallback: If regular valid email, log in as patient with custom email
-      if (normalizedEmail.includes('@')) {
-        const customUser: AuthUser = {
-          ...MOCK_PATIENT_USER,
-          email: normalizedEmail,
-          name: normalizedEmail.split('@')[0].toUpperCase(),
-        }
-        saveUserSession(customUser)
-        return { success: true, redirectTo: '/user/dashboard' }
-      }
-
       return {
         success: false,
-        error: 'Format email tidak valid. Gunakan admin@medicore.com atau budi@medicore.com',
+        error: res.error || 'Gagal login. Periksa kembali email Anda.',
       }
     },
     []
@@ -94,41 +89,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const quickLogin = useCallback(
     async (role: UserRole): Promise<{ success: boolean; redirectTo: string }> => {
-      await new Promise((resolve) => setTimeout(resolve, 350))
-      if (role === 'admin') {
-        saveUserSession(MOCK_ADMIN_USER)
-        return { success: true, redirectTo: '/admin/dashboard' }
-      } else {
-        saveUserSession(MOCK_PATIENT_USER)
-        return { success: true, redirectTo: '/user/dashboard' }
+      const res = await quickLoginAction(role)
+      if (res.success && res.user) {
+        saveUserSession(res.user)
+        return { success: true, redirectTo: res.redirectTo }
       }
+      return { success: false, redirectTo: '/auth/login' }
     },
     []
   )
 
   const register = useCallback(
     async (data: RegisterCredentials): Promise<{ success: boolean; error?: string; redirectTo?: string }> => {
-      await new Promise((resolve) => setTimeout(resolve, 600))
-      
-      if (!data.name || !data.email) {
-        return { success: false, error: 'Nama dan Email wajib diisi.' }
+      const res = await registerPatientAction(data)
+      if (res.success && res.user) {
+        saveUserSession(res.user)
+        return { success: true, redirectTo: res.redirectTo }
       }
-
-      const newUser: AuthUser = {
-        id: `PAT-${Date.now().toString().slice(-4)}`,
-        name: data.name,
-        email: data.email,
-        phone: data.phone || '0812-0000-0000',
-        role: 'patient',
-        title: 'Pasien Baru',
-        gender: data.gender || 'Laki-laki',
-        age: data.age || 35,
-        assignedDoctor: 'dr. Siti Rahma, Sp.PD',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=300',
+      return {
+        success: false,
+        error: res.error || 'Gagal mendaftar. Silakan coba lagi.',
       }
-
-      saveUserSession(newUser)
-      return { success: true, redirectTo: '/user/dashboard' }
     },
     []
   )

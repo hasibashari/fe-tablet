@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, X, Cross, User, LogOut, LayoutDashboard } from 'lucide-react'
+import { Menu, X, Cross, LogOut, LayoutDashboard } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { useAuth } from '@/src/features/auth'
 import { Avatar, Chip } from '@mui/material'
@@ -56,7 +56,7 @@ export default function Navbar() {
               />
               <div className="flex flex-col text-left">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-slate-800 leading-none truncate max-w-[110px]">
+                  <span className="text-xs font-bold text-slate-800 leading-none truncate max-w-27.5">
                     {user.name.split(',')[0]}
                   </span>
                   <Chip
@@ -124,7 +124,7 @@ export default function Navbar() {
           <Link href="/#ingredients" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-body py-2 border-b border-hairline-soft">Ingredients</Link>
           <Link href="/#trials" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-body py-2 border-b border-hairline-soft">Clinical Trials</Link>
           <Link href="/#about" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-body py-2 border-b border-hairline-soft">About Us</Link>
-          
+
           <div className="pt-2 flex flex-col gap-3">
             {isAuthenticated && user ? (
               <div className="flex flex-col gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">

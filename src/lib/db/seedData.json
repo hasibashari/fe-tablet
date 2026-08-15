@@ -1,0 +1,573 @@
+{
+  "users": [
+    {
+      "id": "usr_admin_1",
+      "name": "dr. Sarah Jenkins, Sp.GK",
+      "email": "sarah.jenkins@hospital.com",
+      "passwordHash": null,
+      "role": "admin",
+      "phone": "+62 811-2233-4455",
+      "avatar": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
+      "title": "Clinical Nutritionist & Wellness Specialist",
+      "age": 38,
+      "gender": "Perempuan",
+      "dateOfBirth": "1988-03-12",
+      "bloodType": "A+",
+      "height": 165,
+      "weight": 56,
+      "assignedDoctorId": null
+    },
+    {
+      "id": "usr_admin_2",
+      "name": "dr. Siti Rahma, Sp.PD",
+      "email": "siti.rahma@hospital.com",
+      "passwordHash": null,
+      "role": "admin",
+      "phone": "+62 812-9988-7766",
+      "avatar": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
+      "title": "Spesialis Penyakit Dalam",
+      "age": 45,
+      "gender": "Perempuan",
+      "dateOfBirth": "1981-08-20",
+      "bloodType": "B+",
+      "height": 160,
+      "weight": 58,
+      "assignedDoctorId": null
+    },
+    {
+      "id": "usr_admin_3",
+      "name": "dr. Michael Chen, Sp.JP",
+      "email": "michael.chen@hospital.com",
+      "passwordHash": null,
+      "role": "admin",
+      "phone": "+62 813-4455-6677",
+      "avatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop",
+      "title": "Spesialis Jantung & Pembuluh Darah",
+      "age": 42,
+      "gender": "Laki-laki",
+      "dateOfBirth": "1984-11-14",
+      "bloodType": "O+",
+      "height": 175,
+      "weight": 72,
+      "assignedDoctorId": null
+    },
+    {
+      "id": "usr_1",
+      "name": "Budi Santoso",
+      "email": "budi.santoso@email.com",
+      "passwordHash": null,
+      "role": "patient",
+      "phone": "0812-3456-7890",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi",
+      "title": null,
+      "age": 58,
+      "gender": "Laki-laki",
+      "dateOfBirth": "1968-05-15",
+      "bloodType": "O+",
+      "height": 170,
+      "weight": 70,
+      "assignedDoctorId": "usr_admin_2"
+    },
+    {
+      "id": "PAT-002",
+      "name": "Siti Aminah",
+      "email": "siti.aminah@email.com",
+      "passwordHash": null,
+      "role": "patient",
+      "phone": "0813-9876-5432",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
+      "title": null,
+      "age": 62,
+      "gender": "Perempuan",
+      "dateOfBirth": "1964-02-10",
+      "bloodType": "B+",
+      "height": 155,
+      "weight": 64,
+      "assignedDoctorId": "usr_admin_3"
+    },
+    {
+      "id": "PAT-003",
+      "name": "Hendra Gunawan",
+      "email": "hendra.g@email.com",
+      "passwordHash": null,
+      "role": "patient",
+      "phone": "0857-1122-3344",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Hendra",
+      "title": null,
+      "age": 45,
+      "gender": "Laki-laki",
+      "dateOfBirth": "1981-09-04",
+      "bloodType": "A+",
+      "height": 172,
+      "weight": 78,
+      "assignedDoctorId": "usr_admin_2"
+    }
+  ],
+  "patientProfiles": [
+    {
+      "userId": "usr_1",
+      "riskLevel": "Tinggi",
+      "status": "Aktif",
+      "medicalNotes": "Pasien hipertensi derajat 2, butuh pengawasan pola konsumsi garam.",
+      "joinDate": "2025-01-12"
+    },
+    {
+      "userId": "PAT-002",
+      "riskLevel": "Sedang",
+      "status": "Aktif",
+      "medicalNotes": "Diabetes Melitus Tipe 2 teratur minum metformin.",
+      "joinDate": "2025-02-28"
+    },
+    {
+      "userId": "PAT-003",
+      "riskLevel": "Rendah",
+      "status": "Aktif",
+      "medicalNotes": "Pemeriksaan rutin pasca rawat jalan.",
+      "joinDate": "2025-03-15"
+    }
+  ],
+  "products": [
+    {
+      "id": "PRD-001",
+      "name": "Amlodipine 5mg",
+      "category": "Obat Resep",
+      "sku": "MED-AML-005",
+      "stock": 120,
+      "unit": "Tablet",
+      "price": 15000,
+      "status": "Tersedia",
+      "description": "Obat antihipertensi golongan calcium channel blocker."
+    },
+    {
+      "id": "PRD-002",
+      "name": "Metformin 500mg",
+      "category": "Obat Resep",
+      "sku": "MED-MET-500",
+      "stock": 45,
+      "unit": "Tablet",
+      "price": 18000,
+      "status": "Tersedia",
+      "description": "Obat antidiabetes oral lini pertama untuk DM Tipe 2."
+    },
+    {
+      "id": "PRD-003",
+      "name": "Vitamin D3 1000 IU",
+      "category": "Suplemen",
+      "sku": "SUP-VD3-100",
+      "stock": 8,
+      "unit": "Botol (30 Kapsul)",
+      "price": 85000,
+      "status": "Stok Menipis",
+      "description": "Suplemen pendukung imun dan kesehatan tulang."
+    },
+    {
+      "id": "PRD-004",
+      "name": "Tensimeter Digital Omron HEM-7120",
+      "category": "Alat Kesehatan",
+      "sku": "ALK-TEN-001",
+      "stock": 15,
+      "unit": "Unit",
+      "price": 450000,
+      "status": "Tersedia",
+      "description": "Alat pengukur tekanan darah digital lengan atas yang akurat."
+    },
+    {
+      "id": "PRD-005",
+      "name": "Aspirin 80mg Cardioprotective",
+      "category": "Obat Resep",
+      "sku": "MED-ASP-080",
+      "stock": 90,
+      "unit": "Strip (10 Tablet)",
+      "price": 25000,
+      "status": "Tersedia",
+      "description": "Antiplatelet untuk prevensi sekunder kardiovaskular."
+    }
+  ],
+  "medicationSchedules": [
+    {
+      "id": "SCH-001",
+      "patientId": "usr_1",
+      "productId": "PRD-001",
+      "medicationName": "Amlodipine 5mg",
+      "dosage": "1 Tablet (5mg)",
+      "frequency": "1x sehari",
+      "startDate": "2025-01-15",
+      "endDate": "2025-07-15",
+      "status": "Aktif",
+      "category": "Obat Resep",
+      "instructions": "Diminum pagi hari sesudah sarapan.",
+      "timeSlots": ["08:00"]
+    },
+    {
+      "id": "SCH-002",
+      "patientId": "usr_1",
+      "productId": "PRD-003",
+      "medicationName": "Vitamin D3 & Omega-3",
+      "dosage": "1 Kapsul Lunak",
+      "frequency": "1x sehari",
+      "startDate": "2025-01-15",
+      "endDate": "2025-12-31",
+      "status": "Aktif",
+      "category": "Suplemen",
+      "instructions": "Diminum siang hari bersama makanan berlemak baik.",
+      "timeSlots": ["12:00"]
+    },
+    {
+      "id": "SCH-003",
+      "patientId": "usr_1",
+      "productId": null,
+      "medicationName": "Cek Tensi Darah Mandiri",
+      "dosage": "1 Kali Pengukuran",
+      "frequency": "1x sehari",
+      "startDate": "2025-01-15",
+      "endDate": "2025-12-31",
+      "status": "Aktif",
+      "category": "Aktivitas Medis",
+      "instructions": "Gunakan tensimeter di lengan kiri dalam kondisi tenang.",
+      "timeSlots": ["15:00"]
+    }
+  ],
+  "reminders": [
+    {
+      "id": "rem_1",
+      "patientId": "usr_1",
+      "scheduleId": "SCH-001",
+      "title": "Obat Hipertensi (Amlodipine 5mg)",
+      "description": "Diminum sesudah makan pagi",
+      "offsetDays": 0,
+      "time": "08:00",
+      "status": "COMPLETED",
+      "type": "MEDICATION"
+    },
+    {
+      "id": "rem_2",
+      "patientId": "usr_1",
+      "scheduleId": "SCH-002",
+      "title": "Vitamin D3 & Omega-3",
+      "description": "Suplemen harian pendukung imun",
+      "offsetDays": 0,
+      "time": "12:00",
+      "status": "PENDING",
+      "type": "MEDICATION"
+    },
+    {
+      "id": "rem_3",
+      "patientId": "usr_1",
+      "scheduleId": "SCH-003",
+      "title": "Cek Tensi Darah Mandiri",
+      "description": "Gunakan tensimeter di lengan kiri",
+      "offsetDays": 0,
+      "time": "15:00",
+      "status": "PENDING",
+      "type": "CHECKUP"
+    },
+    {
+      "id": "rem_4",
+      "patientId": "usr_1",
+      "scheduleId": null,
+      "title": "Obat Kolesterol (Simvastatin)",
+      "description": "Diminum sebelum tidur malam",
+      "offsetDays": 0,
+      "time": "21:00",
+      "status": "PENDING",
+      "type": "MEDICATION"
+    },
+    {
+      "id": "rem_5",
+      "patientId": "usr_1",
+      "scheduleId": "SCH-001",
+      "title": "Obat Hipertensi (Amlodipine 5mg)",
+      "description": "Diminum sesudah sarapan",
+      "offsetDays": -1,
+      "time": "08:00",
+      "status": "COMPLETED",
+      "type": "MEDICATION"
+    },
+    {
+      "id": "rem_6",
+      "patientId": "usr_1",
+      "scheduleId": null,
+      "title": "Jalan Santai 30 Menit",
+      "description": "Aktivitas fisik ringan sore hari",
+      "offsetDays": -1,
+      "time": "16:00",
+      "status": "MISSED",
+      "type": "EXERCISE"
+    },
+    {
+      "id": "rem_7",
+      "patientId": "usr_1",
+      "scheduleId": "SCH-001",
+      "title": "Obat Hipertensi (Amlodipine 5mg)",
+      "description": "Diminum sesudah sarapan pagi",
+      "offsetDays": 1,
+      "time": "08:00",
+      "status": "PENDING",
+      "type": "MEDICATION"
+    },
+    {
+      "id": "rem_8",
+      "patientId": "usr_1",
+      "scheduleId": null,
+      "title": "Konsultasi Dokter Spesialis",
+      "description": "Klinik Medika Utama - Lantai 2",
+      "offsetDays": 1,
+      "time": "10:30",
+      "status": "PENDING",
+      "type": "CHECKUP"
+    },
+    {
+      "id": "rem_9",
+      "patientId": "usr_1",
+      "scheduleId": null,
+      "title": "Fisioterapi Bahu & Peregangan",
+      "description": "Latihan rutin 45 menit",
+      "offsetDays": 2,
+      "time": "16:00",
+      "status": "PENDING",
+      "type": "EXERCISE"
+    }
+  ],
+  "consumptionLogs": [
+    {
+      "id": "log-today-1",
+      "patientId": "usr_1",
+      "reminderId": "rem_1",
+      "scheduleId": "SCH-001",
+      "title": "Obat Hipertensi (Amlodipine 5mg)",
+      "category": "MEDICATION",
+      "dosage": "1 Tablet (5mg)",
+      "offsetDays": 0,
+      "scheduledTime": "08:00",
+      "takenAt": "08:05",
+      "status": "ON_TIME",
+      "notes": "Diminum sesudah sarapan bubur ayam.",
+      "takenBy": "Pasien Mandiri"
+    },
+    {
+      "id": "log-yest-1",
+      "patientId": "usr_1",
+      "reminderId": "rem_5",
+      "scheduleId": "SCH-001",
+      "title": "Obat Hipertensi (Amlodipine 5mg)",
+      "category": "MEDICATION",
+      "dosage": "1 Tablet (5mg)",
+      "offsetDays": -1,
+      "scheduledTime": "08:00",
+      "takenAt": "08:12",
+      "status": "ON_TIME",
+      "notes": "Diminum sesudah makan pagi.",
+      "takenBy": "Pasien Mandiri"
+    },
+    {
+      "id": "log-yest-2",
+      "patientId": "usr_1",
+      "reminderId": "rem_6",
+      "scheduleId": null,
+      "title": "Jalan Santai 30 Menit",
+      "category": "EXERCISE",
+      "dosage": "30 Menit",
+      "offsetDays": -1,
+      "scheduledTime": "16:00",
+      "takenAt": null,
+      "status": "MISSED",
+      "notes": "Hujan deras, ditunda ke hari berikutnya.",
+      "takenBy": "Pasien Mandiri"
+    },
+    {
+      "id": "log-d2-1",
+      "patientId": "usr_1",
+      "reminderId": null,
+      "scheduleId": "SCH-001",
+      "title": "Obat Hipertensi (Amlodipine 5mg)",
+      "category": "MEDICATION",
+      "dosage": "1 Tablet (5mg)",
+      "offsetDays": -2,
+      "scheduledTime": "08:00",
+      "takenAt": "09:20",
+      "status": "LATE",
+      "notes": "Terlambat karena meeting pagi.",
+      "takenBy": "Pasien Mandiri"
+    }
+  ],
+  "articles": [
+    {
+      "id": "art_1",
+      "title": "The Importance of Daily Hydration for Cellular Health",
+      "summary": "Learn why drinking enough water is crucial for your cellular health, cognitive performance, and sustainable energy levels.",
+      "leadParagraph": "Water makes up roughly 60% of the human adult body, playing a pivotal role in every physiological function from temperature regulation to nutrient transport. Yet, mild chronic dehydration remains one of the most overlooked health culprits today.",
+      "imageUrl": "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?q=80&w=1200&auto=format&fit=crop",
+      "imageCaption": "Maintaining adequate hydration supports cellular regeneration and optimizes metabolic functions.",
+      "readTime": "4 min read",
+      "category": "Wellness",
+      "status": "Terbit",
+      "views": 1280,
+      "publishedAt": "2026-07-28",
+      "authorId": "usr_admin_1",
+      "authorName": "Dr. Sarah Jenkins",
+      "authorRole": "Clinical Nutritionist & Wellness Specialist",
+      "authorAvatar": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
+      "authorBio": "Dr. Sarah Jenkins is a board-certified clinical nutritionist with over 12 years of experience in metabolic wellness.",
+      "keyTakeaways": [
+        "Dehydration of just 1–2% noticeably impairs cognitive focus and physical energy.",
+        "Begin each morning with a glass of water to kickstart metabolic clearance.",
+        "Incorporate water-rich whole foods such as cucumbers, berries, and melons into your daily diet.",
+        "Monitor urine color: pale straw yellow indicates optimal hydration levels."
+      ],
+      "tags": ["Hydration", "Wellness", "Cellular Health", "Nutrition"],
+      "sections": [
+        {
+          "orderIndex": 1,
+          "heading": "Why Water Is Essential for Cellular Metabolism",
+          "subheading": null,
+          "paragraphs": [
+            "Every cell, tissue, and organ in your body requires adequate hydration to function correctly. When cellular water content drops by as little as 1.5%, cellular enzymatic processes slow down, impairing energy production and toxin clearance.",
+            "Hydration directly influences blood volume, meaning that when dehydrated, your heart must pump harder to deliver oxygen and essential nutrients across your body."
+          ],
+          "calloutType": "tip",
+          "calloutTitle": "Morning Hydration Protocol",
+          "calloutText": "Drink 400–500ml of room-temperature water with a pinch of mineral salt immediately upon waking to restore fluids lost overnight.",
+          "bulletPoints": null
+        },
+        {
+          "orderIndex": 2,
+          "heading": "Cognitive Function and Energy Levels",
+          "subheading": null,
+          "paragraphs": [
+            "Clinical studies demonstrate that even mild dehydration can trigger headaches, fatigue, mood swings, and marked reductions in memory and attention span.",
+            "Instead of reaching for another cup of coffee when the afternoon slump hits, a glass of cold water often provides a faster and more restorative lift to mental acuity."
+          ],
+          "calloutType": null,
+          "calloutTitle": null,
+          "calloutText": null,
+          "bulletPoints": [
+            "Improves concentration and mental clarity throughout working hours",
+            "Prevents tension headaches and eases joint friction through synovial fluid lubrication",
+            "Aids gastrointestinal digestion and prevents metabolic sluggishness",
+            "Enhances dermal elasticity and natural skin barrier moisture"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "art_2",
+      "title": "Managing Blood Pressure Naturally Through Lifestyle & Diet",
+      "summary": "Discover evidence-based dietary modifications, movement protocols, and stress reduction methods that help maintain healthy cardiovascular pressure.",
+      "leadParagraph": "Hypertension is often called the \"silent killer\" because it frequently develops without noticeable symptoms while steadily straining the cardiovascular system. Fortunately, targeted lifestyle modifications can yield measurable reductions in arterial pressure within weeks.",
+      "imageUrl": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop",
+      "imageCaption": "Daily moderate aerobic exercise combined with nutrient-rich foods supports arterial flexibility.",
+      "readTime": "6 min read",
+      "category": "Cardiovascular",
+      "status": "Terbit",
+      "views": 940,
+      "publishedAt": "2026-07-25",
+      "authorId": "usr_admin_3",
+      "authorName": "Dr. Michael Chen, MD",
+      "authorRole": "Cardiologist & Preventive Medicine Fellow",
+      "authorAvatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop",
+      "authorBio": "Dr. Michael Chen specializes in non-pharmacological blood pressure management and lifestyle cardiology.",
+      "keyTakeaways": [
+        "Prioritize potassium-rich whole foods to assist natural sodium excretion.",
+        "Commit to 30 minutes of low-to-moderate aerobic exercise 5 days a week.",
+        "Incorporate 5 minutes of deep diaphragmatic breathing to dampen sympathetic nervous arousal."
+      ],
+      "tags": ["Blood Pressure", "Heart Health", "DASH Diet", "Cardiovascular"],
+      "sections": [
+        {
+          "orderIndex": 1,
+          "heading": "The DASH Framework: Potassium vs. Sodium Balance",
+          "subheading": null,
+          "paragraphs": [
+            "The Dietary Approaches to Stop Hypertension (DASH) diet is celebrated globally for its clinical efficacy. The cornerstone of this approach is restoring the balance between sodium and potassium.",
+            "Potassium encourages the kidneys to excrete excess sodium and promotes vasodilation, naturally softening the tension inside arterial walls."
+          ],
+          "calloutType": "tip",
+          "calloutTitle": "Actionable Dietary Swap",
+          "calloutText": "Swap standard table salt for mineralized sea salt and enrich meals with herbs like garlic, rosemary, and oregano for natural vascular support.",
+          "bulletPoints": [
+            "Increase intake of leafy greens, avocados, bananas, and sweet potatoes",
+            "Limit heavily processed, sodium-dense convenience foods and canned condiments",
+            "Incorporate magnesium-rich seeds, almonds, and raw dark chocolate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "art_3",
+      "title": "Understanding Vitamin D Deficiency & Immune Resilience",
+      "summary": "How lack of sunlight affects your bone density, immune regulation, and mood — and practical steps to optimize your vitamin D status.",
+      "leadParagraph": "Technically a secosteroid hormone rather than a standard vitamin, Vitamin D receptor sites exist in nearly every cell in the body, governing immune modulation, calcium homeostasis, and gene expression.",
+      "imageUrl": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=1200&auto=format&fit=crop",
+      "imageCaption": "Sunlight exposure triggers natural vitamin D3 synthesis in the epidermal layers.",
+      "readTime": "5 min read",
+      "category": "Nutrition",
+      "status": "Terbit",
+      "views": 780,
+      "publishedAt": "2026-07-20",
+      "authorId": "usr_admin_2",
+      "authorName": "Dr. Elena Rostova",
+      "authorRole": "Immunologist & Biochemical Researcher",
+      "authorAvatar": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
+      "authorBio": "Dr. Elena Rostova conducts research on micronutrient immunology and autoimmune disease prevention.",
+      "keyTakeaways": [
+        "Test your 25(OH)D blood levels annually to establish a safe baseline.",
+        "Combine Vitamin D3 supplementation with Vitamin K2 and dietary Magnesium.",
+        "Take Vitamin D with a fat-containing meal to maximize gastrointestinal absorption."
+      ],
+      "tags": ["Vitamin D", "Immunity", "Bone Health", "Micronutrients"],
+      "sections": [
+        {
+          "orderIndex": 1,
+          "heading": "The Sunshine Hormone and Immune Defense",
+          "subheading": null,
+          "paragraphs": [
+            "Vitamin D activates vital immune peptides known as cathelicidins and defensins, which protect respiratory tissues against viral and bacterial invasion.",
+            "Individuals with low circulating 25-hydroxyvitamin D levels often report higher rates of seasonal infections and prolonged recovery times."
+          ],
+          "calloutType": "tip",
+          "calloutTitle": "Safe Sun Exposure Guidelines",
+          "calloutText": "15–20 minutes of midday sunlight on arms and legs without sunscreen provides sufficient natural synthesis without burning risk for most skin types.",
+          "bulletPoints": null
+        }
+      ]
+    }
+  ],
+  "healthPrograms": [
+    {
+      "id": "PRG-001",
+      "name": "Program Kendali Hipertensi Terpadu",
+      "code": "PROG-HT-01",
+      "description": "Program monitoring terstruktur 8 minggu untuk pasien dengan tekanan darah tinggi.",
+      "durationWeeks": 8,
+      "status": "Aktif",
+      "targetCategory": "Hipertensi",
+      "createdBy": "usr_admin_3"
+    },
+    {
+      "id": "PRG-002",
+      "name": "Program Edukasi & Pengendalian Gula Darah",
+      "code": "PROG-DM-02",
+      "description": "Intervensi pola makan dan kepatuhan konsumsi antidiabetes oral.",
+      "durationWeeks": 12,
+      "status": "Aktif",
+      "targetCategory": "Diabetes",
+      "createdBy": "usr_admin_2"
+    }
+  ],
+  "healthProgramEnrollments": [
+    {
+      "programId": "PRG-001",
+      "patientId": "usr_1",
+      "enrolledAt": "2025-01-20",
+      "progressPercentage": 65.0,
+      "status": "Aktif"
+    },
+    {
+      "programId": "PRG-002",
+      "patientId": "PAT-002",
+      "enrolledAt": "2025-03-01",
+      "progressPercentage": 80.0,
+      "status": "Aktif"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useMemo } from 'react'
-import { ReminderCard, getReminders, Reminder, CalendarPopover } from '@/src/features/schedule'
+import { ReminderCard, getReminders, toggleReminderStatus, Reminder, CalendarPopover } from '@/src/features/schedule'
 import {
   Box,
   Typography,
@@ -37,15 +37,17 @@ export default function ScheduleView() {
     fetchData()
   }, [])
 
-  const handleToggleStatus = (id: string, currentStatus: string) => {
-    setReminders(prev =>
-      prev.map(rem => {
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
+    setReminders((prev) =>
+      prev.map((rem) => {
         if (rem.id === id) {
-          return { ...rem, status: currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED' }
+          return { ...rem, status: nextStatus }
         }
         return rem
       })
     )
+    await toggleReminderStatus(id, currentStatus)
   }
 
   // Filter reminders in memory without API calls

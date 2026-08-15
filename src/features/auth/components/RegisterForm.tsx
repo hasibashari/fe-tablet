@@ -150,10 +150,10 @@ export function RegisterForm() {
             }}
           />
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
             <TextField
-              label="Nomor WhatsApp/HP"
-              placeholder="0812-xxxx-xxxx"
+              label="Nomor WhatsApp"
+              placeholder="0812xxxx"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               fullWidth
@@ -167,6 +167,15 @@ export function RegisterForm() {
                   ),
                 },
               }}
+            />
+
+            <TextField
+              label="Umur (Tahun)"
+              type="number"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              fullWidth
+              size="medium"
             />
 
             <TextField

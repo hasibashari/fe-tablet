@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import HealthLineChart from './HealthLineChart'
 import MedicationAlertBanner, { AdminNudge } from './MedicationAlertBanner'
-import { getTodayReminders, Reminder } from '@/src/features/schedule'
+import { getTodayReminders, toggleReminderStatus, Reminder } from '@/src/features/schedule'
 import {
   Box,
   Typography,
@@ -50,13 +50,17 @@ export default function DashboardView() {
     fetchData()
   }, [])
 
-  const handleToggleStatus = (id: string, currentStatus: string) => {
-    setReminders(prev => prev.map(rem => {
-      if (rem.id === id) {
-        return { ...rem, status: currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED' }
-      }
-      return rem
-    }))
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
+    setReminders((prev) =>
+      prev.map((rem) => {
+        if (rem.id === id) {
+          return { ...rem, status: nextStatus }
+        }
+        return rem
+      })
+    )
+    await toggleReminderStatus(id, currentStatus)
   }
 
   const handleTakeMedication = (id: string) => {

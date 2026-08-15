@@ -24,11 +24,16 @@ import {
 import { Plus, Activity, Edit, Trash2, Users, Calendar } from 'lucide-react'
 import AdminHeader from './AdminHeader'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
-import { initialPrograms } from '../api/mockAdminData'
+import {
+  getProgramsAction,
+  createProgramAction,
+  updateProgramAction,
+  deleteProgramAction,
+} from '../api/adminRepository'
 import { HealthProgram } from '../types/admin.types'
 
 export default function ProgramManagementView() {
-  const [programs, setPrograms] = useState<HealthProgram[]>(initialPrograms)
+  const [programs, setPrograms] = useState<HealthProgram[]>([])
   const [openModal, setOpenModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   
@@ -37,6 +42,25 @@ export default function ProgramManagementView() {
 
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+
+  const loadData = React.useCallback(async () => {
+    const data = await getProgramsAction()
+    setPrograms(data)
+  }, [])
+
+  React.useEffect(() => {
+    let isMounted = true
+    const init = async () => {
+      const data = await getProgramsAction()
+      if (isMounted) {
+        setPrograms(data)
+      }
+    }
+    init()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -81,44 +105,46 @@ export default function ProgramManagementView() {
     setOpenModal(true)
   }
 
-  const handleSaveProgram = () => {
+  const handleSaveProgram = async () => {
     if (!formData.name) return
 
     if (editingId) {
-      setPrograms((prev) =>
-        prev.map((p) =>
-          p.id === editingId
-            ? {
-                ...p,
-                name: formData.name,
-                code: formData.code,
-                description: formData.description,
-                durationWeeks: parseInt(formData.durationWeeks) || 12,
-                targetCategory: formData.targetCategory,
-                createdBy: formData.createdBy,
-              }
-            : p
-        )
-      )
-      setToastMsg('Program berhasil diperbarui!')
+      const res = await updateProgramAction(editingId, {
+        name: formData.name,
+        code: formData.code,
+        description: formData.description,
+        durationWeeks: parseInt(formData.durationWeeks) || 12,
+        targetCategory: formData.targetCategory,
+      })
+
+      if (res.success) {
+        await loadData()
+        setToastMsg('Program berhasil diperbarui di database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal memperbarui program')
+        setToastOpen(true)
+      }
     } else {
-      const created: HealthProgram = {
-        id: `PRG-00${programs.length + 1}`,
+      const res = await createProgramAction({
         name: formData.name,
         code: formData.code || `PRG-${formData.name.substring(0, 4).toUpperCase()}`,
         description: formData.description || 'Program perawatan kesehatan terpimpin untuk pasien.',
         durationWeeks: parseInt(formData.durationWeeks) || 12,
-        enrolledPatientsCount: 0,
-        status: 'Aktif',
         targetCategory: formData.targetCategory,
-        createdBy: formData.createdBy,
-      }
-      setPrograms([created, ...programs])
-      setToastMsg('Program baru berhasil dibuat!')
-    }
+      })
 
-    setOpenModal(false)
-    setToastOpen(true)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Program baru berhasil dibuat di database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal membuat program')
+        setToastOpen(true)
+      }
+    }
   }
 
   const handleDeleteRequest = (id: string) => {
@@ -126,10 +152,15 @@ export default function ProgramManagementView() {
     setDeleteConfirmOpen(true)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (programToDelete) {
-      setPrograms(programs.filter((p) => p.id !== programToDelete))
-      setToastMsg('Program berhasil dihapus.')
+      const res = await deleteProgramAction(programToDelete)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Program berhasil dihapus dari database.')
+      } else {
+        setToastMsg(res.error || 'Gagal menghapus program')
+      }
       setToastOpen(true)
     }
     setDeleteConfirmOpen(false)

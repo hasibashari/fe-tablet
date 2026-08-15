@@ -27,11 +27,18 @@ import { Search, Plus, BellRing, Edit, Trash2 } from 'lucide-react'
 import AdminHeader from './AdminHeader'
 import SendReminderModal from './SendReminderModal'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
-import { initialSchedules, initialPatients } from '../api/mockAdminData'
-import { MedicationSchedule } from '../types/admin.types'
+import {
+  getSchedulesAction,
+  getPatientsAction,
+  createScheduleAction,
+  updateScheduleAction,
+  deleteScheduleAction,
+} from '../api/adminRepository'
+import { MedicationSchedule, PatientUser } from '../types/admin.types'
 
 export default function ScheduleManagementView() {
-  const [schedules, setSchedules] = useState<MedicationSchedule[]>(initialSchedules)
+  const [schedules, setSchedules] = useState<MedicationSchedule[]>([])
+  const [patients, setPatients] = useState<PatientUser[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('Semua')
   
@@ -57,6 +64,27 @@ export default function ScheduleManagementView() {
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
 
+  const loadData = React.useCallback(async () => {
+    const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()])
+    setSchedules(s)
+    setPatients(p)
+  }, [])
+
+  React.useEffect(() => {
+    let isMounted = true
+    const init = async () => {
+      const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()])
+      if (isMounted) {
+        setSchedules(s)
+        setPatients(p)
+      }
+    }
+    init()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   // Form State
   const [formData, setFormData] = useState<{
     patientId: string
@@ -67,7 +95,7 @@ export default function ScheduleManagementView() {
     category: 'Obat Resep' | 'Suplemen' | 'Aktivitas Medis'
     instructions: string
   }>({
-    patientId: initialPatients[0]?.id || '',
+    patientId: '',
     medicationName: '',
     dosage: '1 Tablet',
     frequency: '1x Sehari',
@@ -87,7 +115,7 @@ export default function ScheduleManagementView() {
   const handleOpenAdd = () => {
     setEditingId(null)
     setFormData({
-      patientId: initialPatients[0]?.id || '',
+      patientId: patients[0]?.id || 'usr_1',
       medicationName: '',
       dosage: '1 Tablet',
       frequency: '1x Sehari',
@@ -112,52 +140,55 @@ export default function ScheduleManagementView() {
     setOpenModal(true)
   }
 
-  const handleSaveSchedule = () => {
+  const handleSaveSchedule = async () => {
     if (!formData.medicationName) return
 
-    const selectedPatient = initialPatients.find((p) => p.id === formData.patientId)
     const timeSlotsArray = formData.timeSlot.split(',').map((s) => s.trim())
+    const today = new Date().toISOString().split('T')[0]
 
     if (editingId) {
-      setSchedules((prev) =>
-        prev.map((s) =>
-          s.id === editingId
-            ? {
-                ...s,
-                patientId: formData.patientId,
-                patientName: selectedPatient ? selectedPatient.name : s.patientName,
-                medicationName: formData.medicationName,
-                dosage: formData.dosage,
-                frequency: formData.frequency,
-                timeSlots: timeSlotsArray,
-                category: formData.category,
-                instructions: formData.instructions,
-              }
-            : s
-        )
-      )
-      setToastMsg('Jadwal berhasil diperbarui!')
-    } else {
-      const created: MedicationSchedule = {
-        id: `SCH-${schedules.length + 101}`,
+      const res = await updateScheduleAction(editingId, {
         patientId: formData.patientId,
-        patientName: selectedPatient ? selectedPatient.name : 'Pasien Medis',
         medicationName: formData.medicationName,
         dosage: formData.dosage,
         frequency: formData.frequency,
         timeSlots: timeSlotsArray,
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: '2025-12-31',
-        status: 'Aktif',
+        category: formData.category,
+        instructions: formData.instructions,
+      })
+
+      if (res.success) {
+        await loadData()
+        setToastMsg('Jadwal berhasil diperbarui di database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal memperbarui jadwal')
+        setToastOpen(true)
+      }
+    } else {
+      const res = await createScheduleAction({
+        patientId: formData.patientId || patients[0]?.id || 'usr_1',
+        medicationName: formData.medicationName,
+        dosage: formData.dosage,
+        frequency: formData.frequency,
+        timeSlots: timeSlotsArray,
+        startDate: today,
+        endDate: '2026-12-31',
         category: formData.category,
         instructions: formData.instructions || 'Diminum teratur sesuai petunjuk dokter.',
-      }
-      setSchedules([created, ...schedules])
-      setToastMsg('Jadwal baru berhasil dibuat!')
-    }
+      })
 
-    setOpenModal(false)
-    setToastOpen(true)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Jadwal baru berhasil disimpan ke database!')
+        setOpenModal(false)
+        setToastOpen(true)
+      } else {
+        setToastMsg(res.error || 'Gagal membuat jadwal')
+        setToastOpen(true)
+      }
+    }
   }
 
   const handleDeleteRequest = (id: string) => {
@@ -165,17 +196,22 @@ export default function ScheduleManagementView() {
     setDeleteConfirmOpen(true)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (scheduleToDelete) {
-      setSchedules(schedules.filter((s) => s.id !== scheduleToDelete))
-      setToastMsg('Jadwal berhasil dihapus.')
+      const res = await deleteScheduleAction(scheduleToDelete)
+      if (res.success) {
+        await loadData()
+        setToastMsg('Jadwal berhasil dihapus dari database.')
+      } else {
+        setToastMsg(res.error || 'Gagal menghapus jadwal')
+      }
       setToastOpen(true)
     }
     setDeleteConfirmOpen(false)
   }
 
   const handleOpenReminder = (schedule: MedicationSchedule) => {
-    const patientObj = initialPatients.find((p) => p.id === schedule.patientId)
+    const patientObj = patients.find((p) => p.id === schedule.patientId)
     setReminderData({
       patientName: schedule.patientName,
       patientPhone: patientObj?.phone || '0812-3456-7890',
@@ -371,7 +407,7 @@ export default function ScheduleManagementView() {
                 label="Pasien"
                 onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
               >
-                {initialPatients.map((p) => (
+                {patients.map((p) => (
                   <MenuItem key={p.id} value={p.id}>
                     {p.name} ({p.id})
                   </MenuItem>
