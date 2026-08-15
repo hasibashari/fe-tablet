@@ -159,7 +159,7 @@ export function PWAInstallBanner({
             elevation={0}
             sx={{
               p: { xs: 2, sm: 2.25 },
-              borderRadius: 3.5,
+              borderRadius: 2,
               background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.95) 0%, rgba(14, 165, 233, 0.98) 50%, rgba(56, 189, 248, 0.95) 100%)',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(255, 255, 255, 0.28)',
@@ -203,7 +203,7 @@ export function PWAInstallBanner({
                   sx={{
                     width: 42,
                     height: 42,
-                    borderRadius: 2.5,
+                    borderRadius: 2,
                     bgcolor: 'rgba(255, 255, 255, 0.22)',
                     backdropFilter: 'blur(8px)',
                     border: '1px solid rgba(255, 255, 255, 0.3)',
@@ -313,7 +313,7 @@ export function PWAInstallBanner({
                   px: 1.25,
                   py: 0.4,
                   minWidth: 'auto',
-                  borderRadius: 2,
+                  borderRadius: 1.5,
                   '&:hover': {
                     bgcolor: 'rgba(255, 255, 255, 0.12)',
                     color: 'white',
@@ -338,7 +338,7 @@ export function PWAInstallBanner({
                     textTransform: 'none',
                     px: 1.8,
                     py: 0.6,
-                    borderRadius: 2.25,
+                    borderRadius: 1.5,
                     boxShadow: '0 3px 10px rgba(0, 0, 0, 0.14)',
                     '&:hover': {
                       bgcolor: '#f8fafc',
