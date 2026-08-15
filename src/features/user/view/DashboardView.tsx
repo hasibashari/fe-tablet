@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import HealthLineChart from '../components/HealthLineChart'
 import MedicationAlertBanner from '../components/MedicationAlertBanner'
 import PWAInstallBanner from '../components/PWAInstallBanner'
+import NotificationPermissionPrompt from '../components/NotificationPermissionPrompt'
+import { showSystemNotification } from '@/src/shared/utils/notifications'
 import {
   getTodayReminders,
   toggleReminderStatus,
@@ -143,6 +145,8 @@ export default function DashboardView() {
     }
   }, [userId])
 
+
+
   const handleToggleStatus = async (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
     setReminders((prev) =>
@@ -212,15 +216,49 @@ export default function DashboardView() {
 
     if (pendingReminders.length === 0) return null
 
-    // Find first reminder that is due (or within 30 mins window)
+    // Hanya cari jadwal yang SUDAH masuk waktunya (atau dalam jendela toleransi 30 menit sebelum jadwal)
     const dueReminder = pendingReminders.find((r) => {
       const [h, m] = r.time.split(':').map(Number)
       const scheduledMinutes = h * 60 + m
       return nowMinutes >= scheduledMinutes - 30
     })
 
-    return dueReminder || pendingReminders[0] || null
+    // Hanya return jika benar-benar sudah due, jangan fallback ke pendingReminders[0]
+    return dueReminder || null
   }, [reminders, currentTime])
+
+  // Track fired notifications to prevent duplicate alerts in same session
+  const notifiedKeysRef = useRef<Set<string>>(new Set())
+
+  // Trigger system notification on mobile/browser when a medication is due
+  useEffect(() => {
+    if (nextReminder && alertOpen && !snoozedUntil) {
+      const key = `due-${nextReminder.id}-${nextReminder.date}`
+      if (!notifiedKeysRef.current.has(key)) {
+        notifiedKeysRef.current.add(key)
+        showSystemNotification('Waktunya Minum Obat! 💊', {
+          body: `${nextReminder.title} (${nextReminder.time} WIB)${nextReminder.description ? ` - ${nextReminder.description}` : ''}`,
+          tag: nextReminder.id,
+          url: '/user/dashboard',
+        })
+      }
+    }
+  }, [nextReminder, alertOpen, snoozedUntil])
+
+  // Trigger system notification on mobile/browser when an admin nudge arrives
+  useEffect(() => {
+    if (adminNudge && alertOpen) {
+      const key = `nudge-${adminNudge.senderName}-${adminNudge.message}`
+      if (!notifiedKeysRef.current.has(key)) {
+        notifiedKeysRef.current.add(key)
+        showSystemNotification(`Pesan dari ${adminNudge.senderName} (${adminNudge.senderRole}) 🩺`, {
+          body: adminNudge.message,
+          tag: `nudge-${Date.now()}`,
+          url: '/user/dashboard',
+        })
+      }
+    }
+  }, [adminNudge, alertOpen])
 
   // Group today's reminders into Morning, Afternoon, Evening slots
   const timeSlots = useMemo(() => {
@@ -275,6 +313,9 @@ export default function DashboardView() {
 
   return (
     <Box sx={{ pb: 5, width: '100%' }}>
+      {/* Mobile / PWA Notification Permission Activation Card */}
+      <NotificationPermissionPrompt />
+
       {/* PWA Promotion Banner */}
       <PWAInstallBanner />
 
