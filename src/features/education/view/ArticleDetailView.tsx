@@ -39,9 +39,13 @@ import {
 
 interface ArticleDetailViewProps {
   articleId: string
+  backHref?: string
 }
 
-export default function ArticleDetailView({ articleId }: ArticleDetailViewProps) {
+export default function ArticleDetailView({
+  articleId,
+  backHref = '/user/education',
+}: ArticleDetailViewProps) {
   const router = useRouter()
   const [article, setArticle] = useState<Article | null>(null)
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([])
@@ -193,7 +197,7 @@ export default function ArticleDetailView({ articleId }: ArticleDetailViewProps)
             variant="contained"
             color="primary"
             startIcon={<ArrowLeft size={18} />}
-            onClick={() => router.push('/user/education')}
+            onClick={() => router.push(backHref)}
             sx={{ px: 3.5, py: 1.25 }}
           >
             Back to Health Education
@@ -219,7 +223,7 @@ export default function ArticleDetailView({ articleId }: ArticleDetailViewProps)
           borderColor: 'divider',
         }}
       >
-        <Link href="/user/education" style={{ textDecoration: 'none' }}>
+        <Link href={backHref} style={{ textDecoration: 'none' }}>
           <Button
             variant="text"
             startIcon={<ArrowLeft size={18} />}

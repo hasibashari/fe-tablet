@@ -33,8 +33,10 @@ import {
   createScheduleAction,
   updateScheduleAction,
   deleteScheduleAction,
+  sendReminderNudgeAction,
 } from '../api/adminRepository'
 import { MedicationSchedule, PatientUser } from '../types/admin.types'
+import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync'
 
 interface ScheduleFormData {
   patientId: string
@@ -94,8 +96,10 @@ export default function ScheduleManagementView() {
   // Reminder Modal State
   const [reminderModalOpen, setReminderModalOpen] = useState(false)
   const [reminderData, setReminderData] = useState<{
+    patientId?: string
     patientName: string
     patientPhone?: string
+    scheduleId?: string
     medicationName?: string
     dosage?: string
     timeSlot?: string
@@ -111,14 +115,45 @@ export default function ScheduleManagementView() {
 
   useEffect(() => {
     let isMounted = true
-    Promise.all([getSchedulesAction(), getPatientsAction()]).then(([s, p]) => {
+    const fetchData = async () => {
+      const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()])
       if (isMounted) {
         setSchedules(s)
         setPatients(p)
       }
+    }
+
+    fetchData()
+
+    // 1. Instant Cross-Tab Sync via BroadcastChannel (0s latency)
+    const unsubscribe = subscribeRealtimeEvent((event) => {
+      if (
+        event.type === 'MEDICATION_TAKEN' ||
+        event.type === 'SCHEDULE_UPDATED' ||
+        event.type === 'NUDGE_DISMISSED'
+      ) {
+        fetchData()
+      }
     })
+
+    // 2. Smart Background Polling (every 8 seconds for multi-device sync)
+    const pollInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchData()
+      }
+    }, 8000)
+
+    // 3. Window focus listener
+    const handleFocus = () => {
+      fetchData()
+    }
+    window.addEventListener('focus', handleFocus)
+
     return () => {
       isMounted = false
+      unsubscribe()
+      clearInterval(pollInterval)
+      window.removeEventListener('focus', handleFocus)
     }
   }, [])
 
@@ -154,7 +189,12 @@ export default function ScheduleManagementView() {
       return
     }
 
-    const timeSlotsArray = formData.timeSlot.split(',').map((s) => s.trim())
+    const rawSlots = formData.timeSlot
+      .split(/[,;]+/)
+      .map((s) => s.trim().replace('.', ':'))
+      .filter((s) => s.length > 0)
+
+    const timeSlotsArray = rawSlots.length > 0 ? rawSlots : ['08:00']
     const today = new Date().toISOString().split('T')[0]
 
     setSubmitting(true)
@@ -172,6 +212,7 @@ export default function ScheduleManagementView() {
 
         if (res.success) {
           await loadData()
+          publishRealtimeEvent('SCHEDULE_UPDATED', { patientId: formData.patientId, scheduleId: editingId })
           handleCloseModal()
           showToast('Jadwal berhasil diperbarui di database!', 'success')
         } else {
@@ -192,6 +233,7 @@ export default function ScheduleManagementView() {
 
         if (res.success) {
           await loadData()
+          publishRealtimeEvent('SCHEDULE_UPDATED', { patientId: formData.patientId })
           handleCloseModal()
           showToast('Jadwal baru berhasil disimpan ke database!', 'success')
         } else {
@@ -208,6 +250,7 @@ export default function ScheduleManagementView() {
       const res = await deleteScheduleAction(scheduleToDelete)
       if (res.success) {
         await loadData()
+        publishRealtimeEvent('SCHEDULE_UPDATED', { scheduleId: scheduleToDelete })
         showToast('Jadwal berhasil dihapus dari database.', 'success')
       } else {
         showToast(res.error || 'Gagal menghapus jadwal', 'error')
@@ -219,8 +262,10 @@ export default function ScheduleManagementView() {
   const handleOpenReminder = (schedule: MedicationSchedule) => {
     const patientObj = patients.find((p) => p.id === schedule.patientId)
     setReminderData({
+      patientId: schedule.patientId,
       patientName: schedule.patientName,
       patientPhone: patientObj?.phone || '0812-3456-7890',
+      scheduleId: schedule.id,
       medicationName: schedule.medicationName,
       dosage: schedule.dosage,
       timeSlot: schedule.timeSlots.join(', ') + ' WIB',
@@ -228,7 +273,25 @@ export default function ScheduleManagementView() {
     setReminderModalOpen(true)
   }
 
-  const handleSendSuccess = (channel: 'app' | 'whatsapp') => {
+  const handleSendSuccess = async (channel: 'app' | 'whatsapp', messageSent: string) => {
+    if (reminderData.patientId) {
+      await sendReminderNudgeAction({
+        patientId: reminderData.patientId,
+        senderName: 'dr. Sarah Jenkins, Sp.GK',
+        senderRole: 'Dokter Penanggung Jawab',
+        scheduleId: reminderData.scheduleId,
+        medicationName: reminderData.medicationName,
+        dosage: reminderData.dosage,
+        timeSlot: reminderData.timeSlot,
+        message: messageSent,
+        channel,
+      })
+      await loadData()
+      publishRealtimeEvent('NUDGE_SENT', {
+        patientId: reminderData.patientId,
+        scheduleId: reminderData.scheduleId,
+      })
+    }
     const channelName = channel === 'whatsapp' ? 'WhatsApp' : 'Notifikasi App'
     showToast(`Pengingat obat berhasil dikirim ke ${reminderData.patientName} via ${channelName}!`, 'success')
   }
@@ -237,7 +300,7 @@ export default function ScheduleManagementView() {
     {
       id: 'no',
       label: 'No.',
-      width: '5%',
+      width: '4%',
       renderCell: (_, index) => (
         <Typography variant="body2" color="text.secondary">
           {index + 1}
@@ -247,7 +310,7 @@ export default function ScheduleManagementView() {
     {
       id: 'pasien',
       label: 'Pasien',
-      width: '20%',
+      width: '18%',
       renderCell: (schedule) => (
         <>
           <Typography variant="subtitle2" color="text.primary">
@@ -262,7 +325,7 @@ export default function ScheduleManagementView() {
     {
       id: 'obat',
       label: 'Obat / Tindakan',
-      width: '28%',
+      width: '24%',
       renderCell: (schedule) => (
         <Box>
           <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
@@ -274,7 +337,7 @@ export default function ScheduleManagementView() {
               size="small"
               sx={{ height: 18, fontSize: '0.68rem', fontWeight: 600, bgcolor: 'primary.light', color: 'primary.dark' }}
             />
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
               {schedule.instructions}
             </Typography>
           </Box>
@@ -283,8 +346,8 @@ export default function ScheduleManagementView() {
     },
     {
       id: 'dosis',
-      label: 'Dosis',
-      width: '16%',
+      label: 'Dosis & Frekuensi',
+      width: '15%',
       renderCell: (schedule) => (
         <>
           <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
@@ -301,17 +364,78 @@ export default function ScheduleManagementView() {
       label: 'Waktu',
       width: '14%',
       renderCell: (schedule) => (
-        <Box>
-          <Typography variant="body2" color="text.primary">
-            {schedule.timeSlots.join(', ')}
-          </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {Array.isArray(schedule.timeSlots) && schedule.timeSlots.length > 0 ? (
+            schedule.timeSlots.map((slot) => (
+              <Chip
+                key={slot}
+                label={slot}
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                  borderColor: 'divider',
+                  bgcolor: 'action.hover',
+                }}
+              />
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              -
+            </Typography>
+          )}
         </Box>
       ),
     },
     {
+      id: 'todayStatus',
+      label: 'Status Hari Ini',
+      width: '13%',
+      renderCell: (schedule) => {
+        if (schedule.todayStatus === 'COMPLETED') {
+          return (
+            <Chip
+              label="Sudah Diminum"
+              size="small"
+              sx={{
+                bgcolor: 'rgba(22, 163, 74, 0.12)',
+                color: '#15803d',
+                fontWeight: 700,
+                fontSize: '0.7rem',
+                height: 22,
+                borderRadius: 1,
+              }}
+            />
+          )
+        }
+        if (schedule.todayStatus === 'PENDING') {
+          return (
+            <Chip
+              label="Belum Diminum"
+              size="small"
+              sx={{
+                bgcolor: 'rgba(245, 158, 11, 0.12)',
+                color: '#b45309',
+                fontWeight: 700,
+                fontSize: '0.7rem',
+                height: 22,
+                borderRadius: 1,
+              }}
+            />
+          )
+        }
+        return (
+          <Typography variant="caption" color="text.secondary">
+            -
+          </Typography>
+        )
+      },
+    },
+    {
       id: 'status',
       label: 'Status',
-      width: '10%',
+      width: '8%',
       renderCell: (schedule) => (
         <Chip 
           label={schedule.status} 
@@ -460,6 +584,8 @@ export default function ScheduleManagementView() {
               label="Waktu Pengingat (HH:MM)"
               fullWidth
               size="small"
+              placeholder="08:00, 12:00, 20:00"
+              helperText="Pisahkan dengan koma jika lebih dari 1 waktu"
               value={formData.timeSlot}
               onChange={(e) => updateFormData({ timeSlot: e.target.value })}
             />

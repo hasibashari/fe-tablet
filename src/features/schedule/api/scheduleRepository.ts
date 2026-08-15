@@ -1,7 +1,7 @@
 'use server'
 
 import db from '@/src/lib/db/client'
-import { Reminder, ReminderStatus, ReminderType, DailyProgressStats } from '../types'
+import { Reminder, ReminderStatus, ReminderType, DailyProgressStats, AdminNudge } from '../types'
 
 interface ReminderRow {
   id: string
@@ -166,5 +166,71 @@ export async function getDailyProgressStatsAction(
   } catch (error) {
     console.error('Error in getDailyProgressStatsAction:', error)
     return { total: 0, completed: 0, pending: 0, missed: 0, percentage: 0 }
+  }
+}
+
+interface NudgeRow {
+  id: string
+  patient_id: string
+  sender_id: string | null
+  sender_name: string
+  sender_role: string
+  schedule_id: string | null
+  medication_name: string | null
+  dosage: string | null
+  time_slot: string | null
+  message: string
+  channel: string
+  status: string
+  created_at: string
+}
+
+export async function getActiveNudgeAction(patientId: string = 'usr_1'): Promise<AdminNudge | null> {
+  try {
+    const row = db
+      .prepare(
+        `SELECT * FROM admin_nudges 
+         WHERE patient_id = ? AND status = 'UNREAD' 
+         ORDER BY created_at DESC 
+         LIMIT 1`
+      )
+      .get(patientId) as NudgeRow | undefined
+
+    if (!row) return null
+
+    // Format time, e.g. 14:30 WIB
+    const d = new Date(row.created_at)
+    const timeStr = !isNaN(d.getTime())
+      ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+      : 'Baru saja'
+
+    return {
+      id: row.id,
+      patientId: row.patient_id,
+      senderName: row.sender_name,
+      senderRole: row.sender_role,
+      scheduleId: row.schedule_id || undefined,
+      medicationName: row.medication_name || undefined,
+      dosage: row.dosage || undefined,
+      timeSlot: row.time_slot || undefined,
+      message: row.message,
+      channel: (row.channel as 'app' | 'whatsapp') || 'app',
+      status: row.status as 'UNREAD' | 'READ' | 'DISMISSED',
+      sentAt: timeStr,
+    }
+  } catch (error) {
+    console.error('Error fetching active nudge:', error)
+    return null
+  }
+}
+
+export async function dismissNudgeAction(nudgeId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    db.prepare(`UPDATE admin_nudges SET status = 'DISMISSED' WHERE id = ?`).run(nudgeId)
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error dismissing nudge:', error)
+    const errMsg = error instanceof Error ? error.message : 'Gagal menutup pengingat.'
+    return { success: false, error: errMsg }
   }
 }

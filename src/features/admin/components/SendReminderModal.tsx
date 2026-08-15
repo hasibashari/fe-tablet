@@ -24,8 +24,10 @@ import { BellRing, MessageSquare, Send } from 'lucide-react'
 export interface SendReminderModalProps {
   open: boolean
   onClose: () => void
+  patientId?: string
   patientName: string
   patientPhone?: string
+  scheduleId?: string
   medicationName?: string
   dosage?: string
   timeSlot?: string

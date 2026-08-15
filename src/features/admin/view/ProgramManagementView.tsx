@@ -15,7 +15,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material'
-import { Plus, Activity, Edit, Trash2, Users, Calendar } from 'lucide-react'
+import { Plus, Edit, Trash2, Users, Calendar } from 'lucide-react'
 import AdminHeader from '../components/AdminHeader'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
 import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
@@ -183,24 +183,19 @@ export default function ProgramManagementView() {
       label: 'Nama Program',
       width: '35%',
       renderCell: (program) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'primary.light', color: 'primary.dark' }}>
-            <Activity size={20} />
-          </Box>
-          <Box>
-            <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 600 }}>
-              {program.name}
+        <Box>
+          <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 600 }}>
+            {program.name}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
+            <Chip
+              label={program.targetCategory}
+              size="small"
+              sx={{ height: 18, fontSize: '0.68rem', fontWeight: 600, bgcolor: 'primary.light', color: 'primary.dark' }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              Kode: {program.code}
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
-              <Chip
-                label={program.targetCategory}
-                size="small"
-                sx={{ height: 18, fontSize: '0.68rem', fontWeight: 600, bgcolor: 'primary.light', color: 'primary.dark' }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Kode: {program.code}
-              </Typography>
-            </Box>
           </Box>
         </Box>
       ),

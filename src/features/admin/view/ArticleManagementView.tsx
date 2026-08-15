@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Box,
   Typography,
@@ -16,8 +17,9 @@ import {
   Grid,
   IconButton,
   Tooltip,
+  Paper,
 } from '@mui/material'
-import { Search, Plus, Eye, Edit, Trash2, Clock } from 'lucide-react'
+import { Search, Plus, Eye, Edit, Trash2, Clock, UploadCloud, Image as ImageIcon, X } from 'lucide-react'
 import AdminHeader from '../components/AdminHeader'
 import { DataTable, Column } from '@/src/shared/components/DataTable'
 import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
@@ -39,8 +41,10 @@ interface ArticleFormData {
   category: 'Hipertensi' | 'Diabetes' | 'Nutrisi' | 'Gaya Hidup' | 'Kardiovaskular'
   author: string
   summary: string
+  content: string
   readTime: string
   status: 'Terbit' | 'Draf'
+  imageUrl: string
 }
 
 const initialArticleFormData: ArticleFormData = {
@@ -48,15 +52,19 @@ const initialArticleFormData: ArticleFormData = {
   category: 'Hipertensi',
   author: 'dr. Siti Rahma, Sp.PD',
   summary: '',
+  content: '',
   readTime: '5 min read',
   status: 'Terbit',
+  imageUrl: '',
 }
 
 export default function ArticleManagementView() {
+  const router = useRouter()
   const [articles, setArticles] = useState<HealthArticle[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('Semua')
   const [submitting, setSubmitting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // 1. Hook Form Modal Add/Edit
   const {
@@ -115,13 +123,42 @@ export default function ArticleManagementView() {
       category: article.category,
       author: article.author,
       summary: article.summary || '',
+      content: article.content || article.summary || '',
       readTime: article.readTime,
       status: article.status,
+      imageUrl: article.imageUrl || '',
     })
   }
 
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 3 * 1024 * 1024) {
+        showToast('Ukuran gambar maksimal 3MB', 'error')
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = (uploadEvent) => {
+        const base64Url = uploadEvent.target?.result as string
+        updateFormData({ imageUrl: base64Url })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    updateFormData({ imageUrl: '' })
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handlePreviewArticle = (articleId: string) => {
+    router.push(`/admin/articles/${articleId}`)
+  }
+
   const handleSaveArticle = async () => {
-    if (!formData.title) {
+    if (!formData.title.trim()) {
       showToast('Judul artikel wajib diisi', 'error')
       return
     }
@@ -134,8 +171,10 @@ export default function ArticleManagementView() {
           category: formData.category,
           author: formData.author,
           summary: formData.summary,
+          content: formData.content,
           readTime: formData.readTime,
           status: formData.status,
+          imageUrl: formData.imageUrl,
         })
 
         if (res.success) {
@@ -151,8 +190,10 @@ export default function ArticleManagementView() {
           category: formData.category,
           author: formData.author,
           summary: formData.summary || 'Ringkasan artikel edukasi kesehatan untuk pasien.',
+          content: formData.content,
           readTime: formData.readTime,
           status: formData.status,
+          imageUrl: formData.imageUrl,
         })
 
         if (res.success) {
@@ -258,8 +299,8 @@ export default function ArticleManagementView() {
       width: '10%',
       renderCell: (article) => (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-          <Tooltip title="Preview Artikel">
-            <IconButton size="small">
+          <Tooltip title="Lihat Detail Artikel">
+            <IconButton size="small" color="primary" onClick={() => handlePreviewArticle(article.id)}>
               <Eye size={16} />
             </IconButton>
           </Tooltip>
@@ -342,7 +383,138 @@ export default function ArticleManagementView() {
         onSubmit={handleSaveArticle}
         submitText={editingId ? 'Simpan Perubahan' : 'Publikasikan Artikel'}
         submitting={submitting}
+        maxWidth="md"
       >
+        {/* Cover Image Upload Section */}
+        <Box sx={{ mb: 1 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 1 }}>
+            Gambar Cover Artikel
+          </Typography>
+          
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleImageFileChange}
+          />
+
+          {formData.imageUrl ? (
+            <Paper
+              variant="outlined"
+              sx={{
+                position: 'relative',
+                borderRadius: 2,
+                overflow: 'hidden',
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Box
+                component="img"
+                src={formData.imageUrl}
+                alt="Cover Preview"
+                sx={{
+                  width: '100%',
+                  height: 180,
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  display: 'flex',
+                  gap: 1,
+                  bgcolor: 'rgba(0, 0, 0, 0.65)',
+                  borderRadius: 2,
+                  p: 0.5,
+                }}
+              >
+                <Button
+                  size="small"
+                  variant="text"
+                  sx={{ color: '#fff', fontSize: '0.75rem', py: 0.25, px: 1, minWidth: 'auto' }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Ganti
+                </Button>
+                <IconButton
+                  size="small"
+                  onClick={handleRemoveImage}
+                  sx={{ color: '#fff', p: 0.25 }}
+                >
+                  <X size={16} />
+                </IconButton>
+              </Box>
+            </Paper>
+          ) : (
+            <Paper
+              variant="outlined"
+              onClick={() => fileInputRef.current?.click()}
+              sx={{
+                p: 3,
+                textAlign: 'center',
+                border: '2px dashed',
+                borderColor: 'divider',
+                borderRadius: 2,
+                bgcolor: 'action.hover',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: 'rgba(14, 165, 233, 0.04)',
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(14, 165, 233, 0.1)',
+                  color: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 1,
+                }}
+              >
+                <UploadCloud size={24} />
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                Klik untuk upload gambar cover
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Format didukung: PNG, JPG, WebP (Maksimal 3MB)
+              </Typography>
+            </Paper>
+          )}
+
+          {/* Opsi input URL langsung */}
+          <TextField
+            placeholder="Atau tempelkan tautan URL gambar cover di sini..."
+            fullWidth
+            size="small"
+            value={formData.imageUrl}
+            onChange={(e) => updateFormData({ imageUrl: e.target.value })}
+            sx={{ mt: 1.5 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <ImageIcon size={16} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </Box>
+
         <TextField
           label="Judul Artikel"
           fullWidth
@@ -386,7 +558,7 @@ export default function ArticleManagementView() {
         <Grid container spacing={2}>
           <Grid size={{ xs: 6 }}>
             <TextField
-              label="Waktu (misal: 5 min)"
+              label="Waktu Baca (misal: 5 min read)"
               fullWidth
               size="small"
               value={formData.readTime}
@@ -413,13 +585,26 @@ export default function ArticleManagementView() {
         </Grid>
 
         <TextField
-          label="Ringkasan Artikel"
+          label="Ringkasan Singkat (Summary)"
           multiline
-          rows={3}
+          rows={2}
           fullWidth
           size="small"
+          placeholder="Ringkasan 1-2 kalimat untuk kartu artikel..."
           value={formData.summary}
           onChange={(e) => updateFormData({ summary: e.target.value })}
+        />
+
+        <TextField
+          label="Isi Konten Artikel (Paragraf Edukasi)"
+          multiline
+          rows={6}
+          fullWidth
+          size="small"
+          placeholder="Tuliskan materi edukasi kesehatan secara lengkap di sini. Gunakan baris baru (enter dua kali) untuk memisahkan paragraf baru..."
+          value={formData.content}
+          onChange={(e) => updateFormData({ content: e.target.value })}
+          helperText="Pisahkan paragraf dengan baris baru (enter 2x) agar tersusun rapi di tampilan user."
         />
       </CrudModalDialog>
       

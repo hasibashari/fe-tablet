@@ -40,4 +40,5 @@ export interface AuthContextValue extends AuthState {
   quickLogin: (role: UserRole) => Promise<{ success: boolean; redirectTo: string }>
   register: (data: RegisterCredentials) => Promise<{ success: boolean; error?: string; redirectTo?: string }>
   logout: () => void
+  updateUser: (data: Partial<AuthUser>) => void
 }

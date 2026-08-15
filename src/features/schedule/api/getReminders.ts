@@ -1,9 +1,11 @@
-import { Reminder } from '../types'
+import { Reminder, AdminNudge } from '../types'
 import {
   getRemindersAction,
   getRemindersByDateAction,
   toggleReminderStatusAction,
   getDailyProgressStatsAction,
+  getActiveNudgeAction,
+  dismissNudgeAction,
 } from './scheduleRepository'
 
 export const getReminders = async (patientId: string = 'usr_1'): Promise<Reminder[]> => {
@@ -35,4 +37,12 @@ export const getDailyProgressStats = async (
   dateStr?: string
 ) => {
   return await getDailyProgressStatsAction(patientId, dateStr)
+}
+
+export const getActiveNudge = async (patientId: string = 'usr_1'): Promise<AdminNudge | null> => {
+  return await getActiveNudgeAction(patientId)
+}
+
+export const dismissNudge = async (nudgeId: string) => {
+  return await dismissNudgeAction(nudgeId)
 }

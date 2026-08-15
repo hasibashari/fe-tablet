@@ -175,6 +175,23 @@ CREATE TABLE IF NOT EXISTS health_program_enrollments (
     UNIQUE(program_id, patient_id)
 );
 
+-- 8. ADMIN NUDGES (MANUAL REMINDERS)
+CREATE TABLE IF NOT EXISTS admin_nudges (
+    id TEXT PRIMARY KEY,
+    patient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    sender_name TEXT NOT NULL,
+    sender_role TEXT NOT NULL,
+    schedule_id TEXT REFERENCES medication_schedules(id) ON DELETE SET NULL,
+    medication_name TEXT,
+    dosage TEXT,
+    time_slot TEXT,
+    message TEXT NOT NULL,
+    channel TEXT NOT NULL DEFAULT 'app' CHECK(channel IN ('app', 'whatsapp')),
+    status TEXT NOT NULL DEFAULT 'UNREAD' CHECK(status IN ('UNREAD', 'READ', 'DISMISSED')),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ============================================================
 -- PERFORMANCE INDEXES
 -- ============================================================
@@ -186,3 +203,4 @@ CREATE INDEX IF NOT EXISTS idx_logs_patient_date ON consumption_logs(patient_id,
 CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category);
 CREATE INDEX IF NOT EXISTS idx_article_sections_art_order ON article_sections(article_id, order_index);
 CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON user_bookmarks(user_id);
+CREATE INDEX IF NOT EXISTS idx_nudges_patient_status ON admin_nudges(patient_id, status);

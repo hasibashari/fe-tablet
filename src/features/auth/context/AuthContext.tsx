@@ -130,6 +130,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const updateUser = useCallback((updated: Partial<AuthUser>) => {
+    setState((prev) => {
+      if (!prev.user) return prev
+      const newUser: AuthUser = { ...prev.user, ...updated }
+      try {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser))
+      } catch {
+        // ignore storage parsing error
+      }
+      return {
+        ...prev,
+        user: newUser,
+      }
+    })
+  }, [])
+
   return (
     <AuthContext.Provider
       value={{
@@ -138,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         quickLogin,
         register,
         logout,
+        updateUser,
       }}
     >
       {children}

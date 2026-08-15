@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { getProfile } from '../api/getProfile'
 import { updateUserProfileAction } from '../api/userRepository'
 import { UserProfile } from '../types'
-import { Mail, Phone, Calendar, Activity, User, Save } from 'lucide-react'
+import { Mail, Phone, Calendar, Activity, User, Save, CheckCircle2 } from 'lucide-react'
 import ProfileLayout from '@/src/shared/components/ProfileLayout'
 import { useAuth } from '@/src/features/auth/context/AuthContext'
 import {
@@ -18,10 +18,11 @@ import {
   MenuItem,
   Snackbar,
   Alert,
+  Chip,
 } from '@mui/material'
 
 export default function ProfileView() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const userId = user?.id || 'usr_1'
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,7 +31,10 @@ export default function ProfileView() {
   const [openEditModal, setOpenEditModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
+    name: '',
+    email: '',
     phone: '',
+    dateOfBirth: '',
     height: 170,
     weight: 70,
     bloodType: 'O+',
@@ -43,7 +47,6 @@ export default function ProfileView() {
     severity: 'success',
   })
 
-
   useEffect(() => {
     let isMounted = true
     const init = async () => {
@@ -51,7 +54,10 @@ export default function ProfileView() {
       if (isMounted) {
         setProfile(data)
         setFormData({
+          name: data.name || '',
+          email: data.email || '',
           phone: data.phone || '',
+          dateOfBirth: data.dateOfBirth || '',
           height: data.height || 170,
           weight: data.weight || 70,
           bloodType: data.bloodType || 'O+',
@@ -68,7 +74,10 @@ export default function ProfileView() {
   const handleOpenEdit = () => {
     if (profile) {
       setFormData({
+        name: profile.name || '',
+        email: profile.email || '',
         phone: profile.phone || '',
+        dateOfBirth: profile.dateOfBirth || '',
         height: profile.height || 170,
         weight: profile.weight || 70,
         bloodType: profile.bloodType || 'O+',
@@ -78,9 +87,17 @@ export default function ProfileView() {
   }
 
   const handleSave = async () => {
+    if (!formData.name.trim() || !formData.email.trim()) {
+      setSnackbar({ open: true, message: 'Nama dan Email wajib diisi.', severity: 'error' })
+      return
+    }
+
     setSaving(true)
     const res = await updateUserProfileAction(userId, {
+      name: formData.name,
+      email: formData.email,
       phone: formData.phone,
+      dateOfBirth: formData.dateOfBirth,
       height: Number(formData.height),
       weight: Number(formData.weight),
       bloodType: formData.bloodType,
@@ -88,6 +105,14 @@ export default function ProfileView() {
 
     if (res.success && res.profile) {
       setProfile(res.profile)
+      if (updateUser) {
+        updateUser({
+          name: res.profile.name,
+          email: res.profile.email,
+          phone: res.profile.phone,
+          bloodType: res.profile.bloodType,
+        })
+      }
       setSnackbar({ open: true, message: 'Profil berhasil diperbarui di database!', severity: 'success' })
       setOpenEditModal(false)
     } else {
@@ -99,8 +124,8 @@ export default function ProfileView() {
   if (loading || !profile) {
     return (
       <ProfileLayout
-        title="My Profile"
-        subtitle="Manage your personal information and health data."
+        title="Profil Saya"
+        subtitle="Kelola informasi data diri dan metrik kesehatan Anda."
         name=""
         contactItems={[]}
         loading={true}
@@ -111,35 +136,67 @@ export default function ProfileView() {
   return (
     <>
       <ProfileLayout
-        title="My Profile"
-        subtitle="Manage your personal information and health data."
+        title="Profil Saya"
+        subtitle="Kelola informasi data diri dan metrik kesehatan Anda."
         name={profile.name}
         avatarUrl={profile.avatar}
+        badges={
+          <>
+            <Chip
+              label="PASIEN"
+              size="small"
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                fontWeight: 700,
+                fontSize: '0.68rem',
+                height: 22,
+                borderRadius: 1,
+              }}
+            />
+            <Chip
+              icon={<CheckCircle2 size={13} style={{ color: '#16a34a' }} />}
+              label="Terverifikasi"
+              size="small"
+              variant="outlined"
+              sx={{
+                borderColor: 'success.light',
+                color: 'success.dark',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                height: 22,
+              }}
+            />
+          </>
+        }
         onEditClick={handleOpenEdit}
         contactItems={[
-          { icon: Mail, value: profile.email },
-          { icon: Phone, value: profile.phone },
-          { icon: Calendar, value: `Born ${profile.dateOfBirth}` },
+          { icon: Mail, label: 'Email', value: profile.email },
+          { icon: Phone, label: 'Nomor Telepon', value: profile.phone },
+          { icon: Calendar, label: 'Tanggal Lahir', value: profile.dateOfBirth },
         ]}
-        metricsTitle="Health Metrics"
+        metricsTitle="Metrik Kesehatan"
         metrics={[
           {
-            label: 'Blood Type',
+            label: 'Golongan Darah',
             value: profile.bloodType,
+            subtitle: 'Tipe Darah Terdaftar',
             icon: Activity,
             iconBgColor: 'error.light',
             iconColor: 'error.dark',
           },
           {
-            label: 'Height',
+            label: 'Tinggi Badan',
             value: `${profile.height} cm`,
+            subtitle: 'Pengukuran Terakhir',
             icon: User,
             iconBgColor: 'info.light',
             iconColor: 'info.dark',
           },
           {
-            label: 'Weight',
+            label: 'Berat Badan',
             value: `${profile.weight} kg`,
+            subtitle: 'Pengukuran Terakhir',
             icon: Activity,
             iconBgColor: 'success.light',
             iconColor: 'success.dark',
@@ -149,40 +206,67 @@ export default function ProfileView() {
 
       {/* Edit Profile Modal */}
       <Dialog open={openEditModal} onClose={() => setOpenEditModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>Edit Personal & Health Data</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>Edit Data Pribadi & Kesehatan</DialogTitle>
         <DialogContent dividers sx={{ pt: 2 }}>
           <Grid container spacing={2.5}>
+            {/* Nama Lengkap */}
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
-                label="Phone Number"
+                label="Nama Lengkap"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Masukkan nama lengkap"
+                required
+              />
+            </Grid>
+
+            {/* Email */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="contoh@email.com"
+                required
+              />
+            </Grid>
+
+            {/* Nomor Telepon */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Nomor Telepon / HP"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="08xxxxxxxxxx"
               />
             </Grid>
+
+            {/* Tanggal Lahir */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Height (cm)"
-                type="number"
-                value={formData.height}
-                onChange={(e) => setFormData({ ...formData, height: Number(e.target.value) })}
+                label="Tanggal Lahir"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
               />
             </Grid>
+
+            {/* Golongan Darah */}
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Weight (kg)"
-                type="number"
-                value={formData.weight}
-                onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
               <TextField
                 select
                 fullWidth
-                label="Blood Type"
+                label="Golongan Darah"
                 value={formData.bloodType}
                 onChange={(e) => setFormData({ ...formData, bloodType: e.target.value })}
               >
@@ -193,11 +277,33 @@ export default function ProfileView() {
                 ))}
               </TextField>
             </Grid>
+
+            {/* Tinggi Badan */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Tinggi (cm)"
+                type="number"
+                value={formData.height}
+                onChange={(e) => setFormData({ ...formData, height: Number(e.target.value) })}
+              />
+            </Grid>
+
+            {/* Berat Badan */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Berat (kg)"
+                type="number"
+                value={formData.weight}
+                onChange={(e) => setFormData({ ...formData, weight: Number(e.target.value) })}
+              />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
           <Button onClick={() => setOpenEditModal(false)} color="inherit" disabled={saving}>
-            Cancel
+            Batal
           </Button>
           <Button
             onClick={handleSave}
@@ -206,7 +312,7 @@ export default function ProfileView() {
             startIcon={<Save size={16} />}
             disabled={saving}
           >
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </Button>
         </DialogActions>
       </Dialog>

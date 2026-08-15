@@ -39,6 +39,7 @@ export interface MedicationSchedule {
   category: 'Obat Resep' | 'Suplemen' | 'Aktivitas Medis'
   instructions: string
   lastReminderSent?: string
+  todayStatus?: 'COMPLETED' | 'PENDING' | 'NO_REMINDER'
 }
 
 export interface MedicalProduct {
@@ -63,6 +64,8 @@ export interface HealthArticle {
   views: number
   summary: string
   readTime: string
+  imageUrl?: string
+  content?: string
 }
 
 export interface HealthProgram {

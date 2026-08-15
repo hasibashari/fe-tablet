@@ -19,3 +19,18 @@ export interface DailyProgressStats {
   missed: number
   percentage: number
 }
+
+export interface AdminNudge {
+  id: string
+  patientId: string
+  senderName: string
+  senderRole: string
+  scheduleId?: string
+  medicationName?: string
+  dosage?: string
+  timeSlot?: string
+  message: string
+  channel: 'app' | 'whatsapp'
+  status: 'UNREAD' | 'READ' | 'DISMISSED'
+  sentAt: string
+}

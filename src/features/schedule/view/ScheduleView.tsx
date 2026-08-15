@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react'
 import { ReminderCard, getReminders, toggleReminderStatus, Reminder, CalendarPopover } from '@/src/features/schedule'
+import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync'
 import {
   Box,
   Typography,
@@ -29,12 +30,43 @@ export default function ScheduleView() {
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('ALL')
 
   useEffect(() => {
+    let isMounted = true
     const fetchData = async () => {
       const data = await getReminders()
-      setReminders(data)
-      setLoading(false)
+      if (isMounted) {
+        setReminders(data)
+        setLoading(false)
+      }
     }
+
     fetchData()
+
+    // 1. Instant Cross-Tab Sync
+    const unsubscribe = subscribeRealtimeEvent((event) => {
+      if (event.type === 'SCHEDULE_UPDATED' || event.type === 'MEDICATION_TAKEN') {
+        fetchData()
+      }
+    })
+
+    // 2. Smart Background Polling
+    const pollInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchData()
+      }
+    }, 6000)
+
+    // 3. Window focus listener
+    const handleFocus = () => {
+      fetchData()
+    }
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      isMounted = false
+      unsubscribe()
+      clearInterval(pollInterval)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
@@ -48,6 +80,7 @@ export default function ScheduleView() {
       })
     )
     await toggleReminderStatus(id, currentStatus)
+    publishRealtimeEvent('MEDICATION_TAKEN', { scheduleId: id })
   }
 
   // Filter reminders in memory without API calls

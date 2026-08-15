@@ -3,8 +3,17 @@
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import HealthLineChart from '../components/HealthLineChart'
-import MedicationAlertBanner, { AdminNudge } from '../components/MedicationAlertBanner'
-import { getTodayReminders, toggleReminderStatus, Reminder } from '@/src/features/schedule'
+import MedicationAlertBanner from '../components/MedicationAlertBanner'
+import {
+  getTodayReminders,
+  toggleReminderStatus,
+  getActiveNudge,
+  dismissNudge,
+  Reminder,
+  AdminNudge,
+} from '@/src/features/schedule'
+import { useAuth } from '@/src/features/auth'
+import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync'
 import {
   Box,
   Typography,
@@ -28,27 +37,109 @@ import {
 } from 'lucide-react'
 
 export default function DashboardView() {
+  const { user } = useAuth()
+  const userId = user?.id || 'usr_1'
+
   const [reminders, setReminders] = useState<Reminder[]>([])
+  const [adminNudge, setAdminNudge] = useState<AdminNudge | null>(null)
   const [loading, setLoading] = useState(true)
   const [waterAmount, setWaterAmount] = useState<number>(1.5) // in Liters
 
   // Alert Banner State
   const [alertOpen, setAlertOpen] = useState(true)
-  const [adminNudge] = useState<AdminNudge | null>({
-    senderName: 'Ns. Ratna, S.Kep',
-    senderRole: 'Perawat Penanggung Jawab',
-    message: 'Ibu Siti, mohon obatnya diminum tepat waktu setelah makan ya agar kondisi tetap stabil.',
-    sentAt: '12:45 WIB',
+  const [snoozedUntil, setSnoozedUntil] = useState<number | null>(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      const stored = localStorage.getItem(`medicore_snooze_until_${userId}`)
+      if (stored) {
+        const timestamp = Number(stored)
+        if (timestamp > Date.now()) {
+          return timestamp
+        }
+        localStorage.removeItem(`medicore_snooze_until_${userId}`)
+      }
+    } catch {
+      // ignore storage error
+    }
+    return null
   })
+  const [currentTime, setCurrentTime] = useState(() => new Date())
+
+  // Real-time clock update (every 30s)
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 30000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // Auto un-snooze and timer listener
+  useEffect(() => {
+    if (!snoozedUntil) return
+    const remaining = snoozedUntil - Date.now()
+    const timer = setTimeout(() => {
+      try {
+        localStorage.removeItem(`medicore_snooze_until_${userId}`)
+      } catch {
+        // ignore
+      }
+      setSnoozedUntil(null)
+      setAlertOpen(true)
+    }, Math.max(0, remaining))
+    return () => clearTimeout(timer)
+  }, [snoozedUntil, userId])
 
   useEffect(() => {
+    let isMounted = true
     const fetchData = async () => {
-      const data = await getTodayReminders()
-      setReminders(data)
-      setLoading(false)
+      const [remData, nudgeData] = await Promise.all([
+        getTodayReminders(userId),
+        getActiveNudge(userId),
+      ])
+      if (isMounted) {
+        setReminders(remData)
+        setAdminNudge(nudgeData)
+        if (nudgeData) {
+          setAlertOpen(true)
+        }
+        setLoading(false)
+      }
     }
+
+    // Initial fetch
     fetchData()
-  }, [])
+
+    // 1. Instant Cross-Tab Sync via BroadcastChannel (0s latency)
+    const unsubscribe = subscribeRealtimeEvent((event) => {
+      if (
+        event.type === 'NUDGE_SENT' ||
+        event.type === 'SCHEDULE_UPDATED' ||
+        event.type === 'NUDGE_DISMISSED'
+      ) {
+        fetchData()
+      }
+    })
+
+    // 2. Smart Background Polling (every 6 seconds for multi-device tablet sync)
+    const pollInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchData()
+      }
+    }, 6000)
+
+    // 3. Window focus / visibility change auto-revalidation
+    const handleFocus = () => {
+      fetchData()
+    }
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleFocus)
+
+    return () => {
+      isMounted = false
+      unsubscribe()
+      clearInterval(pollInterval)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleFocus)
+    }
+  }, [userId])
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
@@ -60,47 +151,86 @@ export default function DashboardView() {
         return rem
       })
     )
-    await toggleReminderStatus(id, currentStatus)
+    await toggleReminderStatus(id, currentStatus, userId)
+    publishRealtimeEvent('MEDICATION_TAKEN', { patientId: userId, scheduleId: id })
   }
 
-  const handleTakeMedication = (id: string) => {
-    handleToggleStatus(id, 'PENDING')
+  const handleTakeMedication = async (id: string) => {
+    await handleToggleStatus(id, 'PENDING')
+    try {
+      localStorage.removeItem(`medicore_snooze_until_${userId}`)
+    } catch {
+      // ignore
+    }
+    setSnoozedUntil(null)
     setAlertOpen(false)
   }
 
-  const handleSnooze = () => {
+  const handleSnooze = (minutes: number = 10) => {
+    const target = Date.now() + minutes * 60 * 1000
+    try {
+      localStorage.setItem(`medicore_snooze_until_${userId}`, target.toString())
+    } catch {
+      // ignore
+    }
+    setSnoozedUntil(target)
+    setAlertOpen(false)
+  }
+
+  const handleDismissAlert = async () => {
+    if (adminNudge) {
+      await dismissNudge(adminNudge.id)
+      publishRealtimeEvent('NUDGE_DISMISSED', { patientId: userId, nudgeId: adminNudge.id })
+      setAdminNudge(null)
+    } else {
+      // If closing routine medication reminder, snooze for 15 mins so reload doesn't spam
+      handleSnooze(15)
+    }
     setAlertOpen(false)
   }
 
   const handleAddWater = () => {
-    setWaterAmount(prev => Math.min(2.5, +(prev + 0.25).toFixed(2)))
+    setWaterAmount((prev) => Math.min(2.5, +(prev + 0.25).toFixed(2)))
   }
 
   const completedCount = useMemo(
-    () => reminders.filter(r => r.status === 'COMPLETED').length,
+    () => reminders.filter((r) => r.status === 'COMPLETED').length,
     [reminders]
   )
   const totalCount = reminders.length
   const adherenceRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 100
 
-  // The single next pending reminder for alert
+  // Real-Time Time Window Detection for Alert Banner
   const nextReminder = useMemo(() => {
-    return reminders
-      .filter(r => r.status === 'PENDING')
-      .sort((a, b) => a.time.localeCompare(b.time))[0] || null
-  }, [reminders])
+    const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes()
+
+    const pendingReminders = reminders
+      .filter((r) => r.status === 'PENDING')
+      .sort((a, b) => a.time.localeCompare(b.time))
+
+    if (pendingReminders.length === 0) return null
+
+    // Find first reminder that is due (or within 30 mins window)
+    const dueReminder = pendingReminders.find((r) => {
+      const [h, m] = r.time.split(':').map(Number)
+      const scheduledMinutes = h * 60 + m
+      return nowMinutes >= scheduledMinutes - 30
+    })
+
+    return dueReminder || pendingReminders[0] || null
+  }, [reminders, currentTime])
 
   // Group today's reminders into Morning, Afternoon, Evening slots
   const timeSlots = useMemo(() => {
-    const morning = reminders.filter(r => {
+    const morning = reminders.filter((r) => {
       const hour = parseInt(r.time.split(':')[0], 10)
       return hour < 11
     })
-    const afternoon = reminders.filter(r => {
+    const afternoon = reminders.filter((r) => {
       const hour = parseInt(r.time.split(':')[0], 10)
       return hour >= 11 && hour < 17
     })
-    const evening = reminders.filter(r => {
+    const evening = reminders.filter((r) => {
       const hour = parseInt(r.time.split(':')[0], 10)
       return hour >= 17
     })
@@ -109,7 +239,7 @@ export default function DashboardView() {
       if (slotReminders.length === 0) {
         return { label: 'Tidak Ada', state: 'empty' as const, countText: '0 Jadwal' }
       }
-      const done = slotReminders.filter(r => r.status === 'COMPLETED').length
+      const done = slotReminders.filter((r) => r.status === 'COMPLETED').length
       if (done === slotReminders.length) {
         return { label: 'Selesai', state: 'done' as const, countText: `${done}/${slotReminders.length} Diminum` }
       }
@@ -147,10 +277,10 @@ export default function DashboardView() {
       <MedicationAlertBanner
         reminder={nextReminder}
         adminNudge={adminNudge}
-        isOpen={alertOpen && (Boolean(nextReminder) || Boolean(adminNudge))}
+        isOpen={alertOpen && (Boolean(adminNudge) || (!snoozedUntil && Boolean(nextReminder)))}
         onTakeMedication={handleTakeMedication}
         onSnooze={handleSnooze}
-        onDismiss={() => setAlertOpen(false)}
+        onDismiss={handleDismissAlert}
       />
 
       {/* Welcome Header */}

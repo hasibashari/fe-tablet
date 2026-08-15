@@ -51,7 +51,10 @@ export async function updateUserProfileAction(
     const updateStmt = db.prepare(`
       UPDATE users 
       SET 
+        name = COALESCE(?, name),
+        email = COALESCE(?, email),
         phone = COALESCE(?, phone),
+        date_of_birth = COALESCE(?, date_of_birth),
         height = COALESCE(?, height),
         weight = COALESCE(?, weight),
         blood_type = COALESCE(?, blood_type),
@@ -60,7 +63,10 @@ export async function updateUserProfileAction(
     `)
 
     updateStmt.run(
+      data.name ?? null,
+      data.email ?? null,
       data.phone ?? null,
+      data.dateOfBirth ?? null,
       data.height ?? null,
       data.weight ?? null,
       data.bloodType ?? null,
