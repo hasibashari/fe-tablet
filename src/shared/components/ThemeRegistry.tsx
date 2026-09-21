@@ -54,24 +54,27 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
         palette: {
           mode: 'light',
           primary: {
-            main: '#0ea5e9', // Tailwind primary
-            dark: '#0284c7', // Tailwind primary-active
-            light: '#bae6fd',
+            main: '#e11d48', // Fe-Tablet Rose
+            dark: '#be123c', // Fe-Tablet Rose Hover
+            light: '#ffe4e6', // Fe-Tablet Rose Light
           },
           text: {
-            primary: '#0f172a', // text-ink
-            secondary: '#334155', // text-body
+            primary: '#1e293b', // text-ink
+            secondary: '#475569', // text-body
           },
           background: {
-            default: '#f8fafc', // surface-soft
+            default: '#fff5f7', // canvas soft blush
             paper: '#ffffff',
           },
-          divider: '#e2e8f0', // hairline
+          divider: '#fce7f3', // blush border
           success: {
-            main: '#10b981', // accent-teal
+            main: '#10b981', // emerald
           },
           warning: {
-            main: '#f59e0b', // accent-amber
+            main: '#f59e0b', // amber
+          },
+          error: {
+            main: '#f43f5e', // rose-red
           },
         },
         typography: {
@@ -85,11 +88,11 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
             letterSpacing: '-0.3px',
           },
           subtitle2: {
-            fontWeight: 700,
+            fontWeight: 600,
           },
         },
         shape: {
-          borderRadius: 12, // Update general border radius
+          borderRadius: 16, // Fe-Tablet rounded standard
         },
         components: {
           MuiButton: {
@@ -100,11 +103,12 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
                 fontWeight: 600,
                 boxShadow: 'none',
                 '&.MuiButton-containedPrimary': {
-                  boxShadow: '0 4px 14px 0 rgba(14, 165, 233, 0.35)',
+                  boxShadow: '0 4px 14px 0 rgba(225, 29, 72, 0.35)',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
-                    boxShadow: '0 6px 20px rgba(14, 165, 233, 0.23)',
-                    transform: 'translateY(-2px)',
+                    backgroundColor: '#be123c',
+                    boxShadow: '0 6px 20px rgba(225, 29, 72, 0.25)',
+                    transform: 'translateY(-1px)',
                   },
                 },
               },
@@ -113,16 +117,17 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
           MuiCard: {
             styleOverrides: {
               root: {
-                borderRadius: 12, // More proportional radius for cards
-                boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)',
-                border: '1px solid #e2e8f0',
+                borderRadius: 16,
+                boxShadow: '0px 2px 10px rgba(225, 29, 72, 0.04)',
+                border: '1px solid #fce7f3',
               },
             },
           },
           MuiDialog: {
             styleOverrides: {
               paper: {
-                borderRadius: 12,
+                borderRadius: 20,
+                border: '1px solid #fce7f3',
               },
             },
           },
@@ -137,12 +142,12 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
           MuiTableCell: {
             styleOverrides: {
               root: {
-                borderBottom: '1px solid #e2e8f0',
+                borderBottom: '1px solid #fce7f3',
               },
               head: {
                 fontWeight: 700,
-                backgroundColor: '#f8fafc',
-                color: '#0f172a',
+                backgroundColor: '#fff5f7',
+                color: '#1e293b',
               },
             },
           },

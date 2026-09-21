@@ -3,21 +3,20 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Box, Typography } from '@mui/material'
-import { LayoutDashboard, Calendar, History, BookOpen, User } from 'lucide-react'
+import { Home, CalendarCheck, BookOpen, Flame, Bot } from 'lucide-react'
 
 export interface BottomNavItem {
   name: string
   href: string
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>
 }
 
 export const USER_BOTTOM_NAV_ITEMS: BottomNavItem[] = [
-  { name: 'Dashboard', href: '/user/dashboard', icon: LayoutDashboard },
-  { name: 'Jadwal', href: '/user/schedule', icon: Calendar },
-  { name: 'Riwayat', href: '/user/history', icon: History },
+  { name: 'Beranda', href: '/user/dashboard', icon: Home },
+  { name: 'Monitoring', href: '/user/history', icon: CalendarCheck },
   { name: 'Edukasi', href: '/user/education', icon: BookOpen },
-  { name: 'Profil', href: '/user/profile', icon: User },
+  { name: 'Buddy', href: '/user/buddy', icon: Flame },
+  { name: 'Konsultasi', href: '/user/consultation', icon: Bot },
 ]
 
 export interface MobileBottomBarProps {
@@ -28,103 +27,50 @@ export default function MobileBottomBar({ items = USER_BOTTOM_NAV_ITEMS }: Mobil
   const pathname = usePathname()
 
   return (
-    <Box
-      component="nav"
+    <nav
       aria-label="Navigasi Bawah Mobile"
-      sx={{
-        display: { xs: 'flex', md: 'none' },
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1200,
-        height: 64,
-        bgcolor: '#ffffff',
-        borderTop: '1px solid #e2e8f0',
-        boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.06)',
-        px: 1,
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        boxSizing: 'border-box',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-md border-t border-[#fce7f3] shadow-[0_-4px_16px_rgba(225,29,72,0.06)]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      {items.map((item) => {
-        const isActive = pathname === item.href || (item.href !== '/user/dashboard' && pathname?.startsWith(item.href))
-        const Icon = item.icon
+      <div className="max-w-md mx-auto h-16 px-2 flex items-center justify-around">
+        {items.map((item) => {
+          const isActive =
+            pathname === item.href ||
+            (item.href !== '/user/dashboard' && pathname?.startsWith(item.href))
+          const Icon = item.icon
 
-        return (
-          <Box
-            key={item.name}
-            component={Link}
-            href={item.href}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textDecoration: 'none',
-              minWidth: 56,
-              height: '100%',
-              py: 0.5,
-              px: 1,
-              borderRadius: 2,
-              color: isActive ? '#cc785c' : '#64748b',
-              transition: 'all 0.15s ease-in-out',
-              position: 'relative',
-              '&:hover': {
-                color: '#cc785c',
-                bgcolor: 'rgba(204, 120, 92, 0.04)',
-              },
-              '&:active': {
-                transform: 'scale(0.95)',
-              },
-            }}
-          >
-            {/* Active Top Bar Indicator */}
-            {isActive && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  width: '32px',
-                  height: '3px',
-                  bgcolor: '#cc785c',
-                  borderRadius: '0 0 4px 4px',
-                }}
-              />
-            )}
-
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 36,
-                height: 28,
-                borderRadius: '12px',
-                bgcolor: isActive ? 'rgba(204, 120, 92, 0.12)' : 'transparent',
-                transition: 'background-color 0.2s ease',
-              }}
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex flex-col items-center justify-center min-w-[56px] h-full py-1 px-1.5 rounded-xl transition-all duration-150 relative select-none ${
+                isActive ? 'text-[#e11d48]' : 'text-[#64748b] hover:text-[#e11d48]'
+              }`}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} color={isActive ? '#cc785c' : '#64748b'} />
-            </Box>
+              {/* Active Indicator Pill */}
+              <div
+                className={`flex items-center justify-center w-10 h-7 rounded-xl transition-all duration-200 ${
+                  isActive ? 'bg-[#ffe4e6] scale-105' : 'bg-transparent'
+                }`}
+              >
+                <Icon
+                  size={20}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                  className={isActive ? 'text-[#e11d48]' : 'text-[#64748b]'}
+                />
+              </div>
 
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: '0.68rem',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? '#cc785c' : '#64748b',
-                lineHeight: 1.1,
-                mt: 0.25,
-              }}
-            >
-              {item.name}
-            </Typography>
-          </Box>
-        )
-      })}
-    </Box>
+              <span
+                className={`text-[11px] leading-tight mt-0.5 transition-all ${
+                  isActive ? 'font-bold text-[#e11d48]' : 'font-medium text-[#64748b]'
+                }`}
+              >
+                {item.name}
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
   )
 }

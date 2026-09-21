@@ -1,305 +1,326 @@
 'use client'
 
-import React, { useEffect, useState, useMemo } from 'react'
-import { ReminderCard, getReminders, toggleReminderStatus, Reminder, CalendarPopover } from '@/src/features/schedule'
-import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync'
+import React, { useState } from 'react'
 import {
-  Box,
-  Typography,
-  Paper,
-  Skeleton,
-  Stack,
-  TextField,
-  Chip,
-  Button,
-  InputAdornment,
-} from '@mui/material'
-import { Search, CalendarOff, RotateCcw } from 'lucide-react'
+  Clock,
+  Calendar as CalendarIcon,
+  Pill,
+  Bell,
+  BellRing,
+  Info,
+  Check,
+  X,
+  Edit3,
+  Sparkles,
+  HelpCircle,
+} from 'lucide-react'
+import { Card } from '@/src/shared/components/ui/Card'
+import { Button } from '@/src/shared/components/ui/Button'
+import { Chip } from '@/src/shared/components/ui/Chip'
+import { MOCK_REMINDER, ReminderScheduleMock } from '@/src/shared/mock/feTabletData'
 
-type StatusFilterType = 'ALL' | 'PENDING' | 'COMPLETED' | 'MISSED'
+const DAYS_OF_WEEK = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
+const FREQUENCIES = ['1x Seminggu', 'Setiap Hari (Terapi Khusus)']
 
 export default function ScheduleView() {
-  const [reminders, setReminders] = useState<Reminder[]>([])
-  const [loading, setLoading] = useState(true)
+  const [schedule, setSchedule] = useState<ReminderScheduleMock>(MOCK_REMINDER)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
-  // Filters State
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0]
-  })
-  const [searchQuery, setSearchQuery] = useState<string>('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilterType>('ALL')
+  // Edit Form Temp States
+  const [tempDay, setTempDay] = useState(schedule.dayOfWeek)
+  const [tempTime, setTempTime] = useState(schedule.time)
+  const [tempFrequency, setTempFrequency] = useState(
+    schedule.frequency === 'Mingguan' ? '1x Seminggu' : 'Setiap Hari (Terapi Khusus)'
+  )
+  const [tempRemind15, setTempRemind15] = useState(schedule.remind15MinBefore)
 
-  useEffect(() => {
-    let isMounted = true
-    const fetchData = async () => {
-      const data = await getReminders()
-      if (isMounted) {
-        setReminders(data)
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-
-    // 1. Instant Cross-Tab Sync
-    const unsubscribe = subscribeRealtimeEvent((event) => {
-      if (event.type === 'SCHEDULE_UPDATED' || event.type === 'MEDICATION_TAKEN') {
-        fetchData()
-      }
+  const handleToggleActive = () => {
+    setSchedule((prev) => {
+      const nextEnabled = !prev.isEnabled
+      showToast(nextEnabled ? 'Pengingat TTD diaktifkan' : 'Pengingat TTD dinonaktifkan')
+      return { ...prev, isEnabled: nextEnabled }
     })
-
-    // 2. Smart Background Polling
-    const pollInterval = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        fetchData()
-      }
-    }, 6000)
-
-    // 3. Window focus listener
-    const handleFocus = () => {
-      fetchData()
-    }
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      isMounted = false
-      unsubscribe()
-      clearInterval(pollInterval)
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [])
-
-  const handleToggleStatus = async (id: string, currentStatus: string) => {
-    const nextStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-    setReminders((prev) =>
-      prev.map((rem) => {
-        if (rem.id === id) {
-          return { ...rem, status: nextStatus }
-        }
-        return rem
-      })
-    )
-    await toggleReminderStatus(id, currentStatus)
-    publishRealtimeEvent('MEDICATION_TAKEN', { scheduleId: id })
   }
 
-  // Filter reminders in memory without API calls
-  const filteredReminders = useMemo(() => {
-    return reminders.filter(item => {
-      // 1. Date Filter
-      const matchDate = item.date === selectedDate
+  const handleOpenModal = () => {
+    setTempDay(schedule.dayOfWeek)
+    setTempTime(schedule.time)
+    setTempFrequency(schedule.frequency === 'Mingguan' ? '1x Seminggu' : 'Setiap Hari (Terapi Khusus)')
+    setTempRemind15(schedule.remind15MinBefore)
+    setIsModalOpen(true)
+  }
 
-      // 2. Status Filter
-      const matchStatus = statusFilter === 'ALL' || item.status === statusFilter
+  const handleSaveModal = (e: React.FormEvent) => {
+    e.preventDefault()
+    setSchedule((prev) => ({
+      ...prev,
+      dayOfWeek: tempDay,
+      time: tempTime,
+      frequency: tempFrequency.includes('Seminggu') ? 'Mingguan' : 'Harian',
+      remind15MinBefore: tempRemind15,
+      nextDate: `${tempDay}, 10 Oktober 2026`,
+    }))
+    setIsModalOpen(false)
+    showToast('Jadwal pengingat berhasil diperbarui! ✨')
+  }
 
-      // 3. Search Query Filter
-      const q = searchQuery.trim().toLowerCase()
-      const matchSearch =
-        q === '' ||
-        item.title.toLowerCase().includes(q) ||
-        (item.description && item.description.toLowerCase().includes(q))
-
-      return matchDate && matchStatus && matchSearch
-    })
-  }, [reminders, selectedDate, statusFilter, searchQuery])
-
-  const handleResetFilters = () => {
-    const todayStr = new Date().toISOString().split('T')[0]
-    setSelectedDate(todayStr)
-    setSearchQuery('')
-    setStatusFilter('ALL')
+  const showToast = (msg: string) => {
+    setToastMessage(msg)
+    setTimeout(() => setToastMessage(null), 3000)
   }
 
   return (
-    <Box sx={{ pb: 6, width: '100%' }}>
-      {/* Header Title */}
-      <Box sx={{ mb: 3.5 }}>
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{
-            fontWeight: 700,
-            color: 'text.primary',
-            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
-          }}
-        >
-          My Schedule
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5 }}>
-          Manage and view your health reminders by date.
-        </Typography>
-      </Box>
+    <div className="flex flex-col gap-6 w-full">
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#1e293b] text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-fade-in">
+          <Sparkles size={14} className="text-amber-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
-      {/* Controls Bar: Search, Calendar Date Filter, Status Chips */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2, sm: 2.5 },
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'var(--color-hairline, #e2e8f0)',
-          bgcolor: '#ffffff',
-          mb: 4,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'center' },
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          {/* Left Controls: Search & Date Filter */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' },
-              gap: 1.5,
-              flexGrow: 1,
-            }}
-          >
-            {/* Search Input */}
-            <TextField
-              size="small"
-              placeholder="Search schedule..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} style={{ color: '#94a3b8' }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{
-                width: { xs: '100%', sm: 260 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 1.5,
-                  bgcolor: '#f8fafc',
-                },
-              }}
-            />
+      {/* Screen Header */}
+      <div>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-[#1e293b] tracking-tight">
+          Jadwal Pengingat TTD
+        </h2>
+        <p className="text-xs sm:text-sm text-[#64748b]">
+          Atur waktu rutin konsumsi Tablet Tambah Darah setiap minggu
+        </p>
+      </div>
 
-            {/* Calendar Date Filter Popover */}
-            <CalendarPopover selectedDate={selectedDate} onDateChange={setSelectedDate} />
-          </Box>
+      {/* Responsive Grid: Mobile 1-col -> Tablet/Desktop 2-col */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 items-start">
+        {/* LEFT COLUMN: Active Schedule Card (md:col-span-7) */}
+        <div className="md:col-span-7 flex flex-col gap-5">
+          <Card variant="hero" padding="lg" className="relative">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 rounded-full text-xs font-bold text-[#e11d48] border border-rose-200">
+                <Pill size={14} />
+                <span>{schedule.dosage}</span>
+              </span>
 
-          {/* Right Controls: Status Filter Chips */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              overflowX: 'auto',
-              flexWrap: { xs: 'nowrap', sm: 'wrap' },
-              pb: { xs: 0.5, sm: 0 },
-              '&::-webkit-scrollbar': { height: 4 },
-              '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.1)', borderRadius: 2 },
-            }}
-          >
-            {(['ALL', 'PENDING', 'COMPLETED', 'MISSED'] as StatusFilterType[]).map(st => {
-              const isActive = statusFilter === st
-              return (
-                <Chip
-                  key={st}
-                  label={st.charAt(0) + st.slice(1).toLowerCase()}
-                  onClick={() => setStatusFilter(st)}
-                  size="small"
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: '0.775rem',
-                    px: 0.5,
-                    height: 32,
-                    borderRadius: 1.5,
-                    bgcolor: isActive ? 'primary.main' : 'background.default',
-                    color: isActive ? '#ffffff' : 'text.secondary',
-                    flexShrink: 0,
-                    '&:hover': {
-                      bgcolor: isActive ? 'primary.dark' : 'action.hover',
-                    },
-                  }}
+              {/* Toggle Switch */}
+              <button
+                type="button"
+                onClick={handleToggleActive}
+                className={`w-12 h-6.5 rounded-full transition-colors p-0.5 flex items-center cursor-pointer ${
+                  schedule.isEnabled ? 'bg-[#e11d48]' : 'bg-slate-300'
+                }`}
+                aria-label="Toggle Status Pengingat"
+              >
+                <div
+                  className={`w-5.5 h-5.5 rounded-full bg-white shadow-md transform transition-transform ${
+                    schedule.isEnabled ? 'translate-x-5.5' : 'translate-x-0'
+                  }`}
                 />
-              )
-            })}
-          </Box>
-        </Box>
-      </Paper>
+              </button>
+            </div>
 
-      {/* Reminder Content Section */}
-      <Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            Reminders List
-          </Typography>
+            <div className="my-3">
+              <span className="text-xs text-[#64748b] font-medium block">Hari & Waktu Rutin:</span>
+              <div className="text-2xl sm:text-4xl font-extrabold text-[#1e293b] tracking-tight flex items-baseline gap-2 mt-1">
+                <span>{schedule.dayOfWeek}</span>
+                <span className="text-[#e11d48] text-xl sm:text-2xl font-bold">• {schedule.time} WIB</span>
+              </div>
+              <span className="text-xs sm:text-sm font-semibold text-[#475569] mt-2 block">
+                {schedule.tabletName}
+              </span>
+            </div>
 
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-            Showing {filteredReminders.length} item{filteredReminders.length === 1 ? '' : 's'}
-          </Typography>
-        </Box>
+            <div className="mt-5 pt-4 border-t border-rose-200 flex items-center justify-between">
+              <span className="text-xs text-[#64748b] flex items-center gap-1">
+                <BellRing size={13} className="text-[#e11d48]" />
+                {schedule.remind15MinBefore ? 'Pengingat 15 menit sebelum' : 'Tepat pada jam'}
+              </span>
 
-        {loading ? (
-          <Stack spacing={2}>
-            <Skeleton variant="rounded" height={80} sx={{ borderRadius: 4 }} />
-            <Skeleton variant="rounded" height={80} sx={{ borderRadius: 4 }} />
-            <Skeleton variant="rounded" height={80} sx={{ borderRadius: 4 }} />
-          </Stack>
-        ) : filteredReminders.length === 0 ? (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 5,
-              border: '2px dashed',
-              borderColor: 'divider',
-              borderRadius: 4,
-              bgcolor: '#ffffff',
-              textAlign: 'center',
-            }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                borderRadius: '50%',
-                bgcolor: '#f8fafc',
-                color: '#94a3b8',
-                display: 'inline-flex',
-                mb: 2,
-              }}
-            >
-              <CalendarOff size={36} />
-            </Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
-              No Reminders Found
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 400, mx: 'auto', mb: 2.5 }}>
-              There are no scheduled reminders matching your selected date ({selectedDate}) and active filters.
-            </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<RotateCcw size={16} />}
-              onClick={handleResetFilters}
-              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600 }}
-            >
-              Reset Filters & Date
-            </Button>
-          </Paper>
-        ) : (
-          <Stack spacing={2}>
-            {filteredReminders.map(reminder => (
-              <ReminderCard
-                key={reminder.id}
-                reminder={reminder}
-                onToggleStatus={handleToggleStatus}
-              />
-            ))}
-          </Stack>
-        )}
-      </Box>
-    </Box>
+              <Button
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon={<Edit3 size={13} />}
+                onClick={handleOpenModal}
+              >
+                Ubah Jadwal
+              </Button>
+            </div>
+          </Card>
+
+          {/* Quick Frequency Info */}
+          <Card padding="md" className="bg-[#fff5f7]">
+            <h4 className="text-xs font-bold text-[#1e293b] mb-1">
+              Kenapa Cukup 1x Seminggu? 🩸
+            </h4>
+            <p className="text-xs text-[#475569] leading-relaxed">
+              Bagi remaja putri sehat, suplementasi TTD mingguan sudah cukup efektif untuk mencukupi simpanan zat besi tanpa menimbulkan penumpukan berlebihan.
+            </p>
+          </Card>
+        </div>
+
+        {/* RIGHT COLUMN: Medical Guidelines & FAQs (md:col-span-5) */}
+        <div className="md:col-span-5 flex flex-col gap-5">
+          <Card padding="lg">
+            <div className="flex items-center gap-2 text-sm sm:text-base font-bold text-[#1e293b] mb-3">
+              <div className="w-7 h-7 rounded-full bg-rose-100 text-[#e11d48] flex items-center justify-center shrink-0">
+                <Info size={15} />
+              </div>
+              <h4>Petunjuk Konsumsi TTD</h4>
+            </div>
+
+            <ul className="space-y-3 text-xs sm:text-sm text-[#475569] leading-relaxed">
+              <li className="flex items-start gap-2">
+                <span className="text-rose-500 font-bold">•</span>
+                <span>
+                  <strong>1 Tablet per Minggu:</strong> Konsumsi rutin setiap minggu pada hari yang sama (misalnya setiap Sabtu pagi).
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-rose-500 font-bold">•</span>
+                <span>
+                  <strong>Minum Setelah Makan:</strong> Sangat dianjurkan setelah makan untuk mencegah iritasi dan rasa mual.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-rose-500 font-bold">•</span>
+                <span>
+                  <strong>Hindari Teh & Kopi:</strong> Beri jeda 2 jam karena tanin mengikat zat besi sebelum diserap tubuh.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-rose-500 font-bold">•</span>
+                <span>
+                  <strong>Dampingi Buah Jeruk:</strong> Vitamin C meningkatkan efisiensi penyerapan zat besi hingga 2 kali lipat.
+                </span>
+              </li>
+            </ul>
+          </Card>
+        </div>
+      </div>
+
+      {/* Edit Schedule Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-[#fce7f3] max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#fce7f3] mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-rose-100 text-[#e11d48] flex items-center justify-center">
+                  <CalendarIcon size={16} />
+                </div>
+                <h3 className="text-base font-bold text-[#1e293b]">Ubah Jadwal Pengingat</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#f1f5f9] text-[#64748b] hover:text-[#1e293b] flex items-center justify-center"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveModal} className="flex flex-col gap-4">
+              {/* Day Selector */}
+              <div>
+                <label className="text-xs font-bold text-[#1e293b] mb-2 block">
+                  Pilih Hari Konsumsi:
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {DAYS_OF_WEEK.map((d) => (
+                    <Chip
+                      key={d}
+                      size="md"
+                      active={tempDay === d}
+                      onClick={() => setTempDay(d)}
+                    >
+                      {d}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time Selector */}
+              <div>
+                <label className="text-xs font-bold text-[#1e293b] mb-1.5 block">
+                  Pukul / Jam Konsumsi:
+                </label>
+                <div className="relative flex items-center">
+                  <Clock size={16} className="absolute left-3.5 text-[#94a3b8] pointer-events-none" />
+                  <input
+                    type="time"
+                    value={tempTime}
+                    onChange={(e) => setTempTime(e.target.value)}
+                    className="w-full bg-white text-[#1e293b] font-semibold text-sm rounded-xl border border-[#fce7f3] focus:border-[#e11d48] pl-10 pr-3.5 py-3 outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Frequency Selector */}
+              <div>
+                <label className="text-xs font-bold text-[#1e293b] mb-1.5 block">
+                  Frekuensi:
+                </label>
+                <div className="flex flex-col gap-2">
+                  {FREQUENCIES.map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setTempFrequency(f)}
+                      className={`text-left text-xs font-medium p-3.5 rounded-xl border transition-all flex items-center justify-between ${
+                        tempFrequency === f
+                          ? 'border-[#e11d48] bg-[#fff1f2] text-[#be123c] font-bold'
+                          : 'border-[#fce7f3] bg-white text-[#475569] hover:bg-[#fff5f7]'
+                      }`}
+                    >
+                      <span>{f}</span>
+                      {tempFrequency === f && <Check size={14} className="text-[#e11d48]" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Remind 15 min toggle */}
+              <div className="flex items-center justify-between p-3.5 bg-[#fff5f7] rounded-xl border border-[#fce7f3]">
+                <div className="flex items-center gap-2">
+                  <Bell size={16} className="text-[#e11d48]" />
+                  <span className="text-xs font-semibold text-[#1e293b]">
+                    Ingatkan 15 Menit Sebelumnya
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={tempRemind15}
+                  onChange={(e) => setTempRemind15(e.target.checked)}
+                  className="w-4 h-4 text-[#e11d48] accent-[#e11d48] rounded-md cursor-pointer"
+                />
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex items-center gap-2.5 pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  shape="pill"
+                  className="flex-1"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  shape="pill"
+                  className="flex-1"
+                >
+                  Simpan Jadwal
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

@@ -40,7 +40,7 @@ export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContaine
               left: 0,
               right: 0,
               height: '3px',
-              bgcolor: '#cc785c',
+              bgcolor: '#e11d48',
               borderRadius: '2px',
             } : undefined,
           }}
@@ -72,7 +72,7 @@ export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContaine
               left: 0,
               right: 0,
               height: '3px',
-              bgcolor: '#cc785c',
+              bgcolor: '#e11d48',
               borderRadius: '2px',
             } : undefined,
           }}
@@ -88,8 +88,8 @@ export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContaine
         sx={{ fontSize: '0.9rem', mb: 3.5, mt: -2, lineHeight: 1.5 }}
       >
         {activeTab === 'login'
-          ? 'Masukkan email dan kata sandi untuk mengakses portal.'
-          : 'Buat akun baru untuk mulai memantau pengobatan harian Anda.'}
+          ? 'Selamat datang kembali! Masuk untuk memantau konsumsi TTD-mu.'
+          : 'Lengkapi data dirimu untuk mulai hidup bebas anemia bersama Fe-Tablet.'}
       </Typography>
 
       {/* Form Content with Smooth Fade */}

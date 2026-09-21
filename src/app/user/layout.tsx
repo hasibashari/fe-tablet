@@ -1,73 +1,41 @@
 'use client'
 
 import React from 'react'
-import UserSidebar from '../../features/user/components/UserSidebar'
 import MobileTopBar from '@/src/shared/components/MobileTopBar'
 import MobileBottomBar from '@/src/shared/components/MobileBottomBar'
+import UserSidebar from '@/src/features/user/components/UserSidebar'
 import { AuthGuard } from '@/src/features/auth'
-import { Box, Chip } from '@mui/material'
+import { MOCK_USER } from '@/src/shared/mock/feTabletData'
 
 export default function UserLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const userBadge = (
-    <Chip
-      label="USER"
-      size="small"
-      sx={{
-        bgcolor: 'primary.light',
-        color: 'primary.dark',
-        fontSize: '0.62rem',
-        height: 18,
-        fontWeight: 700,
-        borderRadius: '9999px',
-      }}
-    />
-  )
-
   return (
     <AuthGuard>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f8fafc' }}>
-        {/* Mobile Top App Bar (< md) */}
-        <MobileTopBar
-          brandTitle={
-            <>
-              Medi<Box component="span" sx={{ color: 'primary.main' }}>Core</Box>
-            </>
-          }
-          brandSubtitle="User Portal"
-          brandHref="/user/dashboard"
-          badge={userBadge}
-        />
+      <div className="min-h-screen bg-[#fff5f7] flex flex-col md:flex-row selection:bg-rose-200 selection:text-rose-900">
+        {/* Mobile Top Header (< md) */}
+        <div className="block md:hidden">
+          <MobileTopBar
+            userName={MOCK_USER.name.split(' ')[0]}
+            avatarUrl={MOCK_USER.avatarUrl}
+          />
+        </div>
 
-        <Box sx={{ display: 'flex', flexGrow: 1, minHeight: { md: '100vh' } }}>
-          {/* Desktop Left Sidebar (>= md) */}
+        {/* Desktop / Tablet Left Sidebar (>= md) */}
+        <div className="hidden md:block shrink-0">
           <UserSidebar />
+        </div>
 
-          {/* Main Page Content */}
-          <Box
-            component="main"
-            sx={{
-              flexGrow: 1,
-              minWidth: 0,
-              width: { xs: '100%', md: 'calc(100% - 260px)' },
-              p: { xs: 2, sm: 2.5, md: 3, lg: 3.5, xl: 4 },
-              pb: { xs: 10, md: 4 }, // Safe bottom padding so bottom bar never obscures content
-              minHeight: '100%',
-              boxSizing: 'border-box',
-            }}
-          >
-            <Box sx={{ maxWidth: '1200px', width: '100%', mx: 'auto' }}>
-              {children}
-            </Box>
-          </Box>
-        </Box>
+        {/* Main Content Area: Mobile-First fluid -> Tablet/Desktop max-w-6xl */}
+        <main className="flex-1 w-full max-w-full md:max-w-6xl mx-auto px-4 py-4 pb-28 md:p-8 md:pb-12 min-h-screen box-sizing">
+          {children}
+        </main>
 
-        {/* Mobile Bottom Navigation Bar (< md) */}
+        {/* Fixed Mobile Bottom Navigation (< md) */}
         <MobileBottomBar />
-      </Box>
+      </div>
     </AuthGuard>
   )
 }

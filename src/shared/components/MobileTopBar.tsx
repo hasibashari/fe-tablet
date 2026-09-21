@@ -2,8 +2,8 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Box, Typography, IconButton } from '@mui/material'
-import { Menu, Cross } from 'lucide-react'
+import Image from 'next/image'
+import { Bell, Heart } from 'lucide-react'
 
 export interface MobileTopBarProps {
   onOpenSidebar?: () => void
@@ -12,101 +12,75 @@ export interface MobileTopBarProps {
   brandHref?: string
   badge?: React.ReactNode
   rightAction?: React.ReactNode
+  userName?: string
+  avatarUrl?: string
 }
 
 export default function MobileTopBar({
-  onOpenSidebar,
-  brandTitle = 'MediCore',
-  brandSubtitle = 'Portal',
-  brandHref = '/',
+  brandTitle,
+  brandSubtitle,
+  brandHref = '/user/dashboard',
   badge,
   rightAction,
+  userName = 'Sarah',
+  avatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
 }: MobileTopBarProps) {
   return (
-    <Box
-      component="header"
-      sx={{
-        display: { xs: 'flex', md: 'none' },
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: 60,
-        px: 2,
-        bgcolor: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1100,
-        boxSizing: 'border-box',
-        width: '100%',
-      }}
-    >
-      {/* Left: Brand / Logo */}
-      <Box
-        component={Link}
-        href={brandHref}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.25,
-          textDecoration: 'none',
-          color: 'inherit',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            width: 34,
-            height: 34,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '8px',
-            bgcolor: '#cc785c',
-            color: '#ffffff',
-            boxShadow: '0 2px 6px rgba(204, 120, 92, 0.25)',
-          }}
-        >
-          <Cross size={18} />
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2, color: '#1c1c1c' }}>
-              {brandTitle}
-            </Typography>
-            {badge}
-          </Box>
-          {brandSubtitle && (
-            <Typography variant="caption" sx={{ fontSize: '0.65rem', color: '#6b6964', lineHeight: 1 }}>
-              {brandSubtitle}
-            </Typography>
-          )}
-        </Box>
-      </Box>
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#fce7f3] shadow-xs">
+      <div className="max-w-md mx-auto h-14 px-4 flex items-center justify-between">
+        {/* Left: Brand / Greeting */}
+        <Link href={brandHref} className="flex items-center gap-2.5 text-inherit no-underline">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center shadow-sm shadow-rose-500/25">
+            <Heart size={16} className="fill-white" />
+          </div>
 
-      {/* Right: Custom Action or Optional Hamburger */}
-      {rightAction ? (
-        rightAction
-      ) : onOpenSidebar ? (
-        <IconButton
-          onClick={onOpenSidebar}
-          aria-label="Buka menu navigasi"
-          sx={{
-            width: 44,
-            height: 44,
-            borderRadius: '6px',
-            color: '#1c1c1c',
-            border: '1px solid #e2e8f0',
-            bgcolor: '#f8fafc',
-            '&:hover': {
-              bgcolor: '#f1f5f9',
-            },
-            '&:active': {
-              opacity: 0.8,
-            },
-          }}
-        >
-          <Menu size={22} />
-        </IconButton>
-      ) : null}
-    </Box>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold text-[#1e293b] leading-tight">
+                {brandTitle || `Hai, ${userName}! 🌸`}
+              </span>
+              {badge}
+            </div>
+            {brandSubtitle ? (
+              <span className="text-[11px] text-[#64748b] leading-none">{brandSubtitle}</span>
+            ) : (
+              <span className="text-[11px] text-[#e11d48] font-medium leading-none">Fe-Tablet App</span>
+            )}
+          </div>
+        </Link>
+
+        {/* Right: Notification & Profile Avatar */}
+        {rightAction ? (
+          rightAction
+        ) : (
+          <div className="flex items-center gap-2">
+            {/* Notification Bell */}
+            <Link
+              href="/user/dashboard"
+              className="w-9 h-9 rounded-full bg-[#fff5f7] border border-[#fce7f3] flex items-center justify-center text-[#475569] hover:text-[#e11d48] hover:bg-[#ffe4e6] transition-colors relative"
+              aria-label="Notifikasi"
+            >
+              <Bell size={17} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#e11d48] ring-2 ring-white" />
+            </Link>
+
+            {/* Profile Avatar */}
+            <Link
+              href="/user/profile"
+              className="w-9 h-9 rounded-full ring-2 ring-[#fce7f3] hover:ring-[#e11d48] overflow-hidden relative transition-all"
+              aria-label="Profil Pengguna"
+            >
+              <Image
+                src={avatarUrl}
+                alt={userName}
+                fill
+                className="object-cover"
+                sizes="36px"
+              />
+            </Link>
+          </div>
+        )}
+      </div>
+    </header>
   )
 }
