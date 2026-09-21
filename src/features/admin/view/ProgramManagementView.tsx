@@ -212,7 +212,7 @@ export default function ProgramManagementView() {
     },
     {
       id: 'penanggungJawab',
-      label: 'Dokter',
+      label: 'Penanggung Jawab',
       width: '15%',
       renderCell: (program) => (
         <Typography variant="body2" color="text.primary">
@@ -350,7 +350,7 @@ export default function ProgramManagementView() {
           </Grid>
           <Grid size={{ xs: 6 }}>
             <TextField
-              label="Dokter"
+              label="Penanggung Jawab Admin"
               fullWidth
               size="small"
               value={formData.createdBy}

@@ -57,7 +57,7 @@ export default function SendReminderModal({
       case 'urgent':
         return `PERHATIAN MEDIS: Halo Bpk/Ibu ${patientName}, tim kesehatan mencatat jadwal obat ${medicationName} Anda terlewat. Segera konsumsi obat Anda dan hubungi klinik jika ada kendala.`
       default:
-        return `Halo Bpk/Ibu ${patientName}, mohon konsumsi obat ${medicationName} (${dosage}) sesuai instruksi dokter.`
+        return `Halo Bpk/Ibu ${patientName}, mohon konsumsi obat ${medicationName} (${dosage}) sesuai petunjuk pengobatan Anda.`
     }
   }
 

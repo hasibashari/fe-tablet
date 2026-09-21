@@ -79,8 +79,8 @@ export const MOCK_REMINDERS: Reminder[] = [
   },
   {
     id: '8',
-    title: 'Konsultasi Dokter Spesialis',
-    description: 'Klinik Medika Utama - Lantai 2',
+    title: 'Pemeriksaan Kesehatan Rutin',
+    description: 'Klinik Pratama MediCore Pusat',
     time: '10:30',
     date: tomorrow,
     status: 'PENDING',

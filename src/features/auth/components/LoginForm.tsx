@@ -12,9 +12,6 @@ import {
   InputAdornment,
   Alert,
   CircularProgress,
-  Divider,
-  Paper,
-  Chip,
   Fade,
 } from '@mui/material'
 import {
@@ -23,66 +20,32 @@ import {
   Mail,
   Lock,
   ArrowRight,
-  ShieldCheck,
-  User,
-  Sparkles,
   CheckCircle2,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { DEMO_ACCOUNTS } from '../api/mockAuthData'
 import { UserRole } from '../types/auth.types'
 import { usePWA } from '@/src/shared/hooks/usePWA'
 
-export function LoginForm() {
+export interface LoginFormProps {
+  onSwitchTab?: () => void
+  hideHeader?: boolean
+}
+
+export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectParam = searchParams.get('redirect')
 
-  const { login, quickLogin } = useAuth()
+  const { login } = useAuth()
   const { isPWA } = usePWA()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [selectedRoleHint, setSelectedRoleHint] = useState<UserRole>('patient')
+  const [selectedRoleHint] = useState<UserRole>('user')
   const [loading, setLoading] = useState(false)
-  const [quickLoadingRole, setQuickLoadingRole] = useState<UserRole | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successRole, setSuccessRole] = useState<string | null>(null)
-
-  const handleSelectDemo = (demoEmail: string, demoPass: string, role: UserRole) => {
-    if (isPWA && role === 'admin') {
-      setErrorMessage('Akun Administrator hanya dapat diakses melalui browser komputer/laptop.')
-      return
-    }
-    setEmail(demoEmail)
-    setPassword(demoPass)
-    setSelectedRoleHint(role)
-    setErrorMessage(null)
-  }
-
-  const handleQuickLogin = async (role: UserRole) => {
-    if (isPWA && role === 'admin') {
-      setErrorMessage('Akun Administrator hanya dapat diakses melalui browser komputer/laptop.')
-      return
-    }
-    setQuickLoadingRole(role)
-    setErrorMessage(null)
-    try {
-      const res = await quickLogin(role)
-      if (res.success) {
-        setSuccessRole(role === 'admin' ? 'Admin / Dokter' : 'Pasien')
-        const target = redirectParam || res.redirectTo
-        setTimeout(() => {
-          router.push(target)
-        }, 400)
-      }
-    } catch {
-      setErrorMessage('Terjadi kesalahan saat masuk. Silakan coba lagi.')
-    } finally {
-      setQuickLoadingRole(null)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,7 +55,9 @@ export function LoginForm() {
     }
 
     if (isPWA && (email.toLowerCase().includes('admin') || selectedRoleHint === 'admin')) {
-      setErrorMessage('Akun Administrator hanya dapat diakses melalui browser komputer/laptop. Silakan gunakan akun Pasien.')
+      setErrorMessage(
+        'Akun Administrator hanya dapat diakses melalui browser komputer/laptop. Silakan gunakan akun Pengguna.'
+      )
       return
     }
 
@@ -108,12 +73,14 @@ export function LoginForm() {
 
       if (res.success && res.redirectTo) {
         if (isPWA && res.redirectTo.includes('admin')) {
-          setErrorMessage('Akun Administrator hanya dapat diakses melalui browser komputer/laptop.')
+          setErrorMessage(
+            'Akun Administrator hanya dapat diakses melalui browser komputer/laptop.'
+          )
           setLoading(false)
           return
         }
         const target = redirectParam || res.redirectTo
-        setSuccessRole(res.redirectTo.includes('admin') ? 'Admin / Dokter' : 'Pasien')
+        setSuccessRole(res.redirectTo.includes('admin') ? 'Administrator' : 'User / Pasien')
         setTimeout(() => {
           router.push(target)
         }, 400)
@@ -127,152 +94,37 @@ export function LoginForm() {
     }
   }
 
-
   return (
-    <Box sx={{ width: '100%', maxWidth: '440px', mx: 'auto' }}>
-      {/* Header Form */}
-      <Box sx={{ mb: 3.5, textAlign: { xs: 'center', md: 'left' } }}>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 800,
-            color: 'text.primary',
-            letterSpacing: '-0.03em',
-            fontSize: { xs: '1.75rem', sm: '2rem' },
-            mb: 1,
-          }}
-        >
-          Masuk ke Portal
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.95rem' }}>
-          Pilih akun demo atau masukkan kredensial akun Anda.
-        </Typography>
-      </Box>
-
-      {/* Quick Demo Switcher Cards */}
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Sparkles size={16} className="text-primary" />
-            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', color: 'primary.dark', letterSpacing: '0.05em' }}>
-              Akses Cepat Demo (1-Klik)
-            </Typography>
-          </Box>
-          <Chip label="Mock Data" size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: 'primary.light', color: 'primary.dark' }} />
+    <Box sx={{ width: '100%' }}>
+      {/* Optional Header Form if not in tabbed container */}
+      {!hideHeader && (
+        <Box sx={{ mb: 3.5, textAlign: 'left' }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 800,
+              color: 'text.primary',
+              letterSpacing: '-0.025em',
+              fontSize: { xs: '1.65rem', sm: '1.85rem' },
+              mb: 1,
+            }}
+          >
+            Masuk
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.92rem', lineHeight: 1.5 }}>
+            Masukkan kredensial akun Anda untuk mengakses layanan.
+          </Typography>
         </Box>
-
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-          {DEMO_ACCOUNTS.map((demo) => {
-            const isSelected = email === demo.email
-            const isDemoLoading = quickLoadingRole === demo.role
-            const Icon = demo.role === 'admin' ? ShieldCheck : User
-            const isAdminPWARestricted = isPWA && demo.role === 'admin'
-
-            return (
-              <Paper
-                key={demo.role}
-                elevation={0}
-                onClick={() => handleSelectDemo(demo.email, demo.password, demo.role)}
-                sx={{
-                  p: 1.75,
-                  borderRadius: 2,
-                  border: '1.5px solid',
-                  borderColor: isSelected ? 'primary.main' : 'divider',
-                  bgcolor: isAdminPWARestricted
-                    ? 'rgba(241, 245, 249, 0.6)'
-                    : isSelected
-                    ? 'rgba(14, 165, 233, 0.04)'
-                    : 'background.paper',
-                  cursor: isAdminPWARestricted ? 'not-allowed' : 'pointer',
-                  opacity: isAdminPWARestricted ? 0.65 : 1,
-                  transition: 'all 0.2s ease',
-                  position: 'relative',
-                  '&:hover': {
-                    borderColor: isAdminPWARestricted ? 'divider' : 'primary.main',
-                    boxShadow: isAdminPWARestricted ? 'none' : '0 4px 12px rgba(14, 165, 233, 0.1)',
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Box
-                    sx={{
-                      p: 0.75,
-                      borderRadius: 1.5,
-                      bgcolor: demo.role === 'admin' ? 'primary.light' : 'success.50',
-                      color: demo.role === 'admin' ? 'primary.dark' : 'success.main',
-                      display: 'flex',
-                    }}
-                  >
-                    <Icon size={16} />
-                  </Box>
-                  {isAdminPWARestricted ? (
-                    <Chip
-                      label="Desktop Only"
-                      size="small"
-                      sx={{
-                        fontSize: '0.62rem',
-                        fontWeight: 700,
-                        height: 20,
-                        bgcolor: 'rgba(245, 158, 11, 0.15)',
-                        color: '#b45309',
-                      }}
-                    />
-                  ) : (
-                    <Button
-                      size="small"
-                      variant="text"
-                      disabled={isDemoLoading}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleQuickLogin(demo.role)
-                      }}
-                      sx={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        p: '2px 8px',
-                        minWidth: 0,
-                        borderRadius: 9999,
-                        color: demo.role === 'admin' ? 'primary.main' : 'success.main',
-                        bgcolor: demo.role === 'admin' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                        '&:hover': {
-                          bgcolor: demo.role === 'admin' ? 'primary.main' : 'success.main',
-                          color: 'white',
-                        },
-                      }}
-                    >
-                      {isDemoLoading ? <CircularProgress size={12} color="inherit" /> : 'Masuk ➔'}
-                    </Button>
-                  )}
-                </Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.primary' }}>
-                  {demo.label}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25, fontSize: '0.72rem', lineHeight: 1.2 }}>
-                  {isAdminPWARestricted
-                    ? 'Buka di peramban desktop'
-                    : demo.role === 'admin'
-                    ? 'Ke /admin/dashboard'
-                    : 'Ke /user/dashboard'}
-                </Typography>
-              </Paper>
-            )
-          })}
-        </Box>
-
-      </Box>
-
-      <Box sx={{ display: 'flex', alignItems: 'center', my: 2.5 }}>
-        <Divider sx={{ flexGrow: 1 }} />
-        <Typography variant="caption" color="text.secondary" sx={{ px: 2, fontWeight: 500 }}>
-          atau isi manual
-        </Typography>
-        <Divider sx={{ flexGrow: 1 }} />
-      </Box>
+      )}
 
       {/* Error & Success Feedback */}
       {errorMessage && (
         <Fade in>
-          <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2, fontSize: '0.85rem' }} onClose={() => setErrorMessage(null)}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2.5, borderRadius: '16px', fontSize: '0.85rem' }}
+            onClose={() => setErrorMessage(null)}
+          >
             {errorMessage}
           </Alert>
         </Fade>
@@ -283,61 +135,121 @@ export function LoginForm() {
           <Alert
             icon={<CheckCircle2 size={18} />}
             severity="success"
-            sx={{ mb: 2.5, borderRadius: 2, fontSize: '0.85rem' }}
+            sx={{ mb: 2.5, borderRadius: '16px', fontSize: '0.85rem' }}
           >
-            Berhasil masuk sebagai <strong>{successRole}</strong>. Mengalihkan ke dashboard...
+            Berhasil masuk sebagai <strong>{successRole}</strong>. Mengalihkan...
           </Alert>
         </Fade>
       )}
 
       {/* Main Login Form */}
       <form onSubmit={handleSubmit}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>
+          {/* Email Field with Pill Styling */}
           <TextField
-            label="Email Akun"
-            placeholder="admin@medicore.com atau budi@medicore.com"
+            placeholder="Email atau nomor telepon"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             fullWidth
             size="medium"
+            autoComplete="email"
             slotProps={{
               input: {
+                sx: {
+                  borderRadius: '9999px',
+                  bgcolor: '#ffffff',
+                  pl: 1.5,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                  '& fieldset': {
+                    borderColor: '#e2e8f0',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#cbd5e1',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#cc785c',
+                    borderWidth: '1.5px',
+                  },
+                },
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Mail size={18} className="text-muted" />
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        bgcolor: 'rgba(204, 120, 92, 0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mr: 0.5,
+                      }}
+                    >
+                      <Mail size={16} color="#cc785c" />
+                    </Box>
                   </InputAdornment>
                 ),
               },
             }}
           />
 
+          {/* Password Field with Pill Styling */}
           <TextField
-            label="Kata Sandi"
-            placeholder="••••••••"
+            placeholder="Kata Sandi"
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             fullWidth
             size="medium"
+            autoComplete="current-password"
             slotProps={{
               input: {
+                sx: {
+                  borderRadius: '9999px',
+                  bgcolor: '#ffffff',
+                  pl: 1.5,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                  '& fieldset': {
+                    borderColor: '#e2e8f0',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#cbd5e1',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#cc785c',
+                    borderWidth: '1.5px',
+                  },
+                },
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock size={18} className="text-muted" />
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        bgcolor: 'rgba(204, 120, 92, 0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mr: 0.5,
+                      }}
+                    >
+                      <Lock size={16} color="#cc785c" />
+                    </Box>
                   </InputAdornment>
                 ),
                 endAdornment: (
-                  <InputAdornment position="end">
+                  <InputAdornment position="end" sx={{ pr: 1 }}>
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       size="small"
                       aria-label="toggle password visibility"
                     >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPassword ? <EyeOff size={18} color="#94a3b8" /> : <Eye size={18} color="#94a3b8" />}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -345,68 +257,69 @@ export function LoginForm() {
             }}
           />
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-              Password demo: <code>password123</code>
-            </Typography>
+          {/* Balanced Action Row: Forgot Password & Pill Submit Button */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mt: 1,
+              flexWrap: 'wrap',
+              gap: 1.5,
+            }}
+          >
             <Link
               href="#"
               onClick={(e) => {
                 e.preventDefault()
-                alert('Silakan gunakan kredensial demo yang disediakan di tombol atas.')
+                alert('Silakan hubungi administrator sistem untuk mereset kata sandi Anda.')
               }}
-              className="text-xs text-primary hover:underline font-medium"
+              className="text-xs text-slate-500 hover:text-[#cc785c] font-medium transition-colors"
             >
-              Lupa sandi?
+              Lupa kata sandi?
             </Link>
-          </Box>
 
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            size="large"
-            disabled={loading || Boolean(quickLoadingRole)}
-            sx={{
-              py: 1.5,
-              mt: 1.5,
-              fontSize: '0.98rem',
-              fontWeight: 700,
-              borderRadius: 2,
-              textTransform: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1.5,
-            }}
-          >
-            {loading ? (
-              <>
-                <CircularProgress size={20} color="inherit" />
-                <span>Memproses Masuk...</span>
-              </>
-            ) : (
-              <>
-                <span>Masuk Sekarang</span>
-                <ArrowRight size={18} />
-              </>
-            )}
-          </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+              sx={{
+                py: 1.25,
+                px: 3.5,
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                borderRadius: '9999px',
+                bgcolor: '#cc785c',
+                color: '#ffffff',
+                textTransform: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                boxShadow: '0 4px 14px rgba(204, 120, 92, 0.35)',
+                '&:hover': {
+                  bgcolor: '#a9583e',
+                  boxShadow: '0 6px 20px rgba(204, 120, 92, 0.45)',
+                },
+              }}
+            >
+              {loading ? (
+                <>
+                  <CircularProgress size={18} color="inherit" />
+                  <span>Masuk...</span>
+                </>
+              ) : (
+                <>
+                  <span>Masuk</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </Button>
+          </Box>
         </Box>
       </form>
 
-      {/* Register Footer */}
-      <Box sx={{ mt: 3.5, textAlign: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
-          Belum memiliki akun pasien?{' '}
-          <Link
-            href="/auth/register"
-            className="text-primary font-semibold hover:underline"
-          >
-            Daftar Pasien Baru
-          </Link>
-        </Typography>
-      </Box>
     </Box>
   )
 }
+
+export default LoginForm

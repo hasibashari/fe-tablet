@@ -102,10 +102,11 @@ export async function quickLoginAction(
   role: UserRole
 ): Promise<{ success: boolean; user?: AuthUser; redirectTo: string }> {
   try {
+    const targetRoles = role === 'admin' ? ['admin'] : ['user', 'patient']
     const res = await db.query<UserDbRow>(
       `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
-       FROM users WHERE role = $1 ORDER BY id ASC LIMIT 1`,
-      [role]
+       FROM users WHERE role = ANY($1) ORDER BY id ASC LIMIT 1`,
+      [targetRoles]
     )
     const row = res.rows[0]
 
@@ -155,20 +156,30 @@ export async function registerPatientAction(
   data: RegisterCredentials
 ): Promise<{ success: boolean; user?: AuthUser; error?: string; redirectTo?: string }> {
   try {
-    if (!data.name || !data.email) {
-      return { success: false, error: 'Nama dan Email wajib diisi.' }
+    if (!data.email || !data.email.trim()) {
+      return { success: false, error: 'Email wajib diisi.' }
     }
 
-    const existingRes = await db.query(`SELECT id FROM users WHERE lower(email) = $1`, [data.email.toLowerCase()])
+    const normalizedEmail = data.email.trim().toLowerCase()
+    const existingRes = await db.query(`SELECT id FROM users WHERE lower(email) = $1`, [normalizedEmail])
     if (existingRes.rows.length > 0) {
       return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain.' }
     }
+
+    // Default friendly name from email or input
+    const defaultName =
+      data.name?.trim() ||
+      normalizedEmail
+        .split('@')[0]
+        .replace(/[._-]/g, ' ')
+        .replace(/\b\w/g, (l) => l.toUpperCase()) ||
+      'Pengguna MediCore'
 
     const newId = `PAT-${Date.now().toString().slice(-4)}`
     const defaultDoctorRes = await db.query<DoctorDbRow>(`SELECT id, name FROM users WHERE role = 'admin' LIMIT 1`)
     const defaultDoctor = defaultDoctorRes.rows[0]
 
-    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}`
+    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(defaultName)}`
 
     await db.transaction(async (client) => {
       await client.query(
@@ -176,8 +187,8 @@ export async function registerPatientAction(
          VALUES ($1, $2, $3, 'patient', $4, $5, $6, $7, $8)`,
         [
           newId,
-          data.name,
-          data.email.toLowerCase(),
+          defaultName,
+          normalizedEmail,
           data.phone || null,
           data.gender || 'Laki-laki',
           data.age || 30,
@@ -195,8 +206,8 @@ export async function registerPatientAction(
 
     const authUser: AuthUser = {
       id: newId,
-      name: data.name,
-      email: data.email.toLowerCase(),
+      name: defaultName,
+      email: normalizedEmail,
       role: 'patient',
       phone: data.phone || undefined,
       gender: data.gender || 'Laki-laki',

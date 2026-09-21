@@ -22,9 +22,9 @@ interface UserSidebarProps {
 export default function UserSidebar({ mobileOpen = false, onMobileClose }: UserSidebarProps) {
   const { user, logout } = useAuth()
 
-  const patientBadge = (
+  const userBadge = (
     <Chip
-      label="PATIENT"
+      label="USER"
       size="small"
       sx={{
         bgcolor: 'primary.light',
@@ -112,10 +112,10 @@ export default function UserSidebar({ mobileOpen = false, onMobileClose }: UserS
           Medi<Box component="span" sx={{ color: 'primary.main' }}>Core</Box>
         </>
       }
-      brandSubtitle="Patient Portal"
+      brandSubtitle="User Portal"
       brandIcon={Cross}
       brandHref="/user/dashboard"
-      badge={patientBadge}
+      badge={userBadge}
       activeBgColor="primary.light"
       activeTextColor="primary.dark"
       activeIconColor="primary.dark"

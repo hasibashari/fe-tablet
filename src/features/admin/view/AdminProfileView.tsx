@@ -30,16 +30,13 @@ export default function AdminProfileView() {
 
   // Profile State
   const [profileData, setProfileData] = useState({
-    name: user?.name || 'Dr. Bambang Hernawan, Sp.PD',
-    email: user?.email || 'admin@medicore.id',
-    phone: user?.phone || '+62 812-3456-7890',
-    title: user?.title || 'Dokter Spesialis Penyakit Dalam / Kepala Medis',
-    sipNumber: '446/SIP.D/DS/Dinkes/2024',
-    strNumber: '31.1.1.100.2.19.123456',
-    sipExpiry: '31 Desember 2028',
-    department: 'Instalasi Rawat Jalan & Farmakoterapi',
-    clinicName: 'Klinik Pratama MediCore Pusat',
-    roleLabel: 'Super Administrator / Dokter Penanggung Jawab',
+    name: user?.name || 'Administrator MediCore',
+    email: user?.email || 'admin@medicore.com',
+    phone: user?.phone || '+62 811-2233-4455',
+    title: user?.title || 'Administrator Sistem & Operasional',
+    department: 'Manajemen Sistem & Farmakoterapi',
+    clinicName: 'MediCore Central System',
+    roleLabel: 'Administrator',
   })
 
   // Edit Modal State
@@ -61,7 +58,7 @@ export default function AdminProfileView() {
   return (
     <ProfileLayout
       title="Profil Admin"
-      subtitle="Informasi identitas tenaga medis, kontak dinas, serta kredensial akun administrator."
+      subtitle="Informasi identitas, kontak dinas, serta kredensial akun administrator sistem."
       name={profileData.name}
       avatarUrl={user?.avatar}
       badges={
@@ -97,31 +94,31 @@ export default function AdminProfileView() {
       onEditClick={handleOpenEdit}
       contactItems={[
         { icon: Mail, label: 'Email Dinas', value: profileData.email },
-        { icon: Phone, label: 'Nomor WhatsApp', value: profileData.phone },
-        { icon: FileCheck, label: 'Nomor SIP Aktif', value: profileData.sipNumber },
+        { icon: Phone, label: 'Nomor Telepon', value: profileData.phone },
+        { icon: Building, label: 'Unit Kerja', value: profileData.department },
       ]}
       metricsTitle="Kredensial & Hak Akses"
       metrics={[
         {
           label: 'Hak Akses',
           value: 'Full Control',
-          subtitle: 'Pasien, Obat, Jadwal, Laporan',
+          subtitle: 'Pengguna, Obat, Jadwal, Laporan',
           icon: Shield,
           iconBgColor: 'primary.light',
           iconColor: 'primary.dark',
         },
         {
-          label: 'Fasilitas Kesehatan',
-          value: 'MediCore Pusat',
-          subtitle: 'Klinik Pratama Rawat Jalan',
+          label: 'Sistem Pengelola',
+          value: 'MediCore Central',
+          subtitle: 'Portal Manajemen Terpadu',
           icon: Building,
           iconBgColor: 'success.light',
           iconColor: 'success.dark',
         },
         {
-          label: 'Legalitas Praktik',
-          value: 'STR & SIP Valid',
-          subtitle: `Hingga ${profileData.sipExpiry}`,
+          label: 'Status Akun',
+          value: 'Aktif & Valid',
+          subtitle: 'Role Administrator Tunggal',
           icon: Award,
           iconBgColor: 'warning.light',
           iconColor: 'warning.dark',
@@ -144,7 +141,7 @@ export default function AdminProfileView() {
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
-              label="Nama Lengkap Beserta Gelar"
+              label="Nama Lengkap Administrator"
               fullWidth
               size="small"
               value={editForm.name}
@@ -165,18 +162,18 @@ export default function AdminProfileView() {
               onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
             />
             <TextField
-              label="Jabatan & Spesialisasi"
+              label="Jabatan & Peran"
               fullWidth
               size="small"
               value={editForm.title}
               onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
             />
             <TextField
-              label="Nomor SIP (Surat Izin Praktik)"
+              label="Unit / Divisi Kerja"
               fullWidth
               size="small"
-              value={editForm.sipNumber}
-              onChange={(e) => setEditForm({ ...editForm, sipNumber: e.target.value })}
+              value={editForm.department}
+              onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
             />
           </Box>
         </DialogContent>

@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'patient'
+export type UserRole = 'admin' | 'user' | 'patient'
 
 export interface AuthUser {
   id: string
@@ -21,10 +21,10 @@ export interface LoginCredentials {
 }
 
 export interface RegisterCredentials {
-  name: string
   email: string
-  phone: string
   password?: string
+  name?: string
+  phone?: string
   gender?: 'Laki-laki' | 'Perempuan'
   age?: number
 }

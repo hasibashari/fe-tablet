@@ -364,7 +364,7 @@ export default function DashboardView() {
                     Fokus Pengobatan Hari Ini
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                    Ringkasan fase konsumsi harian berdasarkan jadwal dokter.
+                    Ringkasan fase konsumsi obat harian Anda.
                   </Typography>
                 </Box>
 
@@ -592,30 +592,30 @@ export default function DashboardView() {
                   sx={{
                     p: 1,
                     borderRadius: 1.5,
-                    bgcolor: 'success.light',
-                    color: 'success.dark',
+                    bgcolor: 'primary.light',
+                    color: 'primary.dark',
                     display: 'flex',
                   }}
                 >
                   <UserCheck size={18} />
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '0.95rem', color: 'text.primary' }}>
-                  Dokter Penanggung Jawab
+                  Pusat Bantuan Klinis
                 </Typography>
               </Box>
 
               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                dr. Siti Rahma, Sp.PD
+                Layanan Dukungan Pasien
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
-                Dokter Spesialis Penyakit Dalam • MediCore Clinical
+                Layanan konsultasi jadwal & bantuan darurat • MediCore Support
               </Typography>
 
               <Button
                 fullWidth
                 size="small"
                 variant="outlined"
-                color="success"
+                color="primary"
                 startIcon={<PhoneCall size={15} />}
                 sx={{
                   borderRadius: 1.5,
@@ -623,9 +623,9 @@ export default function DashboardView() {
                   fontWeight: 600,
                   minHeight: 40,
                 }}
-                onClick={() => alert('Menghubungi layanan klinik dr. Siti Rahma...')}
+                onClick={() => alert('Menghubungi layanan dukungan MediCore (Hotline: 0800-123-4567)...')}
               >
-                Hubungi Dokter
+                Hubungi Bantuan
               </Button>
             </Card>
           </Stack>

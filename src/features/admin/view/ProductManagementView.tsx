@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -16,32 +16,32 @@ import {
   Grid,
   IconButton,
   Tooltip,
-} from '@mui/material'
-import { Search, Plus, Edit, Trash2, Tag } from 'lucide-react'
-import AdminHeader from '../components/AdminHeader'
-import { DataTable, Column } from '@/src/shared/components/DataTable'
-import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
-import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog'
-import { ToastFeedback } from '@/src/shared/components/ToastFeedback'
-import { useCrudModal } from '@/src/shared/hooks/useCrudModal'
-import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm'
-import { useToast } from '@/src/shared/hooks/useToast'
+} from '@mui/material';
+import { Search, Plus, Edit, Trash2, Tag } from 'lucide-react';
+import AdminHeader from '../components/AdminHeader';
+import { DataTable, Column } from '@/src/shared/components/DataTable';
+import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog';
+import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog';
+import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
+import { useCrudModal } from '@/src/shared/hooks/useCrudModal';
+import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm';
+import { useToast } from '@/src/shared/hooks/useToast';
 import {
   getProductsAction,
   createProductAction,
   updateProductAction,
   deleteProductAction,
-} from '../api/productRepository'
-import { MedicalProduct } from '../types/admin.types'
+} from '../api/productRepository';
+import { MedicalProduct } from '../types/admin.types';
 
 interface ProductFormData {
-  name: string
-  category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan'
-  sku: string
-  stock: string
-  unit: string
-  price: string
-  description: string
+  name: string;
+  category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan';
+  sku: string;
+  stock: string;
+  unit: string;
+  price: string;
+  description: string;
 }
 
 const initialProductFormData: ProductFormData = {
@@ -52,13 +52,13 @@ const initialProductFormData: ProductFormData = {
   unit: 'Tablet',
   price: '20000',
   description: '',
-}
+};
 
 export default function ProductManagementView() {
-  const [products, setProducts] = useState<MedicalProduct[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('Semua')
-  const [submitting, setSubmitting] = useState(false)
+  const [products, setProducts] = useState<MedicalProduct[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('Semua');
+  const [submitting, setSubmitting] = useState(false);
 
   // 1. Hook Form Modal Add/Edit
   const {
@@ -69,7 +69,7 @@ export default function ProductManagementView() {
     handleOpenEdit,
     handleCloseModal,
     updateFormData,
-  } = useCrudModal<ProductFormData>(initialProductFormData)
+  } = useCrudModal<ProductFormData>(initialProductFormData);
 
   // 2. Hook Konfirmasi Hapus
   const {
@@ -77,7 +77,7 @@ export default function ProductManagementView() {
     itemToDelete: productToDelete,
     requestDelete: handleDeleteRequest,
     closeDelete: handleCloseDelete,
-  } = useDeleteConfirm<string>()
+  } = useDeleteConfirm<string>();
 
   // 3. Hook Feedback Notifikasi
   const {
@@ -86,30 +86,30 @@ export default function ProductManagementView() {
     severity: toastSeverity,
     showToast,
     hideToast,
-  } = useToast()
+  } = useToast();
 
   const loadData = useCallback(async () => {
-    const data = await getProductsAction()
-    setProducts(data)
-  }, [])
+    const data = await getProductsAction();
+    setProducts(data);
+  }, []);
 
   useEffect(() => {
-    let isMounted = true
-    getProductsAction().then((data) => {
-      if (isMounted) setProducts(data)
-    })
+    let isMounted = true;
+    getProductsAction().then(data => {
+      if (isMounted) setProducts(data);
+    });
     return () => {
-      isMounted = false
-    }
-  }, [])
+      isMounted = false;
+    };
+  }, []);
 
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = products.filter(p => {
     const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === 'Semua' || p.category === categoryFilter
-    return matchesSearch && matchesCategory
-  })
+      p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'Semua' || p.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   const onOpenEdit = (product: MedicalProduct) => {
     handleOpenEdit(product.id, {
@@ -120,21 +120,21 @@ export default function ProductManagementView() {
       unit: product.unit,
       price: product.price.toString(),
       description: product.description || '',
-    })
-  }
+    });
+  };
 
   const handleSaveProduct = async () => {
     if (!formData.name) {
-      showToast('Nama produk wajib diisi', 'error')
-      return
+      showToast('Nama produk wajib diisi', 'error');
+      return;
     }
 
-    const stockNum = parseInt(formData.stock) || 0
-    let status: 'Tersedia' | 'Stok Menipis' | 'Habis' = 'Tersedia'
-    if (stockNum === 0) status = 'Habis'
-    else if (stockNum < 20) status = 'Stok Menipis'
+    const stockNum = parseInt(formData.stock) || 0;
+    let status: 'Tersedia' | 'Stok Menipis' | 'Habis' = 'Tersedia';
+    if (stockNum === 0) status = 'Habis';
+    else if (stockNum < 20) status = 'Stok Menipis';
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
       if (editingId) {
         const res = await updateProductAction(editingId, {
@@ -146,14 +146,14 @@ export default function ProductManagementView() {
           price: parseInt(formData.price) || 0,
           status,
           description: formData.description,
-        })
+        });
 
         if (res.success) {
-          await loadData()
-          handleCloseModal()
-          showToast('Produk berhasil diperbarui di database!', 'success')
+          await loadData();
+          handleCloseModal();
+          showToast('Produk berhasil diperbarui di database!', 'success');
         } else {
-          showToast(res.error || 'Gagal memperbarui produk', 'error')
+          showToast(res.error || 'Gagal memperbarui produk', 'error');
         }
       } else {
         const res = await createProductAction({
@@ -165,33 +165,33 @@ export default function ProductManagementView() {
           price: parseInt(formData.price) || 10000,
           status,
           description: formData.description || 'Deskripsi produk medis.',
-        })
+        });
 
         if (res.success) {
-          await loadData()
-          handleCloseModal()
-          showToast('Produk baru berhasil disimpan ke database!', 'success')
+          await loadData();
+          handleCloseModal();
+          showToast('Produk baru berhasil disimpan ke database!', 'success');
         } else {
-          showToast(res.error || 'Gagal menambahkan produk', 'error')
+          showToast(res.error || 'Gagal menambahkan produk', 'error');
         }
       }
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleConfirmDelete = async () => {
     if (productToDelete) {
-      const res = await deleteProductAction(productToDelete)
+      const res = await deleteProductAction(productToDelete);
       if (res.success) {
-        await loadData()
-        showToast('Produk berhasil dihapus dari database.', 'success')
+        await loadData();
+        showToast('Produk berhasil dihapus dari database.', 'success');
       } else {
-        showToast(res.error || 'Gagal menghapus produk', 'error')
+        showToast(res.error || 'Gagal menghapus produk', 'error');
       }
     }
-    handleCloseDelete()
-  }
+    handleCloseDelete();
+  };
 
   const columns: Column<MedicalProduct>[] = [
     {
@@ -199,7 +199,7 @@ export default function ProductManagementView() {
       label: 'No.',
       width: '5%',
       renderCell: (_, index) => (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant='body2' color='text.secondary'>
           {index + 1}
         </Typography>
       ),
@@ -208,18 +208,28 @@ export default function ProductManagementView() {
       id: 'nama',
       label: 'Nama Produk',
       width: '35%',
-      renderCell: (product) => (
+      renderCell: product => (
         <Box>
-          <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 600 }}>
+          <Typography variant='subtitle2' color='text.primary' sx={{ fontWeight: 600 }}>
             {product.name}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-            <Chip 
-              label={product.category} 
-              size="small" 
-              sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600, bgcolor: 'primary.light', color: 'primary.dark' }} 
+            <Chip
+              label={product.category}
+              size='small'
+              sx={{
+                height: 20,
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                bgcolor: 'primary.light',
+                color: 'primary.dark',
+              }}
             />
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+            >
               <Tag size={12} /> SKU: {product.sku}
             </Typography>
           </Box>
@@ -229,17 +239,20 @@ export default function ProductManagementView() {
     {
       id: 'stok',
       label: 'Stok & Satuan',
-      renderCell: (product) => (
-        <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
-          {product.stock} <Typography component="span" variant="caption" color="text.secondary">{product.unit}</Typography>
+      renderCell: product => (
+        <Typography variant='body2' color='text.primary' sx={{ fontWeight: 600 }}>
+          {product.stock}{' '}
+          <Typography component='span' variant='caption' color='text.secondary'>
+            {product.unit}
+          </Typography>
         </Typography>
       ),
     },
     {
       id: 'harga',
       label: 'Harga Estimasi',
-      renderCell: (product) => (
-        <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
+      renderCell: product => (
+        <Typography variant='body2' color='text.primary' sx={{ fontWeight: 600 }}>
           Rp {product.price.toLocaleString('id-ID')}
         </Typography>
       ),
@@ -247,13 +260,16 @@ export default function ProductManagementView() {
     {
       id: 'status',
       label: 'Status',
-      renderCell: (product) => (
-        <Chip 
-          label={product.status} 
-          size="small" 
+      renderCell: product => (
+        <Chip
+          label={product.status}
+          size='small'
           color={
-            product.status === 'Tersedia' ? 'success' : 
-            product.status === 'Stok Menipis' ? 'warning' : 'error'
+            product.status === 'Tersedia'
+              ? 'success'
+              : product.status === 'Stok Menipis'
+                ? 'warning'
+                : 'error'
           }
         />
       ),
@@ -262,63 +278,71 @@ export default function ProductManagementView() {
       id: 'aksi',
       label: 'Aksi',
       align: 'right',
-      renderCell: (product) => (
+      renderCell: product => (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-          <Tooltip title="Edit Produk">
-            <IconButton size="small" onClick={() => onOpenEdit(product)}>
+          <Tooltip title='Edit Produk'>
+            <IconButton size='small' onClick={() => onOpenEdit(product)}>
               <Edit size={16} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Hapus Produk">
-            <IconButton size="small" color="error" onClick={() => handleDeleteRequest(product.id)}>
+          <Tooltip title='Hapus Produk'>
+            <IconButton size='small' color='error' onClick={() => handleDeleteRequest(product.id)}>
               <Trash2 size={16} />
             </IconButton>
           </Tooltip>
         </Box>
       ),
     },
-  ]
+  ];
 
   return (
     <Box>
       <AdminHeader
-        title="Katalog Produk Medis"
-        subtitle="Kelola ketersediaan inventaris farmasi, suplemen kesehatan, dan alat medis."
+        title='Katalog Produk Medis'
+        subtitle='Kelola ketersediaan inventaris farmasi, suplemen kesehatan, dan alat medis.'
       />
 
       {/* Filter Bar */}
       <Card sx={{ p: 2.5, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
           <Box sx={{ display: 'flex', gap: 2, flex: 1, minWidth: 280 }}>
             <TextField
-              placeholder="Cari nama produk atau SKU..."
+              placeholder='Cari nama produk atau SKU...'
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              size="small"
+              onChange={e => setSearchQuery(e.target.value)}
+              size='small'
               fullWidth
               slotProps={{
                 input: {
                   startAdornment: (
-                    <InputAdornment position="start">
+                    <InputAdornment position='start'>
                       <Search size={18} />
                     </InputAdornment>
                   ),
                 },
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                <MenuItem value="Semua">Semua Kategori</MenuItem>
-                <MenuItem value="Obat Resep">Obat Resep</MenuItem>
-                <MenuItem value="Obat Bebas">Obat Bebas</MenuItem>
-                <MenuItem value="Suplemen">Suplemen</MenuItem>
-                <MenuItem value="Alat Kesehatan">Alat Kesehatan</MenuItem>
+            <FormControl size='small' sx={{ minWidth: 200 }}>
+              <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+                <MenuItem value='Semua'>Semua Kategori</MenuItem>
+                <MenuItem value='Obat Resep'>Obat Resep</MenuItem>
+                <MenuItem value='Obat Bebas'>Obat Bebas</MenuItem>
+                <MenuItem value='Suplemen'>Suplemen</MenuItem>
+                <MenuItem value='Alat Kesehatan'>Alat Kesehatan</MenuItem>
               </Select>
             </FormControl>
           </Box>
 
           <Button
-            variant="contained"
+            variant='contained'
             startIcon={<Plus size={18} />}
             onClick={() => handleOpenAdd()}
           >
@@ -331,7 +355,7 @@ export default function ProductManagementView() {
       <DataTable
         columns={columns}
         data={filteredProducts}
-        emptyMessage="Tidak ada produk yang ditemukan."
+        emptyMessage='Tidak ada produk yang ditemukan.'
       />
 
       {/* Add/Edit Product Modal */}
@@ -344,40 +368,40 @@ export default function ProductManagementView() {
         submitting={submitting}
       >
         <TextField
-          label="Nama Obat / Produk"
+          label='Nama Obat / Produk'
           fullWidth
-          size="small"
+          size='small'
           value={formData.name}
-          onChange={(e) => updateFormData({ name: e.target.value })}
+          onChange={e => updateFormData({ name: e.target.value })}
         />
 
         <Grid container spacing={2}>
           <Grid size={{ xs: 6 }}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size='small'>
               <InputLabel>Kategori</InputLabel>
               <Select
                 value={formData.category}
-                label="Kategori"
-                onChange={(e) =>
+                label='Kategori'
+                onChange={e =>
                   updateFormData({
                     category: e.target.value as ProductFormData['category'],
                   })
                 }
               >
-                <MenuItem value="Obat Resep">Obat Resep</MenuItem>
-                <MenuItem value="Obat Bebas">Obat Bebas</MenuItem>
-                <MenuItem value="Suplemen">Suplemen</MenuItem>
-                <MenuItem value="Alat Kesehatan">Alat Kesehatan</MenuItem>
+                <MenuItem value='Obat Resep'>Obat Resep</MenuItem>
+                <MenuItem value='Obat Bebas'>Obat Bebas</MenuItem>
+                <MenuItem value='Suplemen'>Suplemen</MenuItem>
+                <MenuItem value='Alat Kesehatan'>Alat Kesehatan</MenuItem>
               </Select>
             </FormControl>
           </Grid>
           <Grid size={{ xs: 6 }}>
             <TextField
-              label="Kode SKU (Opsional)"
+              label='Kode SKU (Opsional)'
               fullWidth
-              size="small"
+              size='small'
               value={formData.sku}
-              onChange={(e) => updateFormData({ sku: e.target.value })}
+              onChange={e => updateFormData({ sku: e.target.value })}
             />
           </Grid>
         </Grid>
@@ -385,52 +409,52 @@ export default function ProductManagementView() {
         <Grid container spacing={2}>
           <Grid size={{ xs: 4 }}>
             <TextField
-              label="Jumlah Stok"
-              type="number"
+              label='Jumlah Stok'
+              type='number'
               fullWidth
-              size="small"
+              size='small'
               value={formData.stock}
-              onChange={(e) => updateFormData({ stock: e.target.value })}
+              onChange={e => updateFormData({ stock: e.target.value })}
             />
           </Grid>
           <Grid size={{ xs: 4 }}>
             <TextField
-              label="Satuan"
+              label='Satuan'
               fullWidth
-              size="small"
+              size='small'
               value={formData.unit}
-              onChange={(e) => updateFormData({ unit: e.target.value })}
+              onChange={e => updateFormData({ unit: e.target.value })}
             />
           </Grid>
           <Grid size={{ xs: 4 }}>
             <TextField
-              label="Harga (Rp)"
-              type="number"
+              label='Harga (Rp)'
+              type='number'
               fullWidth
-              size="small"
+              size='small'
               value={formData.price}
-              onChange={(e) => updateFormData({ price: e.target.value })}
+              onChange={e => updateFormData({ price: e.target.value })}
             />
           </Grid>
         </Grid>
 
         <TextField
-          label="Deskripsi / Indikasi Medis"
+          label='Deskripsi / Indikasi Medis'
           multiline
           rows={3}
           fullWidth
-          size="small"
+          size='small'
           value={formData.description}
-          onChange={(e) => updateFormData({ description: e.target.value })}
+          onChange={e => updateFormData({ description: e.target.value })}
         />
       </CrudModalDialog>
-      
+
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteDialog
         open={deleteConfirmOpen}
-        title="Konfirmasi Hapus"
-        message="Apakah Anda yakin ingin menghapus produk ini? Data yang dihapus tidak dapat dikembalikan."
-        confirmText="Hapus Produk"
+        title='Konfirmasi Hapus'
+        message='Apakah Anda yakin ingin menghapus produk ini? Data yang dihapus tidak dapat dikembalikan.'
+        confirmText='Hapus Produk'
         onClose={handleCloseDelete}
         onConfirm={handleConfirmDelete}
       />
@@ -443,5 +467,5 @@ export default function ProductManagementView() {
         onClose={hideToast}
       />
     </Box>
-  )
+  );
 }

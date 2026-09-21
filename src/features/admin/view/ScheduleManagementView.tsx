@@ -228,7 +228,7 @@ export default function ScheduleManagementView() {
           startDate: today,
           endDate: '2026-12-31',
           category: formData.category,
-          instructions: formData.instructions || 'Diminum teratur sesuai petunjuk dokter.',
+          instructions: formData.instructions || 'Diminum teratur sesuai petunjuk pengobatan.',
         })
 
         if (res.success) {
@@ -277,8 +277,8 @@ export default function ScheduleManagementView() {
     if (reminderData.patientId) {
       await sendReminderNudgeAction({
         patientId: reminderData.patientId,
-        senderName: 'dr. Sarah Jenkins, Sp.GK',
-        senderRole: 'Dokter Penanggung Jawab',
+        senderName: 'Administrator MediCore',
+        senderRole: 'Administrator',
         scheduleId: reminderData.scheduleId,
         medicationName: reminderData.medicationName,
         dosage: reminderData.dosage,

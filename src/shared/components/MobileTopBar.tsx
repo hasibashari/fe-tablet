@@ -6,11 +6,12 @@ import { Box, Typography, IconButton } from '@mui/material'
 import { Menu, Cross } from 'lucide-react'
 
 export interface MobileTopBarProps {
-  onOpenSidebar: () => void
+  onOpenSidebar?: () => void
   brandTitle?: React.ReactNode
   brandSubtitle?: string
   brandHref?: string
   badge?: React.ReactNode
+  rightAction?: React.ReactNode
 }
 
 export default function MobileTopBar({
@@ -19,6 +20,7 @@ export default function MobileTopBar({
   brandSubtitle = 'Portal',
   brandHref = '/',
   badge,
+  rightAction,
 }: MobileTopBarProps) {
   return (
     <Box
@@ -80,27 +82,31 @@ export default function MobileTopBar({
         </Box>
       </Box>
 
-      {/* Right: Hamburger Menu Button (Min 44px touch target) */}
-      <IconButton
-        onClick={onOpenSidebar}
-        aria-label="Buka menu navigasi"
-        sx={{
-          width: 44,
-          height: 44,
-          borderRadius: '6px',
-          color: '#1c1c1c',
-          border: '1px solid #e2e8f0',
-          bgcolor: '#f8fafc',
-          '&:hover': {
-            bgcolor: '#f1f5f9',
-          },
-          '&:active': {
-            opacity: 0.8,
-          },
-        }}
-      >
-        <Menu size={22} />
-      </IconButton>
+      {/* Right: Custom Action or Optional Hamburger */}
+      {rightAction ? (
+        rightAction
+      ) : onOpenSidebar ? (
+        <IconButton
+          onClick={onOpenSidebar}
+          aria-label="Buka menu navigasi"
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: '6px',
+            color: '#1c1c1c',
+            border: '1px solid #e2e8f0',
+            bgcolor: '#f8fafc',
+            '&:hover': {
+              bgcolor: '#f1f5f9',
+            },
+            '&:active': {
+              opacity: 0.8,
+            },
+          }}
+        >
+          <Menu size={22} />
+        </IconButton>
+      ) : null}
     </Box>
   )
 }
