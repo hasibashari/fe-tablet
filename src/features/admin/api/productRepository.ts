@@ -1,18 +1,18 @@
-'use server'
+'use server';
 
-import db from '@/src/lib/db/client'
-import { MedicalProduct } from '../types/admin.types'
+import db from '@/src/db/client';
+import { MedicalProduct } from '../types/admin.types';
 
 interface ProductDbRow {
-  id: string
-  name: string
-  category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan'
-  sku: string
-  stock: number
-  unit: string
-  price: number
-  status: 'Tersedia' | 'Stok Menipis' | 'Habis'
-  description: string | null
+  id: string;
+  name: string;
+  category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan';
+  sku: string;
+  stock: number;
+  unit: string;
+  price: number;
+  status: 'Tersedia' | 'Stok Menipis' | 'Habis';
+  description: string | null;
 }
 
 // ============================================================
@@ -20,8 +20,8 @@ interface ProductDbRow {
 // ============================================================
 export async function getProductsAction(): Promise<MedicalProduct[]> {
   try {
-    const res = await db.query<ProductDbRow>(`SELECT * FROM products ORDER BY name ASC`)
-    return res.rows.map((r) => ({
+    const res = await db.query<ProductDbRow>(`SELECT * FROM products ORDER BY name ASC`);
+    return res.rows.map(r => ({
       id: r.id,
       name: r.name,
       category: r.category,
@@ -31,25 +31,25 @@ export async function getProductsAction(): Promise<MedicalProduct[]> {
       price: Number(r.price) || 0,
       status: r.status,
       description: r.description || '',
-    }))
+    }));
   } catch (error) {
-    console.error('Error in getProductsAction:', error)
-    return []
+    console.error('Error in getProductsAction:', error);
+    return [];
   }
 }
 
 export async function createProductAction(data: {
-  name: string
-  category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan'
-  sku: string
-  stock: number
-  unit: string
-  price: number
-  status: 'Tersedia' | 'Stok Menipis' | 'Habis'
-  description?: string
+  name: string;
+  category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan';
+  sku: string;
+  stock: number;
+  unit: string;
+  price: number;
+  status: 'Tersedia' | 'Stok Menipis' | 'Habis';
+  description?: string;
 }): Promise<{ success: boolean; product?: MedicalProduct; error?: string }> {
   try {
-    const newId = `PRD-${Date.now().toString().slice(-3)}`
+    const newId = `PRD-${Date.now().toString().slice(-3)}`;
     await db.query(
       `INSERT INTO products (id, name, category, sku, stock, unit, price, status, description)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
@@ -63,8 +63,8 @@ export async function createProductAction(data: {
         data.price,
         data.status,
         data.description || null,
-      ]
-    )
+      ],
+    );
 
     const created: MedicalProduct = {
       id: newId,
@@ -76,18 +76,18 @@ export async function createProductAction(data: {
       price: data.price,
       status: data.status,
       description: data.description || '',
-    }
-    return { success: true, product: created }
+    };
+    return { success: true, product: created };
   } catch (error: unknown) {
-    console.error('Error creating product:', error)
-    const errMsg = error instanceof Error ? error.message : 'Gagal membuat data produk'
-    return { success: false, error: errMsg }
+    console.error('Error creating product:', error);
+    const errMsg = error instanceof Error ? error.message : 'Gagal membuat data produk';
+    return { success: false, error: errMsg };
   }
 }
 
 export async function updateProductAction(
   productId: string,
-  data: Partial<MedicalProduct>
+  data: Partial<MedicalProduct>,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await db.query(
@@ -113,23 +113,25 @@ export async function updateProductAction(
         data.status ?? null,
         data.description ?? null,
         productId,
-      ]
-    )
-    return { success: true }
+      ],
+    );
+    return { success: true };
   } catch (error: unknown) {
-    console.error('Error updating product:', error)
-    const errMsg = error instanceof Error ? error.message : 'Gagal memperbarui data produk'
-    return { success: false, error: errMsg }
+    console.error('Error updating product:', error);
+    const errMsg = error instanceof Error ? error.message : 'Gagal memperbarui data produk';
+    return { success: false, error: errMsg };
   }
 }
 
-export async function deleteProductAction(productId: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteProductAction(
+  productId: string,
+): Promise<{ success: boolean; error?: string }> {
   try {
-    await db.query(`DELETE FROM products WHERE id = $1`, [productId])
-    return { success: true }
+    await db.query(`DELETE FROM products WHERE id = $1`, [productId]);
+    return { success: true };
   } catch (error: unknown) {
-    console.error('Error deleting product:', error)
-    const errMsg = error instanceof Error ? error.message : 'Gagal menghapus data produk'
-    return { success: false, error: errMsg }
+    console.error('Error deleting product:', error);
+    const errMsg = error instanceof Error ? error.message : 'Gagal menghapus data produk';
+    return { success: false, error: errMsg };
   }
 }

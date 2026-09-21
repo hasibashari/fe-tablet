@@ -1,13 +1,13 @@
-'use server'
+'use server';
 
-import db from '@/src/lib/db/client'
-import { ComplianceReport } from '../types/admin.types'
+import db from '@/src/db/client';
+import { ComplianceReport } from '../types/admin.types';
 
 interface ComplianceReportRow {
-  date: string
-  taken_count: string | number
-  missed_count: string | number
-  total: string | number
+  date: string;
+  taken_count: string | number;
+  missed_count: string | number;
+  total: string | number;
 }
 
 // ============================================================
@@ -25,31 +25,31 @@ export async function getComplianceReportsAction(): Promise<ComplianceReport[]> 
       GROUP BY scheduled_date
       ORDER BY scheduled_date ASC
       LIMIT 14
-    `)
-    const rows = res.rows
+    `);
+    const rows = res.rows;
 
     if (rows.length === 0) {
       return [
         { date: 'Senin', takenCount: 42, missedCount: 4, adherencePercentage: 91 },
         { date: 'Selasa', takenCount: 45, missedCount: 3, adherencePercentage: 93 },
         { date: 'Rabu', takenCount: 40, missedCount: 6, adherencePercentage: 87 },
-      ]
+      ];
     }
 
-    return rows.map((r) => {
-      const total = Number(r.total) || 0
-      const takenCount = Number(r.taken_count) || 0
-      const missedCount = Number(r.missed_count) || 0
-      const percentage = total > 0 ? Math.round((takenCount / total) * 100) : 100
+    return rows.map(r => {
+      const total = Number(r.total) || 0;
+      const takenCount = Number(r.taken_count) || 0;
+      const missedCount = Number(r.missed_count) || 0;
+      const percentage = total > 0 ? Math.round((takenCount / total) * 100) : 100;
       return {
         date: r.date,
         takenCount,
         missedCount,
         adherencePercentage: percentage,
-      }
-    })
+      };
+    });
   } catch (error) {
-    console.error('Error in getComplianceReportsAction:', error)
-    return []
+    console.error('Error in getComplianceReportsAction:', error);
+    return [];
   }
 }
