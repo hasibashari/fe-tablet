@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
+import React, { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   Box,
   Typography,
@@ -13,86 +13,79 @@ import {
   Alert,
   CircularProgress,
   Fade,
-} from '@mui/material'
-import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  ArrowRight,
-  CheckCircle2,
-} from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
-import { UserRole } from '../types/auth.types'
-import { usePWA } from '@/src/shared/hooks/usePWA'
+} from '@mui/material';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../types/auth.types';
+import { usePWA } from '@/src/shared/hooks/usePWA';
 
 export interface LoginFormProps {
-  onSwitchTab?: () => void
-  hideHeader?: boolean
+  onSwitchTab?: () => void;
+  hideHeader?: boolean;
 }
 
-export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirectParam = searchParams.get('redirect')
+export function LoginForm({ hideHeader = false }: LoginFormProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
 
-  const { login } = useAuth()
-  const { isPWA } = usePWA()
+  const { login } = useAuth();
+  const { isPWA } = usePWA();
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [selectedRoleHint] = useState<UserRole>('user')
-  const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [successRole, setSuccessRole] = useState<string | null>(null)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [selectedRoleHint] = useState<UserRole>('user');
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successRole, setSuccessRole] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!email.trim()) {
-      setErrorMessage('Silakan masukkan email Anda.')
-      return
+      setErrorMessage('Silakan masukkan email Anda.');
+      return;
     }
 
     if (isPWA && (email.toLowerCase().includes('admin') || selectedRoleHint === 'admin')) {
       setErrorMessage(
-        'Akun Administrator hanya dapat diakses melalui browser komputer/laptop. Silakan gunakan akun Pengguna.'
-      )
-      return
+        'Akun Administrator hanya dapat diakses melalui browser komputer/laptop. Silakan gunakan akun Pengguna.',
+      );
+      return;
     }
 
-    setLoading(true)
-    setErrorMessage(null)
+    setLoading(true);
+    setErrorMessage(null);
 
     try {
       const res = await login({
         email,
         password,
         roleHint: selectedRoleHint,
-      })
+      });
 
       if (res.success && res.redirectTo) {
         if (isPWA && res.redirectTo.includes('admin')) {
           setErrorMessage(
-            'Akun Administrator hanya dapat diakses melalui browser komputer/laptop.'
-          )
-          setLoading(false)
-          return
+            'Akun Administrator hanya dapat diakses melalui browser komputer/laptop.',
+          );
+          setLoading(false);
+          return;
         }
-        const target = redirectParam || res.redirectTo
-        setSuccessRole(res.redirectTo.includes('admin') ? 'Administrator' : 'User / Pasien')
+        const target = redirectParam || res.redirectTo;
+        setSuccessRole(res.redirectTo.includes('admin') ? 'Administrator' : 'User / Pasien');
         setTimeout(() => {
-          router.push(target)
-        }, 400)
+          router.push(target);
+        }, 400);
       } else {
-        setErrorMessage(res.error || 'Email atau kata sandi tidak cocok.')
+        setErrorMessage(res.error || 'Email atau kata sandi tidak cocok.');
       }
     } catch {
-      setErrorMessage('Terjadi kendala sistem. Silakan coba lagi.')
+      setErrorMessage('Terjadi kendala sistem. Silakan coba lagi.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -100,7 +93,7 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
       {!hideHeader && (
         <Box sx={{ mb: 3.5, textAlign: 'left' }}>
           <Typography
-            variant="h4"
+            variant='h4'
             sx={{
               fontWeight: 800,
               color: 'text.primary',
@@ -111,7 +104,11 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
           >
             Masuk
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.92rem', lineHeight: 1.5 }}>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ fontSize: '0.92rem', lineHeight: 1.5 }}
+          >
             Masukkan kredensial akun Anda untuk mengakses layanan.
           </Typography>
         </Box>
@@ -121,7 +118,7 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
       {errorMessage && (
         <Fade in>
           <Alert
-            severity="error"
+            severity='error'
             sx={{ mb: 2.5, borderRadius: '16px', fontSize: '0.85rem' }}
             onClose={() => setErrorMessage(null)}
           >
@@ -134,7 +131,7 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
         <Fade in>
           <Alert
             icon={<CheckCircle2 size={18} />}
-            severity="success"
+            severity='success'
             sx={{ mb: 2.5, borderRadius: '16px', fontSize: '0.85rem' }}
           >
             Berhasil masuk sebagai <strong>{successRole}</strong>. Mengalihkan...
@@ -147,14 +144,14 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>
           {/* Email Field with Pill Styling */}
           <TextField
-            placeholder="Email atau nomor telepon"
-            type="email"
+            placeholder='Email atau nomor telepon'
+            type='email'
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             required
             fullWidth
-            size="medium"
-            autoComplete="email"
+            size='medium'
+            autoComplete='email'
             slotProps={{
               input: {
                 sx: {
@@ -174,7 +171,7 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
                   },
                 },
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <Box
                       sx={{
                         width: 32,
@@ -187,7 +184,7 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
                         mr: 0.5,
                       }}
                     >
-                      <Mail size={16} color="#cc785c" />
+                      <Mail size={16} color='#cc785c' />
                     </Box>
                   </InputAdornment>
                 ),
@@ -197,14 +194,14 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
 
           {/* Password Field with Pill Styling */}
           <TextField
-            placeholder="Kata Sandi"
+            placeholder='Kata Sandi'
             type={showPassword ? 'text' : 'password'}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             required
             fullWidth
-            size="medium"
-            autoComplete="current-password"
+            size='medium'
+            autoComplete='current-password'
             slotProps={{
               input: {
                 sx: {
@@ -224,7 +221,7 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
                   },
                 },
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <Box
                       sx={{
                         width: 32,
@@ -237,19 +234,23 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
                         mr: 0.5,
                       }}
                     >
-                      <Lock size={16} color="#cc785c" />
+                      <Lock size={16} color='#cc785c' />
                     </Box>
                   </InputAdornment>
                 ),
                 endAdornment: (
-                  <InputAdornment position="end" sx={{ pr: 1 }}>
+                  <InputAdornment position='end' sx={{ pr: 1 }}>
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      size="small"
-                      aria-label="toggle password visibility"
+                      edge='end'
+                      size='small'
+                      aria-label='toggle password visibility'
                     >
-                      {showPassword ? <EyeOff size={18} color="#94a3b8" /> : <Eye size={18} color="#94a3b8" />}
+                      {showPassword ? (
+                        <EyeOff size={18} color='#94a3b8' />
+                      ) : (
+                        <Eye size={18} color='#94a3b8' />
+                      )}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -269,19 +270,19 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
             }}
           >
             <Link
-              href="#"
-              onClick={(e) => {
-                e.preventDefault()
-                alert('Silakan hubungi administrator sistem untuk mereset kata sandi Anda.')
+              href='#'
+              onClick={e => {
+                e.preventDefault();
+                alert('Silakan hubungi administrator sistem untuk mereset kata sandi Anda.');
               }}
-              className="text-xs text-slate-500 hover:text-[#cc785c] font-medium transition-colors"
+              className='text-xs text-slate-500 hover:text-[#cc785c] font-medium transition-colors'
             >
               Lupa kata sandi?
             </Link>
 
             <Button
-              type="submit"
-              variant="contained"
+              type='submit'
+              variant='contained'
               disabled={loading}
               sx={{
                 py: 1.25,
@@ -304,7 +305,7 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
             >
               {loading ? (
                 <>
-                  <CircularProgress size={18} color="inherit" />
+                  <CircularProgress size={18} color='inherit' />
                   <span>Masuk...</span>
                 </>
               ) : (
@@ -317,9 +318,8 @@ export function LoginForm({ onSwitchTab, hideHeader = false }: LoginFormProps) {
           </Box>
         </Box>
       </form>
-
     </Box>
-  )
+  );
 }
 
-export default LoginForm
+export default LoginForm;

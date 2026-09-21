@@ -33,6 +33,8 @@ export interface AuthState {
   user: AuthUser | null
   isAuthenticated: boolean
   isLoading: boolean
+  isInitializing: boolean
+  hasCompletedOnboarding: boolean
 }
 
 export interface AuthContextValue extends AuthState {
@@ -40,5 +42,8 @@ export interface AuthContextValue extends AuthState {
   quickLogin: (role: UserRole) => Promise<{ success: boolean; redirectTo: string }>
   register: (data: RegisterCredentials) => Promise<{ success: boolean; error?: string; redirectTo?: string }>
   logout: () => void
+  completeOnboarding: () => void
+  resetOnboarding: () => void
   updateUser: (data: Partial<AuthUser>) => void
 }
+

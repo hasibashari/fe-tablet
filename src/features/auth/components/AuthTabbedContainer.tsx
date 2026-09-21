@@ -1,16 +1,16 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { Box, Button, Typography, Fade } from '@mui/material'
-import { LoginForm } from './LoginForm'
-import { RegisterForm } from './RegisterForm'
+import React, { useState } from 'react';
+import { Box, Button, Typography, Fade } from '@mui/material';
+import { LoginForm } from './LoginForm';
+import { RegisterForm } from './RegisterForm';
 
 export interface AuthTabbedContainerProps {
-  initialTab?: 'login' | 'register'
+  initialTab?: 'login' | 'register';
 }
 
 export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContainerProps) {
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>(initialTab)
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>(initialTab);
 
   return (
     <Box sx={{ width: '100%', maxWidth: '420px', mx: 'auto' }}>
@@ -33,16 +33,19 @@ export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContaine
               bgcolor: 'transparent',
               color: activeTab === 'login' ? 'text.primary' : '#64748b',
             },
-            '&::after': activeTab === 'login' ? {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: '3px',
-              bgcolor: '#e11d48',
-              borderRadius: '2px',
-            } : undefined,
+            '&::after':
+              activeTab === 'login'
+                ? {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    bgcolor: '#e11d48',
+                    borderRadius: '2px',
+                  }
+                : undefined,
           }}
         >
           Masuk
@@ -65,16 +68,19 @@ export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContaine
               bgcolor: 'transparent',
               color: activeTab === 'register' ? 'text.primary' : '#64748b',
             },
-            '&::after': activeTab === 'register' ? {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: '3px',
-              bgcolor: '#e11d48',
-              borderRadius: '2px',
-            } : undefined,
+            '&::after':
+              activeTab === 'register'
+                ? {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    bgcolor: '#e11d48',
+                    borderRadius: '2px',
+                  }
+                : undefined,
           }}
         >
           Daftar
@@ -83,8 +89,8 @@ export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContaine
 
       {/* Subtitle / Context Hint */}
       <Typography
-        variant="body2"
-        color="text.secondary"
+        variant='body2'
+        color='text.secondary'
         sx={{ fontSize: '0.9rem', mb: 3.5, mt: -2, lineHeight: 1.5 }}
       >
         {activeTab === 'login'
@@ -107,7 +113,7 @@ export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContaine
         </Fade>
       )}
     </Box>
-  )
+  );
 }
 
-export default AuthTabbedContainer
+export default AuthTabbedContainer;

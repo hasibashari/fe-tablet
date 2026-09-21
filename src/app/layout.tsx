@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#0ea5e9",
+  themeColor: "#e11d48",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -29,13 +29,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "MediCore | Advanced Healthcare",
-  description: "Scientifically backed, high-purity medical solutions designed to improve your quality of life.",
-  applicationName: "MediCore",
+  title: "Fe-Tablet | Pengingat & Monitoring Tablet Tambah Darah",
+  description: "Small habit, big impact. Aplikasi pintar pemantau kepatuhan konsumsi Tablet Tambah Darah (TTD) untuk cegah anemia remaja putri dan wanita usia subur.",
+  applicationName: "Fe-Tablet",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "MediCore",
+    title: "Fe-Tablet",
   },
   formatDetection: {
     telephone: false,
@@ -62,11 +62,11 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="id"
       suppressHydrationWarning
       className={`${cormorantSerif.variable} ${interSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans bg-white text-ink">
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans bg-[#fff5f7] text-[#1e293b]">
         <ThemeRegistry>
           <AuthProvider>
             <ServiceWorkerRegister />
@@ -77,4 +77,3 @@ export default function RootLayout({
     </html>
   );
 }
-

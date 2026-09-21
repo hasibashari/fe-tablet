@@ -155,7 +155,7 @@ export function AuthCardLayout({ children }: AuthCardLayoutProps) {
           <Box
             sx={{
               p: 3.5,
-              borderRadius: 4,
+              borderRadius: '16px',
               bgcolor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(226, 232, 240, 0.9)',
@@ -178,7 +178,7 @@ export function AuthCardLayout({ children }: AuthCardLayoutProps) {
                   sx={{
                     width: 38,
                     height: 38,
-                    borderRadius: '12px',
+                    borderRadius: '10px',
                     bgcolor: '#cc785c',
                     color: '#ffffff',
                     display: 'flex',
@@ -229,7 +229,7 @@ export function AuthCardLayout({ children }: AuthCardLayoutProps) {
             <Box
               sx={{
                 p: 2,
-                borderRadius: 3,
+                borderRadius: '12px',
                 bgcolor: '#f8fafc',
                 border: '1px solid #e2e8f0',
                 display: 'flex',

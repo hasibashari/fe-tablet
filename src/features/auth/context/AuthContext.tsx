@@ -15,12 +15,17 @@ import {
   registerPatientAction,
 } from '../api/authRepository'
 
-const AUTH_STORAGE_KEY = 'medicore_auth_user'
+export const AUTH_STORAGE_KEY = 'fe_tablet_auth_user'
+export const ONBOARDING_STORAGE_KEY = 'fe_tablet_has_onboarded'
+const LEGACY_AUTH_STORAGE_KEY = 'medicore_auth_user'
+const LEGACY_ONBOARDING_STORAGE_KEY = 'fe_has_onboarded'
 
 const initialAuthState: AuthState = {
   user: null,
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
+  isInitializing: true,
+  hasCompletedOnboarding: false,
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -28,105 +33,194 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialAuthState)
 
-  // Initialize from localStorage on client side
+  // Initialize from localStorage on client side mount
   useEffect(() => {
     let isMounted = true
-    const initAuth = async () => {
+
+    const initAppAuth = () => {
       try {
-        const stored = typeof window !== 'undefined' ? localStorage.getItem(AUTH_STORAGE_KEY) : null
-        if (stored) {
-          const parsedUser: AuthUser = JSON.parse(stored)
-          if (isMounted) {
-            setState({
-              user: parsedUser,
-              isAuthenticated: true,
-              isLoading: false,
-            })
-            return
+        if (typeof window === 'undefined') return
+
+        // 1. Check Onboarding Status
+        const onboardVal =
+          localStorage.getItem(ONBOARDING_STORAGE_KEY) ||
+          localStorage.getItem(LEGACY_ONBOARDING_STORAGE_KEY)
+        const hasCompletedOnboarding = onboardVal === 'true'
+
+        // 2. Check Auth User Session
+        const storedAuth =
+          localStorage.getItem(AUTH_STORAGE_KEY) ||
+          localStorage.getItem(LEGACY_AUTH_STORAGE_KEY)
+        let parsedUser: AuthUser | null = null
+
+        if (storedAuth) {
+          try {
+            parsedUser = JSON.parse(storedAuth)
+          } catch {
+            // ignore JSON parse error
           }
         }
+
+        if (isMounted) {
+          setState({
+            user: parsedUser,
+            isAuthenticated: !!parsedUser,
+            isLoading: false,
+            isInitializing: false,
+            hasCompletedOnboarding,
+          })
+        }
       } catch {
-        // ignore storage parsing error
-      }
-      if (isMounted) {
-        setState((prev) => ({ ...prev, isLoading: false }))
+        if (isMounted) {
+          setState((prev) => ({
+            ...prev,
+            isInitializing: false,
+            isLoading: false,
+          }))
+        }
       }
     }
 
-    initAuth()
+    initAppAuth()
     return () => {
       isMounted = false
     }
   }, [])
 
-  const saveUserSession = (user: AuthUser) => {
+  const completeOnboarding = useCallback(() => {
     try {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true')
+        localStorage.setItem(LEGACY_ONBOARDING_STORAGE_KEY, 'true')
+      }
     } catch {
       // storage error fallback
     }
-    setState({
+    setState((prev) => ({
+      ...prev,
+      hasCompletedOnboarding: true,
+    }))
+  }, [])
+
+  const resetOnboarding = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(ONBOARDING_STORAGE_KEY)
+        localStorage.removeItem(LEGACY_ONBOARDING_STORAGE_KEY)
+      }
+    } catch {
+      // ignore
+    }
+    setState((prev) => ({
+      ...prev,
+      hasCompletedOnboarding: false,
+    }))
+  }, [])
+
+  const saveUserSession = useCallback((user: AuthUser) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
+        localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true')
+      }
+    } catch {
+      // storage error fallback
+    }
+    setState((prev) => ({
+      ...prev,
       user,
       isAuthenticated: true,
+      hasCompletedOnboarding: true,
       isLoading: false,
-    })
-  }
+    }))
+  }, [])
 
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string; redirectTo?: string }> => {
-      const res = await loginUserAction(credentials)
-      if (res.success && res.user) {
-        saveUserSession(res.user)
-        return { success: true, redirectTo: res.redirectTo }
-      }
-      return {
-        success: false,
-        error: res.error || 'Gagal login. Periksa kembali email Anda.',
+      setState((prev) => ({ ...prev, isLoading: true }))
+      try {
+        const res = await loginUserAction(credentials)
+        if (res.success && res.user) {
+          saveUserSession(res.user)
+          return { success: true, redirectTo: res.redirectTo }
+        }
+        setState((prev) => ({ ...prev, isLoading: false }))
+        return {
+          success: false,
+          error: res.error || 'Gagal login. Periksa kembali email Anda.',
+        }
+      } catch {
+        setState((prev) => ({ ...prev, isLoading: false }))
+        return {
+          success: false,
+          error: 'Terjadi kendala sistem saat login.',
+        }
       }
     },
-    []
+    [saveUserSession]
   )
 
   const quickLogin = useCallback(
     async (role: UserRole): Promise<{ success: boolean; redirectTo: string }> => {
-      const res = await quickLoginAction(role)
-      if (res.success && res.user) {
-        saveUserSession(res.user)
-        return { success: true, redirectTo: res.redirectTo }
+      setState((prev) => ({ ...prev, isLoading: true }))
+      try {
+        const res = await quickLoginAction(role)
+        if (res.success && res.user) {
+          saveUserSession(res.user)
+          return { success: true, redirectTo: res.redirectTo }
+        }
+        setState((prev) => ({ ...prev, isLoading: false }))
+        return { success: false, redirectTo: '/auth/login' }
+      } catch {
+        setState((prev) => ({ ...prev, isLoading: false }))
+        return { success: false, redirectTo: '/auth/login' }
       }
-      return { success: false, redirectTo: '/auth/login' }
     },
-    []
+    [saveUserSession]
   )
 
   const register = useCallback(
     async (data: RegisterCredentials): Promise<{ success: boolean; error?: string; redirectTo?: string }> => {
-      const res = await registerPatientAction(data)
-      if (res.success && res.user) {
-        saveUserSession(res.user)
-        return { success: true, redirectTo: res.redirectTo }
-      }
-      return {
-        success: false,
-        error: res.error || 'Gagal mendaftar. Silakan coba lagi.',
+      setState((prev) => ({ ...prev, isLoading: true }))
+      try {
+        const res = await registerPatientAction(data)
+        if (res.success && res.user) {
+          saveUserSession(res.user)
+          return { success: true, redirectTo: res.redirectTo }
+        }
+        setState((prev) => ({ ...prev, isLoading: false }))
+        return {
+          success: false,
+          error: res.error || 'Gagal mendaftar. Silakan coba lagi.',
+        }
+      } catch {
+        setState((prev) => ({ ...prev, isLoading: false }))
+        return {
+          success: false,
+          error: 'Terjadi kendala sistem saat pendaftaran.',
+        }
       }
     },
-    []
+    [saveUserSession]
   )
 
   const logout = useCallback(() => {
     try {
-      localStorage.removeItem(AUTH_STORAGE_KEY)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(AUTH_STORAGE_KEY)
+        localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY)
+      }
     } catch {
       // ignore
     }
-    setState({
+    setState((prev) => ({
+      ...prev,
       user: null,
       isAuthenticated: false,
       isLoading: false,
-    })
+    }))
     if (typeof window !== 'undefined') {
-      window.location.href = '/auth/login'
+      window.location.href = '/onboarding'
     }
   }, [])
 
@@ -135,7 +229,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!prev.user) return prev
       const newUser: AuthUser = { ...prev.user, ...updated }
       try {
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser))
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser))
+        }
       } catch {
         // ignore storage parsing error
       }
@@ -154,6 +250,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         quickLogin,
         register,
         logout,
+        completeOnboarding,
+        resetOnboarding,
         updateUser,
       }}
     >
@@ -169,3 +267,4 @@ export function useAuth(): AuthContextValue {
   }
   return context
 }
+

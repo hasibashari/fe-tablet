@@ -23,7 +23,6 @@ const adminNavItems: NavItem[] = [
   { name: 'Jadwal & Pengingat', href: '/admin/schedules', icon: CalendarCheck },
   { name: 'Katalog Obat', href: '/admin/products', icon: Pill },
   { name: 'Artikel Edukasi', href: '/admin/articles', icon: FileText },
-  { name: 'Program Kesehatan', href: '/admin/programs', icon: Activity },
   { name: 'Laporan & Analitik', href: '/admin/reports', icon: BarChart3 },
   { name: 'Profil Admin', href: '/admin/profile', icon: User },
 ]

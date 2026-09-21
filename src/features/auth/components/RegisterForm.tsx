@@ -28,9 +28,7 @@ export function RegisterForm({ onSwitchTab, hideHeader = false }: RegisterFormPr
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -44,11 +42,6 @@ export function RegisterForm({ onSwitchTab, hideHeader = false }: RegisterFormPr
 
     if (!password || password.length < 6) {
       setErrorMessage('Kata sandi harus minimal 6 karakter.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setErrorMessage('Konfirmasi kata sandi tidak cocok.');
       return;
     }
 
@@ -247,81 +240,34 @@ export function RegisterForm({ onSwitchTab, hideHeader = false }: RegisterFormPr
             }}
           />
 
-          {/* Confirm Password Field */}
-          <TextField
-            placeholder='Ketik Ulang Kata Sandi'
-            type={showConfirmPassword ? 'text' : 'password'}
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            required
-            fullWidth
-            size='medium'
-            autoComplete='new-password'
-            slotProps={{
-              input: {
-                sx: {
-                  borderRadius: '9999px',
-                  bgcolor: '#ffffff',
-                  pl: 1.5,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                  '& fieldset': {
-                    borderColor: '#e2e8f0',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#cbd5e1',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#cc785c',
-                    borderWidth: '1.5px',
-                  },
-                },
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        bgcolor: 'rgba(204, 120, 92, 0.08)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mr: 0.5,
-                      }}
-                    >
-                      <Lock size={16} color='#cc785c' />
-                    </Box>
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position='end' sx={{ pr: 1 }}>
-                    <IconButton
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      edge='end'
-                      size='small'
-                      aria-label='toggle confirm password visibility'
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff size={18} color='#94a3b8' />
-                      ) : (
-                        <Eye size={18} color='#94a3b8' />
-                      )}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-
-          {/* Action Row */}
+          {/* Balanced Action Row: Switch to Login & Pill Submit Button */}
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'flex-end',
+              justifyContent: 'space-between',
               mt: 1,
+              flexWrap: 'wrap',
+              gap: 1.5,
             }}
           >
+            {onSwitchTab ? (
+              <button
+                type='button'
+                onClick={onSwitchTab}
+                className='text-xs text-slate-500 hover:text-[#cc785c] font-medium transition-colors cursor-pointer bg-transparent border-none p-0 inline-flex items-center gap-1'
+              >
+                Sudah punya akun? <span className='font-semibold text-[#cc785c]'>Masuk</span>
+              </button>
+            ) : (
+              <Link
+                href='/auth?tab=login'
+                className='text-xs text-slate-500 hover:text-[#cc785c] font-medium transition-colors inline-flex items-center gap-1'
+              >
+                Sudah punya akun? <span className='font-semibold text-[#cc785c]'>Masuk</span>
+              </Link>
+            )}
+
             <Button
               type='submit'
               variant='contained'

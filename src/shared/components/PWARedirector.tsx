@@ -9,7 +9,7 @@ export default function PWARedirector() {
 
   useEffect(() => {
     if (isStandalonePWA()) {
-      router.replace('/user/dashboard')
+      router.replace('/splash')
     }
   }, [router])
 
