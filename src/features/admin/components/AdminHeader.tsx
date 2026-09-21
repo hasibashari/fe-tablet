@@ -57,7 +57,17 @@ export default function AdminHeader({ title, subtitle, action }: AdminHeaderProp
 
       {/* Optional Action Controls Slot */}
       {action && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            flexShrink: 0,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+            flexWrap: 'wrap',
+          }}
+        >
           {action}
         </Box>
       )}

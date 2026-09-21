@@ -7,7 +7,7 @@
       "passwordHash": null,
       "role": "admin",
       "phone": "+62 811-2233-4455",
-      "avatar": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
+      "avatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
       "title": "Clinical Nutritionist & Wellness Specialist",
       "age": 38,
       "gender": "Perempuan",
@@ -24,7 +24,7 @@
       "passwordHash": null,
       "role": "admin",
       "phone": "+62 812-9988-7766",
-      "avatar": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
+      "avatarUrl": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
       "title": "Spesialis Penyakit Dalam",
       "age": 45,
       "gender": "Perempuan",
@@ -41,7 +41,7 @@
       "passwordHash": null,
       "role": "admin",
       "phone": "+62 813-4455-6677",
-      "avatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop",
+      "avatarUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop",
       "title": "Spesialis Jantung & Pembuluh Darah",
       "age": 42,
       "gender": "Laki-laki",
@@ -58,7 +58,7 @@
       "passwordHash": null,
       "role": "patient",
       "phone": "0812-3456-7890",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi",
+      "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi",
       "title": null,
       "age": 58,
       "gender": "Laki-laki",
@@ -75,7 +75,7 @@
       "passwordHash": null,
       "role": "patient",
       "phone": "0813-9876-5432",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
+      "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
       "title": null,
       "age": 62,
       "gender": "Perempuan",
@@ -92,7 +92,7 @@
       "passwordHash": null,
       "role": "patient",
       "phone": "0857-1122-3344",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Hendra",
+      "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Hendra",
       "title": null,
       "age": 45,
       "gender": "Laki-laki",
@@ -196,7 +196,9 @@
       "status": "Aktif",
       "category": "Obat Resep",
       "instructions": "Diminum pagi hari sesudah sarapan.",
-      "timeSlots": ["08:00"]
+      "timeSlots": [
+        "08:00"
+      ]
     },
     {
       "id": "SCH-002",
@@ -210,7 +212,9 @@
       "status": "Aktif",
       "category": "Suplemen",
       "instructions": "Diminum siang hari bersama makanan berlemak baik.",
-      "timeSlots": ["12:00"]
+      "timeSlots": [
+        "12:00"
+      ]
     },
     {
       "id": "SCH-003",
@@ -224,7 +228,9 @@
       "status": "Aktif",
       "category": "Aktivitas Medis",
       "instructions": "Gunakan tensimeter di lengan kiri dalam kondisi tenang.",
-      "timeSlots": ["15:00"]
+      "timeSlots": [
+        "15:00"
+      ]
     }
   ],
   "reminders": [
@@ -406,7 +412,7 @@
       "authorId": "usr_admin_1",
       "authorName": "Dr. Sarah Jenkins",
       "authorRole": "Clinical Nutritionist & Wellness Specialist",
-      "authorAvatar": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
+      "authoravatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
       "authorBio": "Dr. Sarah Jenkins is a board-certified clinical nutritionist with over 12 years of experience in metabolic wellness.",
       "keyTakeaways": [
         "Dehydration of just 1–2% noticeably impairs cognitive focus and physical energy.",
@@ -414,7 +420,12 @@
         "Incorporate water-rich whole foods such as cucumbers, berries, and melons into your daily diet.",
         "Monitor urine color: pale straw yellow indicates optimal hydration levels."
       ],
-      "tags": ["Hydration", "Wellness", "Cellular Health", "Nutrition"],
+      "tags": [
+        "Hydration",
+        "Wellness",
+        "Cellular Health",
+        "Nutrition"
+      ],
       "sections": [
         {
           "orderIndex": 1,
@@ -464,14 +475,19 @@
       "authorId": "usr_admin_3",
       "authorName": "Dr. Michael Chen, MD",
       "authorRole": "Cardiologist & Preventive Medicine Fellow",
-      "authorAvatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop",
+      "authoravatarUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop",
       "authorBio": "Dr. Michael Chen specializes in non-pharmacological blood pressure management and lifestyle cardiology.",
       "keyTakeaways": [
         "Prioritize potassium-rich whole foods to assist natural sodium excretion.",
         "Commit to 30 minutes of low-to-moderate aerobic exercise 5 days a week.",
         "Incorporate 5 minutes of deep diaphragmatic breathing to dampen sympathetic nervous arousal."
       ],
-      "tags": ["Blood Pressure", "Heart Health", "DASH Diet", "Cardiovascular"],
+      "tags": [
+        "Blood Pressure",
+        "Heart Health",
+        "DASH Diet",
+        "Cardiovascular"
+      ],
       "sections": [
         {
           "orderIndex": 1,
@@ -507,14 +523,19 @@
       "authorId": "usr_admin_2",
       "authorName": "Dr. Elena Rostova",
       "authorRole": "Immunologist & Biochemical Researcher",
-      "authorAvatar": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
+      "authoravatarUrl": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
       "authorBio": "Dr. Elena Rostova conducts research on micronutrient immunology and autoimmune disease prevention.",
       "keyTakeaways": [
         "Test your 25(OH)D blood levels annually to establish a safe baseline.",
         "Combine Vitamin D3 supplementation with Vitamin K2 and dietary Magnesium.",
         "Take Vitamin D with a fat-containing meal to maximize gastrointestinal absorption."
       ],
-      "tags": ["Vitamin D", "Immunity", "Bone Health", "Micronutrients"],
+      "tags": [
+        "Vitamin D",
+        "Immunity",
+        "Bone Health",
+        "Micronutrients"
+      ],
       "sections": [
         {
           "orderIndex": 1,

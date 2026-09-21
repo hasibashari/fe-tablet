@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Clock,
   Calendar as CalendarIcon,
@@ -12,18 +12,38 @@ import {
   X,
   Edit3,
   Sparkles,
-  HelpCircle,
 } from 'lucide-react'
 import { Card } from '@/src/shared/components/ui/Card'
 import { Button } from '@/src/shared/components/ui/Button'
 import { Chip } from '@/src/shared/components/ui/Chip'
-import { MOCK_REMINDER, ReminderScheduleMock } from '@/src/shared/mock/feTabletData'
+import { useAuth } from '@/src/features/auth/context/AuthContext'
+import {
+  getUserScheduleAction,
+  updateUserScheduleSettingsAction,
+  UserScheduleData,
+} from '@/src/features/user/api/userRepository'
 
 const DAYS_OF_WEEK = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
 const FREQUENCIES = ['1x Seminggu', 'Setiap Hari (Terapi Khusus)']
 
+const defaultSchedule: UserScheduleData = {
+  id: 'SCH-DEFAULT',
+  patientId: 'usr_1',
+  dayOfWeek: 'Sabtu',
+  time: '08:00',
+  tabletName: 'Tablet Tambah Darah (TTD)',
+  dosage: '1 tablet, 1x seminggu',
+  frequency: 'Mingguan',
+  isEnabled: true,
+  remind15MinBefore: true,
+  nextDate: 'Sabtu, 10 Oktober 2026',
+  daysRemaining: 3,
+  instructions: 'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur.',
+}
+
 export default function ScheduleView() {
-  const [schedule, setSchedule] = useState<ReminderScheduleMock>(MOCK_REMINDER)
+  const { user } = useAuth()
+  const [schedule, setSchedule] = useState<UserScheduleData>(defaultSchedule)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
@@ -35,11 +55,33 @@ export default function ScheduleView() {
   )
   const [tempRemind15, setTempRemind15] = useState(schedule.remind15MinBefore)
 
-  const handleToggleActive = () => {
-    setSchedule((prev) => {
-      const nextEnabled = !prev.isEnabled
-      showToast(nextEnabled ? 'Pengingat TTD diaktifkan' : 'Pengingat TTD dinonaktifkan')
-      return { ...prev, isEnabled: nextEnabled }
+  useEffect(() => {
+    let isMounted = true
+    async function loadSchedule() {
+      try {
+        const data = await getUserScheduleAction(user?.id)
+        if (isMounted && data) {
+          setSchedule(data)
+          setTempDay(data.dayOfWeek)
+          setTempTime(data.time)
+        }
+      } catch (err) {
+        console.error('Failed to load schedule:', err)
+      }
+    }
+    loadSchedule()
+    return () => {
+      isMounted = false
+    }
+  }, [user?.id])
+
+  const handleToggleActive = async () => {
+    const nextEnabled = !schedule.isEnabled
+    setSchedule((prev) => ({ ...prev, isEnabled: nextEnabled }))
+    showToast(nextEnabled ? 'Pengingat TTD diaktifkan' : 'Pengingat TTD dinonaktifkan')
+
+    await updateUserScheduleSettingsAction(schedule.id, {
+      isEnabled: nextEnabled,
     })
   }
 
@@ -51,18 +93,27 @@ export default function ScheduleView() {
     setIsModalOpen(true)
   }
 
-  const handleSaveModal = (e: React.FormEvent) => {
+  const handleSaveModal = async (e: React.FormEvent) => {
     e.preventDefault()
+    const updatedFrequency = tempFrequency.includes('Seminggu') ? 'Mingguan' : 'Harian'
+
     setSchedule((prev) => ({
       ...prev,
       dayOfWeek: tempDay,
       time: tempTime,
-      frequency: tempFrequency.includes('Seminggu') ? 'Mingguan' : 'Harian',
+      frequency: updatedFrequency,
       remind15MinBefore: tempRemind15,
       nextDate: `${tempDay}, 10 Oktober 2026`,
     }))
     setIsModalOpen(false)
     showToast('Jadwal pengingat berhasil diperbarui! ✨')
+
+    await updateUserScheduleSettingsAction(schedule.id, {
+      dayOfWeek: tempDay,
+      time: tempTime,
+      frequency: updatedFrequency,
+      remind15MinBefore: tempRemind15,
+    })
   }
 
   const showToast = (msg: string) => {

@@ -34,6 +34,7 @@ export interface DataTableProps<T> {
   pageSize?: number
   onPageChange?: (page: number) => void
   onPageSizeChange?: (pageSize: number) => void
+  renderMobileCard?: (row: T, index: number) => ReactNode
 }
 
 export function DataTable<T extends { id: string | number }>({
@@ -48,6 +49,7 @@ export function DataTable<T extends { id: string | number }>({
   pageSize: controlledPageSize,
   onPageChange: controlledOnPageChange,
   onPageSizeChange: controlledOnPageSizeChange,
+  renderMobileCard,
 }: DataTableProps<T>) {
   const [internalPage, setInternalPage] = useState(1)
   const [internalPageSize, setInternalPageSize] = useState(defaultPageSize)
@@ -81,17 +83,42 @@ export function DataTable<T extends { id: string | number }>({
     : data
 
   return (
-    <Card sx={{ p: 0, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-      <Box sx={{ overflowX: 'auto' }}>
+    <Card sx={{ p: 0, overflow: 'hidden', border: '1px solid', borderColor: 'divider', borderRadius: '16px' }}>
+      {/* 1. Mobile-First Card View (< sm / mobile screens when renderMobileCard provided) */}
+      {renderMobileCard && (
+        <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: 1.5, p: 1.5, bgcolor: '#fff5f7' }}>
+          {paginatedData.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: 'center', bgcolor: '#ffffff', borderRadius: 2, border: '1px dashed #fce7f3' }}>
+              <Typography color="text.secondary" sx={{ fontSize: '0.88rem' }}>
+                {emptyMessage}
+              </Typography>
+            </Box>
+          ) : (
+            paginatedData.map((row, index) => {
+              const globalIndex = pagination
+                ? (activePage - 1) * activePageSize + index
+                : index
+              return (
+                <Box key={row.id}>
+                  {renderMobileCard(row, globalIndex)}
+                </Box>
+              )
+            })
+          )}
+        </Box>
+      )}
+
+      {/* 2. Desktop/Tablet Table View (>= sm or when no renderMobileCard provided) */}
+      <Box sx={{ display: renderMobileCard ? { xs: 'none', sm: 'block' } : 'block', overflowX: 'auto' }}>
         <Table>
-          <TableHead sx={{ bgcolor: 'background.default' }}>
+          <TableHead sx={{ bgcolor: '#fff5f7' }}>
             <TableRow>
               {columns.map((col) => (
                 <TableCell
                   key={col.id}
                   align={col.align || 'left'}
                   width={col.width}
-                  sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.85rem' }}
+                  sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.85rem' }}
                 >
                   {col.label}
                 </TableCell>
@@ -130,7 +157,7 @@ export function DataTable<T extends { id: string | number }>({
       {/* Integrated Pagination Footer */}
       {pagination && data.length > 0 && (
         <>
-          <Divider />
+          <Divider sx={{ borderColor: '#fce7f3' }} />
           <Pagination
             currentPage={activePage}
             totalPages={totalPages}

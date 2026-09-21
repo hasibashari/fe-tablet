@@ -75,7 +75,7 @@ export default function Navbar() {
           {isAuthenticated && user ? (
             <div className='flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 rounded-full py-1.5 pl-2 pr-3'>
               <Avatar
-                src={user.avatar}
+                src={user.avatarUrl}
                 alt={user.name}
                 sx={{ width: 28, height: 28, border: '1.5px solid #e11d48' }}
               />
@@ -173,7 +173,7 @@ export default function Navbar() {
               <div className='flex flex-col gap-2 bg-rose-50/50 p-3.5 rounded-2xl border border-rose-100'>
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
-                    <Avatar src={user.avatar} alt={user.name} sx={{ width: 32, height: 32 }} />
+                    <Avatar src={user.avatarUrl} alt={user.name} sx={{ width: 32, height: 32 }} />
                     <div>
                       <div className='text-sm font-bold text-slate-800'>{user.name}</div>
                       <div className='text-xs text-slate-500'>{user.email}</div>

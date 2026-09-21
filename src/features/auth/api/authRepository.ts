@@ -9,7 +9,7 @@ interface UserDbRow {
   email: string;
   role: string;
   phone: string | null;
-  avatar: string | null;
+  avatarUrl: string | null;
   title: string | null;
   age: number | null;
   gender: string | null;
@@ -30,7 +30,7 @@ export async function loginUserAction(
 
     // 1. Check direct email match
     const res = await db.query<UserDbRow>(
-      `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
+      `SELECT id, name, email, role, phone, avatarUrl, title, age, gender, blood_type, assigned_doctor_id 
        FROM users WHERE lower(email) = $1`,
       [normalizedEmail],
     );
@@ -40,7 +40,7 @@ export async function loginUserAction(
     if (!row) {
       if (normalizedEmail.includes('admin') || credentials.roleHint === 'admin') {
         const adminRes = await db.query<UserDbRow>(
-          `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
+          `SELECT id, name, email, role, phone, avatarUrl, title, age, gender, blood_type, assigned_doctor_id 
            FROM users WHERE role = 'admin' LIMIT 1`,
         );
         row = adminRes.rows[0];
@@ -51,7 +51,7 @@ export async function loginUserAction(
         credentials.roleHint === 'patient'
       ) {
         const patientRes = await db.query<UserDbRow>(
-          `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
+          `SELECT id, name, email, role, phone, avatarUrl, title, age, gender, blood_type, assigned_doctor_id 
            FROM users WHERE role = 'patient' LIMIT 1`,
         );
         row = patientRes.rows[0];
@@ -81,7 +81,7 @@ export async function loginUserAction(
       email: row.email,
       role: row.role as UserRole,
       phone: row.phone || undefined,
-      avatar: row.avatar || undefined,
+      avatarUrl: row.avatarUrl || undefined,
       title: row.title || undefined,
       age: row.age || undefined,
       gender: (row.gender as 'Laki-laki' | 'Perempuan') || undefined,
@@ -103,7 +103,7 @@ export async function quickLoginAction(
   try {
     const targetRoles = role === 'admin' ? ['admin'] : ['user', 'patient'];
     const res = await db.query<UserDbRow>(
-      `SELECT id, name, email, role, phone, avatar, title, age, gender, blood_type, assigned_doctor_id 
+      `SELECT id, name, email, role, phone, avatarUrl, title, age, gender, blood_type, assigned_doctor_id 
        FROM users WHERE role = ANY($1) ORDER BY id ASC LIMIT 1`,
       [targetRoles],
     );
@@ -128,7 +128,7 @@ export async function quickLoginAction(
       email: row.email,
       role: row.role as UserRole,
       phone: row.phone || undefined,
-      avatar: row.avatar || undefined,
+      avatarUrl: row.avatarUrl || undefined,
       title: row.title || undefined,
       age: row.age || undefined,
       gender: (row.gender as 'Laki-laki' | 'Perempuan') || undefined,
@@ -185,7 +185,7 @@ export async function registerPatientAction(
 
     await db.transaction(async client => {
       await client.query(
-        `INSERT INTO users (id, name, email, role, phone, gender, age, assigned_doctor_id, avatar)
+        `INSERT INTO users (id, name, email, role, phone, gender, age, assigned_doctor_id, avatarUrl)
          VALUES ($1, $2, $3, 'patient', $4, $5, $6, $7, $8)`,
         [
           newId,
@@ -215,7 +215,7 @@ export async function registerPatientAction(
       gender: data.gender || 'Laki-laki',
       age: data.age || 30,
       assignedDoctor: defaultDoctor?.name || undefined,
-      avatar: avatarUrl,
+      avatarUrl: avatarUrl,
     };
 
     return { success: true, user: authUser, redirectTo: '/user/dashboard' };

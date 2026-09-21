@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -12,21 +12,13 @@ import {
   DialogActions,
   Snackbar,
   Alert,
-} from '@mui/material'
-import {
-  Mail,
-  Phone,
-  Shield,
-  Building,
-  CheckCircle2,
-  FileCheck,
-  Award,
-} from 'lucide-react'
-import ProfileLayout from '@/src/shared/components/ProfileLayout'
-import { useAuth } from '@/src/features/auth'
+} from '@mui/material';
+import { Mail, Phone, Shield, Building, CheckCircle2, Award } from 'lucide-react';
+import ProfileLayout from '@/src/shared/components/ProfileLayout';
+import { useAuth } from '@/src/features/auth';
 
 export default function AdminProfileView() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   // Profile State
   const [profileData, setProfileData] = useState({
@@ -37,35 +29,35 @@ export default function AdminProfileView() {
     department: 'Manajemen Sistem & Farmakoterapi',
     clinicName: 'MediCore Central System',
     roleLabel: 'Administrator',
-  })
+  });
 
   // Edit Modal State
-  const [editOpen, setEditOpen] = useState(false)
-  const [editForm, setEditForm] = useState(profileData)
-  const [toastOpen, setToastOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState(profileData);
+  const [toastOpen, setToastOpen] = useState(false);
 
   const handleOpenEdit = () => {
-    setEditForm(profileData)
-    setEditOpen(true)
-  }
+    setEditForm(profileData);
+    setEditOpen(true);
+  };
 
   const handleSaveEdit = () => {
-    setProfileData(editForm)
-    setEditOpen(false)
-    setToastOpen(true)
-  }
+    setProfileData(editForm);
+    setEditOpen(false);
+    setToastOpen(true);
+  };
 
   return (
     <ProfileLayout
-      title="Profil Admin"
-      subtitle="Informasi identitas, kontak dinas, serta kredensial akun administrator sistem."
+      title='Profil Admin'
+      subtitle='Informasi identitas, kontak dinas, serta kredensial akun administrator sistem.'
       name={profileData.name}
-      avatarUrl={user?.avatar}
+      avatarUrl={user?.avatarUrl}
       badges={
         <>
           <Chip
-            label="ADMINISTRATOR"
-            size="small"
+            label='ADMINISTRATOR'
+            size='small'
             sx={{
               bgcolor: 'primary.main',
               color: 'primary.contrastText',
@@ -77,9 +69,9 @@ export default function AdminProfileView() {
           />
           <Chip
             icon={<CheckCircle2 size={13} style={{ color: '#16a34a' }} />}
-            label="Terverifikasi"
-            size="small"
-            variant="outlined"
+            label='Terverifikasi'
+            size='small'
+            variant='outlined'
             sx={{
               borderColor: 'success.light',
               color: 'success.dark',
@@ -97,7 +89,7 @@ export default function AdminProfileView() {
         { icon: Phone, label: 'Nomor Telepon', value: profileData.phone },
         { icon: Building, label: 'Unit Kerja', value: profileData.department },
       ]}
-      metricsTitle="Kredensial & Hak Akses"
+      metricsTitle='Kredensial & Hak Akses'
       metrics={[
         {
           label: 'Hak Akses',
@@ -129,7 +121,7 @@ export default function AdminProfileView() {
       <Dialog
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
         slotProps={{
           paper: {
@@ -141,47 +133,47 @@ export default function AdminProfileView() {
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
-              label="Nama Lengkap Administrator"
+              label='Nama Lengkap Administrator'
               fullWidth
-              size="small"
+              size='small'
               value={editForm.name}
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              onChange={e => setEditForm({ ...editForm, name: e.target.value })}
             />
             <TextField
-              label="Email Kedinasan"
+              label='Email Kedinasan'
               fullWidth
-              size="small"
+              size='small'
               value={editForm.email}
-              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              onChange={e => setEditForm({ ...editForm, email: e.target.value })}
             />
             <TextField
-              label="Nomor Telepon / WhatsApp"
+              label='Nomor Telepon / WhatsApp'
               fullWidth
-              size="small"
+              size='small'
               value={editForm.phone}
-              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+              onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
             />
             <TextField
-              label="Jabatan & Peran"
+              label='Jabatan & Peran'
               fullWidth
-              size="small"
+              size='small'
               value={editForm.title}
-              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              onChange={e => setEditForm({ ...editForm, title: e.target.value })}
             />
             <TextField
-              label="Unit / Divisi Kerja"
+              label='Unit / Divisi Kerja'
               fullWidth
-              size="small"
+              size='small'
               value={editForm.department}
-              onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+              onChange={e => setEditForm({ ...editForm, department: e.target.value })}
             />
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setEditOpen(false)} color="inherit">
+          <Button onClick={() => setEditOpen(false)} color='inherit'>
             Batal
           </Button>
-          <Button onClick={handleSaveEdit} variant="contained" sx={{ px: 3 }}>
+          <Button onClick={handleSaveEdit} variant='contained' sx={{ px: 3 }}>
             Simpan
           </Button>
         </DialogActions>
@@ -194,10 +186,10 @@ export default function AdminProfileView() {
         onClose={() => setToastOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity="success" variant="filled" onClose={() => setToastOpen(false)}>
+        <Alert severity='success' variant='filled' onClose={() => setToastOpen(false)}>
           Profil admin berhasil diperbarui!
         </Alert>
       </Snackbar>
     </ProfileLayout>
-  )
+  );
 }

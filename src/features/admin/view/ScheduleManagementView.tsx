@@ -480,8 +480,16 @@ export default function ScheduleManagementView() {
 
       {/* Filter Bar */}
       <Card sx={{ p: 2.5, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2, flex: 1, minWidth: 280 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}>
             <TextField
               placeholder="Cari nama obat atau pasien..."
               value={searchQuery}
@@ -498,7 +506,7 @@ export default function ScheduleManagementView() {
                 },
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 200 }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
               <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
                 <MenuItem value="Semua">Semua Kategori</MenuItem>
                 <MenuItem value="Obat Resep">Obat Resep</MenuItem>
@@ -512,17 +520,188 @@ export default function ScheduleManagementView() {
             variant="contained"
             startIcon={<Plus size={18} />}
             onClick={onOpenAdd}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Buat Jadwal Baru
           </Button>
         </Box>
       </Card>
 
-      {/* Schedule Table */}
+      {/* Schedule Table & Mobile Card View */}
       <DataTable
         columns={columns}
         data={filteredSchedules}
         emptyMessage="Tidak ada jadwal yang ditemukan."
+        renderMobileCard={(schedule) => (
+          <Card
+            sx={{
+              p: 2,
+              borderRadius: '16px',
+              border: '1px solid #fce7f3',
+              bgcolor: '#ffffff',
+              boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+            }}
+          >
+            {/* Header: Medication + Category Chip */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>
+                  {schedule.medicationName}
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  Pasien: <strong>{schedule.patientName}</strong> ({schedule.patientId})
+                </Typography>
+              </Box>
+
+              <Chip
+                label={schedule.category}
+                size="small"
+                sx={{
+                  bgcolor: '#ffe4e6',
+                  color: '#e11d48',
+                  fontWeight: 700,
+                  fontSize: '0.68rem',
+                  height: 22,
+                }}
+              />
+            </Box>
+
+            {/* Middle Details Grid */}
+            <Box
+              sx={{
+                p: 1.25,
+                borderRadius: '12px',
+                bgcolor: '#fff5f7',
+                border: '1px solid #fce7f3',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  Dosis & Frekuensi:
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.8rem' }}>
+                  {schedule.dosage} • {schedule.frequency}
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  Jam Minum:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                  {schedule.timeSlots.map((ts) => (
+                    <Chip
+                      key={ts}
+                      label={ts}
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        bgcolor: '#ffffff',
+                        border: '1px solid #fce7f3',
+                        color: '#1e293b',
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 0.5, borderTop: '1px dashed #fce7f3' }}>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  Status Hari Ini:
+                </Typography>
+                {schedule.todayStatus === 'COMPLETED' ? (
+                  <Chip
+                    label="Sudah Diminum"
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(22, 163, 74, 0.12)',
+                      color: '#15803d',
+                      fontWeight: 700,
+                      fontSize: '0.68rem',
+                      height: 20,
+                    }}
+                  />
+                ) : schedule.todayStatus === 'PENDING' ? (
+                  <Chip
+                    label="Belum Diminum"
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(245, 158, 11, 0.12)',
+                      color: '#b45309',
+                      fontWeight: 700,
+                      fontSize: '0.68rem',
+                      height: 20,
+                    }}
+                  />
+                ) : (
+                  <Typography variant="caption" color="text.secondary">-</Typography>
+                )}
+              </Box>
+            </Box>
+
+            {/* Actions Row */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, pt: 0.5 }}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<BellRing size={14} />}
+                onClick={() => handleOpenReminder(schedule)}
+                sx={{
+                  flex: 1,
+                  py: 0.75,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  bgcolor: '#e11d48',
+                  borderRadius: '9999px',
+                }}
+              >
+                Ingatkan Pasien
+              </Button>
+
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <IconButton
+                  size="small"
+                  onClick={() => onOpenEdit(schedule)}
+                  sx={{
+                    bgcolor: '#f1f5f9',
+                    color: '#475569',
+                    width: 34,
+                    height: 34,
+                    borderRadius: '10px',
+                    '&:hover': { bgcolor: '#ffe4e6', color: '#e11d48' },
+                  }}
+                  title="Edit Jadwal"
+                >
+                  <Edit size={15} />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleDeleteRequest(schedule.id)}
+                  sx={{
+                    bgcolor: '#fee2e2',
+                    color: '#dc2626',
+                    width: 34,
+                    height: 34,
+                    borderRadius: '10px',
+                    '&:hover': { bgcolor: '#fca5a5' },
+                  }}
+                  title="Hapus Jadwal"
+                >
+                  <Trash2 size={15} />
+                </IconButton>
+              </Box>
+            </Box>
+          </Card>
+        )}
       />
 
       {/* Add/Edit Schedule Modal */}

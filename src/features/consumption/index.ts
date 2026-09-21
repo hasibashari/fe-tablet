@@ -1,5 +1,3 @@
-export { default as HistoryView } from './view/HistoryView'
-export { default as ConsumptionStatsCard } from './components/ConsumptionStatsCard'
-export { default as HistoryTimelineItem } from './components/HistoryTimelineItem'
-export * from './types'
-export * from './api/getConsumptionHistory'
+export { default as HistoryView } from './view/HistoryView';
+export * from './types';
+

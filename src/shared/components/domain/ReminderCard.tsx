@@ -11,7 +11,7 @@ export interface ReminderCardProps {
   onTakeAction?: () => void
 }
 
-export function ReminderCard({ schedule, onTakeAction }: ReminderCardProps) {
+export function ReminderCard({ schedule }: ReminderCardProps) {
   return (
     <Card variant="hero" padding="lg" className="relative overflow-hidden">
       {/* Decorative background circle */}

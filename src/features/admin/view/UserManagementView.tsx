@@ -409,12 +409,14 @@ export default function UserManagementView() {
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
             gap: 2,
           }}
         >
-          <Box sx={{ display: 'flex', gap: 2, flex: 1, minWidth: 280 }}>
+          <Box
+            sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}
+          >
             <TextField
               placeholder='Cari nama, ID, email...'
               value={searchQuery}
@@ -431,7 +433,7 @@ export default function UserManagementView() {
                 },
               }}
             />
-            <FormControl size='small' sx={{ minWidth: 200 }}>
+            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
               <Select value={riskFilter} onChange={e => setRiskFilter(e.target.value)}>
                 <MenuItem value='Semua'>Semua Risiko</MenuItem>
                 <MenuItem value='Tinggi'>Risiko Tinggi</MenuItem>
@@ -445,17 +447,198 @@ export default function UserManagementView() {
             variant='contained'
             startIcon={<UserPlus size={18} />}
             onClick={() => handleOpenAdd()}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Tambah Pasien
           </Button>
         </Box>
       </Card>
 
-      {/* Patient Table */}
+      {/* Patient Table & Mobile Card View */}
       <DataTable
         columns={columns}
         data={filteredPatients}
         emptyMessage='Tidak ada pasien yang ditemukan.'
+        renderMobileCard={patient => (
+          <Card
+            sx={{
+              p: 2,
+              borderRadius: '16px',
+              border: '1px solid #fce7f3',
+              bgcolor: '#ffffff',
+              boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+            }}
+          >
+            {/* Top Row: avatarUrl + Name + Risk Chip */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 1.5,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Avatar
+                  sx={{
+                    bgcolor: '#ffe4e6',
+                    color: '#e11d48',
+                    fontWeight: 700,
+                    width: 42,
+                    height: 42,
+                    border: '2px solid #fce7f3',
+                  }}
+                >
+                  {patient.name.charAt(0)}
+                </Avatar>
+                <Box>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}
+                  >
+                    {patient.name}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.5 }}
+                  >
+                    {patient.id} • {patient.age} th ({patient.gender.charAt(0)})
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Chip
+                label={patient.riskLevel}
+                size='small'
+                color={
+                  patient.riskLevel === 'Tinggi'
+                    ? 'error'
+                    : patient.riskLevel === 'Sedang'
+                      ? 'warning'
+                      : 'success'
+                }
+                sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700 }}
+              />
+            </Box>
+
+            {/* Info Row: Phone + Schedules + Adherence */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 1,
+                p: 1.25,
+                borderRadius: '12px',
+                bgcolor: '#fff5f7',
+                border: '1px solid #fce7f3',
+              }}
+            >
+              <Box>
+                <Typography
+                  variant='caption'
+                  sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}
+                >
+                  Kontak Telepon
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 600, color: '#1e293b', fontSize: '0.78rem' }}
+                >
+                  {patient.phone}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography
+                  variant='caption'
+                  sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}
+                >
+                  Kepatuhan Minum TTD
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    color:
+                      patient.adherenceRate >= 90
+                        ? '#10b981'
+                        : patient.adherenceRate >= 80
+                          ? '#f59e0b'
+                          : '#e11d48',
+                  }}
+                >
+                  {patient.adherenceRate}% ({patient.activeSchedulesCount} Jadwal)
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Actions Row */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 1,
+                pt: 0.5,
+              }}
+            >
+              <Button
+                size='small'
+                variant='contained'
+                startIcon={<BellRing size={14} />}
+                onClick={() => handleOpenReminder(patient)}
+                sx={{
+                  flex: 1,
+                  py: 0.75,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  bgcolor: '#e11d48',
+                  borderRadius: '9999px',
+                }}
+              >
+                Kirim Pengingat
+              </Button>
+
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <IconButton
+                  size='small'
+                  onClick={() => onOpenEdit(patient)}
+                  sx={{
+                    bgcolor: '#f1f5f9',
+                    color: '#475569',
+                    width: 34,
+                    height: 34,
+                    borderRadius: '10px',
+                    '&:hover': { bgcolor: '#ffe4e6', color: '#e11d48' },
+                  }}
+                  title='Edit Data Pasien'
+                >
+                  <Edit size={15} />
+                </IconButton>
+                <IconButton
+                  size='small'
+                  color='error'
+                  onClick={() => handleDeleteRequest(patient.id)}
+                  sx={{
+                    bgcolor: '#fee2e2',
+                    color: '#dc2626',
+                    width: 34,
+                    height: 34,
+                    borderRadius: '10px',
+                    '&:hover': { bgcolor: '#fca5a5' },
+                  }}
+                  title='Hapus Pasien'
+                >
+                  <Trash2 size={15} />
+                </IconButton>
+              </Box>
+            </Box>
+          </Card>
+        )}
       />
 
       {/* Add/Edit Patient Modal */}

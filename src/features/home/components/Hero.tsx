@@ -78,7 +78,7 @@ export default function Hero() {
                   <span className='inline-block h-8 w-8 rounded-full ring-2 ring-white bg-primary/20 overflow-hidden relative'>
                     <Image
                       src='https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=150'
-                      alt='Doctor avatar'
+                      alt='Doctor avatarUrl'
                       fill
                       className='object-cover object-top'
                       sizes='32px'
@@ -87,7 +87,7 @@ export default function Hero() {
                   <span className='inline-block h-8 w-8 rounded-full ring-2 ring-white bg-accent-teal/20 overflow-hidden relative'>
                     <Image
                       src='https://images.pexels.com/photos/4173251/pexels-photo-4173251.jpeg?auto=compress&cs=tinysrgb&w=150'
-                      alt='Doctor avatar'
+                      alt='Doctor avatarUrl'
                       fill
                       className='object-cover object-top'
                       sizes='32px'
@@ -96,7 +96,7 @@ export default function Hero() {
                   <span className='inline-block h-8 w-8 rounded-full ring-2 ring-white bg-accent-amber/20 overflow-hidden relative'>
                     <Image
                       src='https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150'
-                      alt='Patient avatar'
+                      alt='Patient avatarUrl'
                       fill
                       className='object-cover object-top'
                       sizes='32px'

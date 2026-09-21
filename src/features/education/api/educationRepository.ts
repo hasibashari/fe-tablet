@@ -18,7 +18,7 @@ interface ArticleDbRow {
   author_id: string | null;
   author_name: string | null;
   author_role: string | null;
-  author_avatar: string | null;
+  author_avatarUrl: string | null;
   author_bio: string | null;
   key_takeaways: string | null;
   tags: string | null;
@@ -44,7 +44,7 @@ export async function getArticlesAction(category?: string): Promise<Article[]> {
   try {
     let sql = `
       SELECT id, title, summary, lead_paragraph, image_url, image_caption, read_time, category, status, views, published_at,
-             author_id, author_name, author_role, author_avatar, author_bio, key_takeaways, tags
+             author_id, author_name, author_role, author_avatarUrl, author_bio, key_takeaways, tags
       FROM articles
       WHERE status = 'Terbit'
     `;
@@ -65,7 +65,7 @@ export async function getArticlesAction(category?: string): Promise<Article[]> {
         author = {
           name: r.author_name,
           role: r.author_role || '',
-          avatar: r.author_avatar || '',
+          avatarUrl: r.author_avatarUrl || '',
           bio: r.author_bio || undefined,
         };
       }
@@ -98,7 +98,7 @@ export async function getArticleByIdAction(id: string): Promise<Article | null> 
 
     const res = await db.query<ArticleDbRow>(
       `SELECT id, title, summary, lead_paragraph, image_url, image_caption, read_time, category, status, views, published_at,
-              author_id, author_name, author_role, author_avatar, author_bio, key_takeaways, tags
+              author_id, author_name, author_role, author_avatarUrl, author_bio, key_takeaways, tags
        FROM articles 
        WHERE id = $1`,
       [id],
@@ -135,7 +135,7 @@ export async function getArticleByIdAction(id: string): Promise<Article | null> 
       author = {
         name: row.author_name,
         role: row.author_role || '',
-        avatar: row.author_avatar || '',
+        avatarUrl: row.author_avatarUrl || '',
         bio: row.author_bio || undefined,
       };
     }
@@ -174,7 +174,7 @@ export async function getRelatedArticlesAction(
     const category = current?.category || '';
 
     const res = await db.query<Partial<ArticleDbRow>>(
-      `SELECT id, title, summary, image_url, read_time, category, published_at, author_name, author_avatar
+      `SELECT id, title, summary, image_url, read_time, category, published_at, author_name, author_avatarUrl
        FROM articles 
        WHERE id != $1 AND status = 'Terbit'
        ORDER BY CASE WHEN category = $2 THEN 0 ELSE 1 END, published_at DESC
@@ -194,7 +194,7 @@ export async function getRelatedArticlesAction(
         ? {
             name: r.author_name,
             role: '',
-            avatar: r.author_avatar || '',
+            avatarUrl: r.author_avatarUrl || '',
           }
         : undefined,
     }));

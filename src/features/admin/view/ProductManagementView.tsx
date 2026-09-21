@@ -308,12 +308,12 @@ export default function ProductManagementView() {
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
             gap: 2,
           }}
         >
-          <Box sx={{ display: 'flex', gap: 2, flex: 1, minWidth: 280 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}>
             <TextField
               placeholder='Cari nama produk atau SKU...'
               value={searchQuery}
@@ -330,7 +330,7 @@ export default function ProductManagementView() {
                 },
               }}
             />
-            <FormControl size='small' sx={{ minWidth: 200 }}>
+            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
               <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
                 <MenuItem value='Semua'>Semua Kategori</MenuItem>
                 <MenuItem value='Obat Resep'>Obat Resep</MenuItem>
@@ -345,17 +345,140 @@ export default function ProductManagementView() {
             variant='contained'
             startIcon={<Plus size={18} />}
             onClick={() => handleOpenAdd()}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Tambah Produk
           </Button>
         </Box>
       </Card>
 
-      {/* Products Table */}
+      {/* Products Table & Mobile Card View */}
       <DataTable
         columns={columns}
         data={filteredProducts}
         emptyMessage='Tidak ada produk yang ditemukan.'
+        renderMobileCard={(product) => (
+          <Card
+            sx={{
+              p: 2,
+              borderRadius: '16px',
+              border: '1px solid #fce7f3',
+              bgcolor: '#ffffff',
+              boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+            }}
+          >
+            {/* Top Row: Name + Category */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>
+                  {product.name}
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  SKU: <strong>{product.sku}</strong>
+                </Typography>
+              </Box>
+
+              <Chip
+                label={product.category}
+                size="small"
+                sx={{
+                  bgcolor: '#ffe4e6',
+                  color: '#e11d48',
+                  fontWeight: 700,
+                  fontSize: '0.68rem',
+                  height: 22,
+                }}
+              />
+            </Box>
+
+            {/* Middle Grid: Stock & Price */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 1,
+                p: 1.25,
+                borderRadius: '12px',
+                bgcolor: '#fff5f7',
+                border: '1px solid #fce7f3',
+              }}
+            >
+              <Box>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>
+                  Ketersediaan Stok
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.85rem' }}>
+                    {product.stock} {product.unit}
+                  </Typography>
+                  <Chip
+                    label={product.status}
+                    size="small"
+                    color={
+                      product.status === 'Tersedia'
+                        ? 'success'
+                        : product.status === 'Stok Menipis'
+                        ? 'warning'
+                        : 'error'
+                    }
+                    sx={{ height: 18, fontSize: '0.62rem', fontWeight: 700 }}
+                  />
+                </Box>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>
+                  Estimasi Harga
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#e11d48', fontSize: '0.88rem', mt: 0.25 }}>
+                  Rp {product.price.toLocaleString('id-ID')}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Actions Row */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, pt: 0.5 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<Edit size={14} />}
+                onClick={() => onOpenEdit(product)}
+                sx={{
+                  flex: 1,
+                  py: 0.75,
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  borderRadius: '9999px',
+                  borderColor: '#fce7f3',
+                  color: '#1e293b',
+                  '&:hover': { borderColor: '#e11d48', bgcolor: '#fff5f7', color: '#e11d48' },
+                }}
+              >
+                Edit Produk
+              </Button>
+
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleDeleteRequest(product.id)}
+                sx={{
+                  bgcolor: '#fee2e2',
+                  color: '#dc2626',
+                  width: 36,
+                  height: 36,
+                  borderRadius: '10px',
+                  '&:hover': { bgcolor: '#fca5a5' },
+                }}
+                title="Hapus Produk"
+              >
+                <Trash2 size={16} />
+              </IconButton>
+            </Box>
+          </Card>
+        )}
       />
 
       {/* Add/Edit Product Modal */}

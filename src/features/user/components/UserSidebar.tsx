@@ -17,7 +17,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '@/src/features/auth';
-import { MOCK_USER } from '@/src/shared/mock/feTabletData';
 
 export const USER_NAV_ITEMS = [
   { name: 'Beranda', href: '/user/dashboard', icon: Home },
@@ -31,7 +30,9 @@ export const USER_NAV_ITEMS = [
 
 export default function UserSidebar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const userName = user?.name || 'Sarah Azzahra';
+  const avatarUrl = user?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah';
 
   return (
     <aside className='w-64 h-screen sticky top-0 bg-white border-r border-[#fce7f3] flex flex-col justify-between p-4 z-40 select-none shadow-xs'>
@@ -89,21 +90,13 @@ export default function UserSidebar() {
           className='flex items-center gap-2.5 p-2 rounded-xl bg-[#fff5f7] border border-[#fce7f3] hover:border-rose-300 transition-colors'
         >
           <div className='w-9 h-9 rounded-full ring-2 ring-rose-200 overflow-hidden relative shrink-0'>
-            <Image
-              src={MOCK_USER.avatarUrl}
-              alt={MOCK_USER.name}
-              fill
-              className='object-cover'
-              sizes='36px'
-            />
+            <Image src={avatarUrl} alt={userName} fill className='object-cover' sizes='36px' />
           </div>
           <div className='min-w-0 flex-1'>
-            <span className='text-xs font-bold text-[#1e293b] truncate block'>
-              {MOCK_USER.name}
-            </span>
+            <span className='text-xs font-bold text-[#1e293b] truncate block'>{userName}</span>
             <span className='text-[10px] text-[#059669] font-semibold flex items-center gap-1'>
               <ShieldCheck size={11} />
-              <span>{MOCK_USER.streakCount} Minggu Streak</span>
+              <span>4 Minggu Streak</span>
             </span>
           </div>
         </Link>

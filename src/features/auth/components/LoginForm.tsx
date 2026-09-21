@@ -17,7 +17,6 @@ import {
 import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types/auth.types';
-import { usePWA } from '@/src/shared/hooks/usePWA';
 
 export interface LoginFormProps {
   onSwitchTab?: () => void;
@@ -30,7 +29,6 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
   const redirectParam = searchParams.get('redirect');
 
   const { login } = useAuth();
-  const { isPWA } = usePWA();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,13 +45,6 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
       return;
     }
 
-    if (isPWA && (email.toLowerCase().includes('admin') || selectedRoleHint === 'admin')) {
-      setErrorMessage(
-        'Akun Administrator hanya dapat diakses melalui browser komputer/laptop. Silakan gunakan akun Pengguna.',
-      );
-      return;
-    }
-
     setLoading(true);
     setErrorMessage(null);
 
@@ -65,13 +56,6 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
       });
 
       if (res.success && res.redirectTo) {
-        if (isPWA && res.redirectTo.includes('admin')) {
-          setErrorMessage(
-            'Akun Administrator hanya dapat diakses melalui browser komputer/laptop.',
-          );
-          setLoading(false);
-          return;
-        }
         const target = redirectParam || res.redirectTo;
         setSuccessRole(res.redirectTo.includes('admin') ? 'Administrator' : 'User / Pasien');
         setTimeout(() => {

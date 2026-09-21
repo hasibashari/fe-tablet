@@ -1,5 +1,4 @@
-export { default as ReminderCard } from './components/ReminderCard'
-export { default as ScheduleView } from './view/ScheduleView'
-export { default as CalendarPopover } from './components/CalendarPopover'
-export * from './types'
-export * from './api/getReminders'
+export { default as ScheduleView } from './view/ScheduleView';
+export * from './types';
+export * from './api/scheduleRepository';
+

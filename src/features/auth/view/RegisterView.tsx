@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
-import React, { Suspense } from 'react'
-import { Box, CircularProgress } from '@mui/material'
-import { AuthCardLayout } from '../components/AuthCardLayout'
-import { AuthTabbedContainer } from '../components/AuthTabbedContainer'
-import { GuestGuard } from '../components/GuestGuard'
+import React, { Suspense } from 'react';
+import { Box, CircularProgress } from '@mui/material';
+import { AuthCardLayout } from '../components/AuthCardLayout';
+import { AuthTabbedContainer } from '../components/AuthTabbedContainer';
+import { GuestGuard } from '../components/GuestGuard';
 
 export function RegisterView() {
   return (
@@ -17,11 +17,11 @@ export function RegisterView() {
             </Box>
           }
         >
-          <AuthTabbedContainer initialTab="register" />
+          <AuthTabbedContainer initialTab='register' />
         </Suspense>
       </AuthCardLayout>
     </GuestGuard>
-  )
+  );
 }
 
-export default RegisterView
+export default RegisterView;

@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { Button } from '@/src/shared/components/ui/Button';
 import { ONBOARDING_SLIDES } from '../constants/slides';
@@ -23,24 +22,24 @@ export function OnboardingView() {
   const slide = ONBOARDING_SLIDES[currentSlide];
   const Icon = slide.icon;
 
-  const handleNext = () => {
+  const handleFinish = useCallback(() => {
+    completeOnboarding();
+    router.push('/auth/login');
+  }, [completeOnboarding, router]);
+
+  const handleNext = useCallback(() => {
     if (currentSlide < totalSlides - 1) {
       setCurrentSlide(prev => prev + 1);
     } else {
       handleFinish();
     }
-  };
+  }, [currentSlide, totalSlides, handleFinish]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentSlide > 0) {
       setCurrentSlide(prev => prev - 1);
     }
-  };
-
-  const handleFinish = () => {
-    completeOnboarding();
-    router.push('/auth/login');
-  };
+  }, [currentSlide]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -53,7 +52,7 @@ export function OnboardingView() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentSlide]);
+  }, [handleNext, handlePrev]);
 
   // Touch Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {

@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, CalendarCheck, BookOpen, Flame, Bot } from 'lucide-react'
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, CalendarCheck, BookOpen, Flame, Bot } from 'lucide-react';
 
 export interface BottomNavItem {
-  name: string
-  href: string
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
 }
 
 export const USER_BOTTOM_NAV_ITEMS: BottomNavItem[] = [
@@ -17,27 +17,27 @@ export const USER_BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   { name: 'Edukasi', href: '/user/education', icon: BookOpen },
   { name: 'Buddy', href: '/user/buddy', icon: Flame },
   { name: 'Konsultasi', href: '/user/consultation', icon: Bot },
-]
+];
 
 export interface MobileBottomBarProps {
-  items?: BottomNavItem[]
+  items?: BottomNavItem[];
 }
 
 export default function MobileBottomBar({ items = USER_BOTTOM_NAV_ITEMS }: MobileBottomBarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <nav
-      aria-label="Navigasi Bawah Mobile"
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-md border-t border-[#fce7f3] shadow-[0_-4px_16px_rgba(225,29,72,0.06)]"
+      aria-label='Navigasi Bawah Mobile'
+      className='fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-md border-t border-[#fce7f3] shadow-[0_-4px_16px_rgba(225,29,72,0.06)]'
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="max-w-md mx-auto h-16 px-2 flex items-center justify-around">
-        {items.map((item) => {
+      <div className='max-w-md mx-auto h-16 px-2 flex items-center justify-around'>
+        {items.map(item => {
           const isActive =
             pathname === item.href ||
-            (item.href !== '/user/dashboard' && pathname?.startsWith(item.href))
-          const Icon = item.icon
+            (item.href !== '/user/dashboard' && pathname?.startsWith(item.href));
+          const Icon = item.icon;
 
           return (
             <Link
@@ -68,9 +68,9 @@ export default function MobileBottomBar({ items = USER_BOTTOM_NAV_ITEMS }: Mobil
                 {item.name}
               </span>
             </Link>
-          )
+          );
         })}
       </div>
     </nav>
-  )
+  );
 }

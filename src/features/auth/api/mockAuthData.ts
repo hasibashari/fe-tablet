@@ -1,4 +1,4 @@
-import { AuthUser } from '../types/auth.types'
+import { AuthUser } from '../types/auth.types';
 
 export const MOCK_ADMIN_USER: AuthUser = {
   id: 'ADM-001',
@@ -7,9 +7,10 @@ export const MOCK_ADMIN_USER: AuthUser = {
   role: 'admin',
   title: 'Administrator Sistem',
   phone: '0811-2233-4455',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
+  avatarUrl:
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
   gender: 'Laki-laki',
-}
+};
 
 export const MOCK_PATIENT_USER: AuthUser = {
   id: 'PAT-001',
@@ -18,11 +19,12 @@ export const MOCK_PATIENT_USER: AuthUser = {
   role: 'user',
   title: 'Pengguna Portal Mandiri',
   phone: '0812-3456-7890',
-  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
+  avatarUrl:
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
   gender: 'Laki-laki',
   age: 58,
   bloodType: 'O+',
-}
+};
 
 export const DEMO_ACCOUNTS = [
   {
@@ -45,5 +47,4 @@ export const DEMO_ACCOUNTS = [
     targetRoute: '/user/dashboard',
     badgeColor: '#10b981',
   },
-]
-
+];

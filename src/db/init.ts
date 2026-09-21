@@ -3,7 +3,7 @@ import path from 'path';
 import db, { pool } from './client';
 
 export async function initializeDatabase() {
-  const schemaPath = path.join(process.cwd(), 'src', 'lib', 'db', 'schema.sql');
+  const schemaPath = path.join(process.cwd(), 'src', 'db', 'schema.sql');
   if (!fs.existsSync(schemaPath)) {
     throw new Error(`Schema file not found at: ${schemaPath}`);
   }

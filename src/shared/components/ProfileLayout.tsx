@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import React from 'react'
+import React from 'react';
 import {
   Box,
   Typography,
@@ -10,45 +10,45 @@ import {
   Button,
   Grid,
   Skeleton,
-} from '@mui/material'
-import { Edit2 } from 'lucide-react'
+} from '@mui/material';
+import { Edit2 } from 'lucide-react';
 
 export interface ProfileContactItem {
-  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
-  label?: string
-  value: React.ReactNode
+  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
+  label?: string;
+  value: React.ReactNode;
 }
 
 export interface ProfileMetricItem {
-  label: string
-  value: React.ReactNode
-  subtitle?: string
-  icon: React.ComponentType<{ size?: number }>
-  iconBgColor?: string
-  iconColor?: string
+  label: string;
+  value: React.ReactNode;
+  subtitle?: string;
+  icon: React.ComponentType<{ size?: number }>;
+  iconBgColor?: string;
+  iconColor?: string;
 }
 
 export interface ProfileLayoutProps {
   /** Page Header */
-  title: string
-  subtitle?: string
-  onEditClick?: () => void
-  editButtonText?: string
+  title: string;
+  subtitle?: string;
+  onEditClick?: () => void;
+  editButtonText?: string;
 
   /** Main Profile Card */
-  name: string
-  avatarUrl?: string
-  badges?: React.ReactNode
-  secondaryText?: React.ReactNode
-  contactItems: ProfileContactItem[]
+  name: string;
+  avatarUrl?: string;
+  badges?: React.ReactNode;
+  secondaryText?: React.ReactNode;
+  contactItems: ProfileContactItem[];
 
   /** Metrics / Highlights Section */
-  metricsTitle?: string
-  metrics?: ProfileMetricItem[]
+  metricsTitle?: string;
+  metrics?: ProfileMetricItem[];
 
   /** State & Extra Content */
-  loading?: boolean
-  children?: React.ReactNode
+  loading?: boolean;
+  children?: React.ReactNode;
 }
 
 export default function ProfileLayout({
@@ -69,22 +69,22 @@ export default function ProfileLayout({
   if (loading) {
     return (
       <Box sx={{ pb: 5, width: '100%' }}>
-        <Skeleton variant="text" width={220} height={40} />
-        <Skeleton variant="text" width={340} height={24} sx={{ mb: 3 }} />
-        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 4 }} />
+        <Skeleton variant='text' width={220} height={40} />
+        <Skeleton variant='text' width={340} height={24} sx={{ mb: 3 }} />
+        <Skeleton variant='rectangular' height={200} sx={{ borderRadius: 2, mb: 4 }} />
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 2 }} />
+            <Skeleton variant='rounded' height={100} sx={{ borderRadius: 2 }} />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 2 }} />
+            <Skeleton variant='rounded' height={100} sx={{ borderRadius: 2 }} />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 2 }} />
+            <Skeleton variant='rounded' height={100} sx={{ borderRadius: 2 }} />
           </Grid>
         </Grid>
       </Box>
-    )
+    );
   }
 
   return (
@@ -102,8 +102,8 @@ export default function ProfileLayout({
       >
         <Box>
           <Typography
-            variant="h4"
-            component="h1"
+            variant='h4'
+            component='h1'
             sx={{
               fontWeight: 700,
               color: 'text.primary',
@@ -113,7 +113,7 @@ export default function ProfileLayout({
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            <Typography variant='body1' sx={{ color: 'text.secondary', mt: 0.5 }}>
               {subtitle}
             </Typography>
           )}
@@ -121,7 +121,7 @@ export default function ProfileLayout({
 
         {onEditClick && (
           <Button
-            variant="contained"
+            variant='contained'
             startIcon={<Edit2 size={16} />}
             onClick={onEditClick}
             sx={{
@@ -193,38 +193,48 @@ export default function ProfileLayout({
                   mb: badges || secondaryText ? 0.75 : 2,
                 }}
               >
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                <Typography variant='h5' sx={{ fontWeight: 700, color: 'text.primary' }}>
                   {name}
                 </Typography>
                 {badges}
               </Box>
 
               {secondaryText && (
-                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                <Typography variant='body2' sx={{ color: 'text.secondary', mb: 2 }}>
                   {secondaryText}
                 </Typography>
               )}
 
               <Grid container spacing={2} sx={{ mt: secondaryText ? 0 : 1 }}>
                 {contactItems.map((item, index) => {
-                  const IconComp = item.icon
+                  const IconComp = item.icon;
                   return (
                     <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'text.primary' }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
+                          color: 'text.primary',
+                        }}
+                      >
                         <IconComp size={18} style={{ color: 'var(--mui-palette-primary-main)' }} />
                         <Box>
                           {item.label && (
-                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2 }}>
+                            <Typography
+                              variant='caption'
+                              sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2 }}
+                            >
                               {item.label}
                             </Typography>
                           )}
-                          <Typography variant="body2" sx={{ fontWeight: item.label ? 500 : 400 }}>
+                          <Typography variant='body2' sx={{ fontWeight: item.label ? 500 : 400 }}>
                             {item.value}
                           </Typography>
                         </Box>
                       </Box>
                     </Grid>
-                  )
+                  );
                 })}
               </Grid>
             </Box>
@@ -236,14 +246,14 @@ export default function ProfileLayout({
       {metrics && metrics.length > 0 && (
         <Box sx={{ mb: 4 }}>
           {metricsTitle && (
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 2.5 }}>
+            <Typography variant='h6' sx={{ fontWeight: 700, color: 'text.primary', mb: 2.5 }}>
               {metricsTitle}
             </Typography>
           )}
 
           <Grid container spacing={3}>
             {metrics.map((metric, index) => {
-              const IconComp = metric.icon
+              const IconComp = metric.icon;
               return (
                 <Grid key={index} size={{ xs: 12, sm: 4 }}>
                   <Card
@@ -275,21 +285,30 @@ export default function ProfileLayout({
                       <IconComp size={24} />
                     </Box>
                     <Box>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'text.secondary', fontWeight: 500 }}
+                      >
                         {metric.label}
                       </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}
+                      >
                         {metric.value}
                       </Typography>
                       {metric.subtitle && (
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
+                        <Typography
+                          variant='caption'
+                          sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}
+                        >
                           {metric.subtitle}
                         </Typography>
                       )}
                     </Box>
                   </Card>
                 </Grid>
-              )
+              );
             })}
           </Grid>
         </Box>
@@ -298,5 +317,5 @@ export default function ProfileLayout({
       {/* 4. Slot for dialogs, extra custom sections, or snackbars */}
       {children}
     </Box>
-  )
+  );
 }

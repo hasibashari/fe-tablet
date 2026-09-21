@@ -29,6 +29,7 @@ import {
   UploadCloud,
   Image as ImageIcon,
   X,
+  Sparkles,
 } from 'lucide-react';
 import AdminHeader from '../components/AdminHeader';
 import { DataTable, Column } from '@/src/shared/components/DataTable';
@@ -44,6 +45,7 @@ import {
   updateAdminArticleAction,
   deleteAdminArticleAction,
 } from '../api/articleRepository';
+import { generateAiArticleDraftAction } from '@/src/lib/gemini';
 import { HealthArticle } from '../types/admin.types';
 
 interface ArticleFormData {
@@ -165,6 +167,36 @@ export default function ArticleManagementView() {
 
   const handlePreviewArticle = (articleId: string) => {
     router.push(`/admin/articles/${articleId}`);
+  };
+
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+  const handleGenerateAiArticle = async () => {
+    const topic = formData.title.trim() || formData.category;
+    if (!topic) {
+      showToast('Ketik judul atau pilih kategori artikel terlebih dahulu', 'error');
+      return;
+    }
+
+    setIsGeneratingAi(true);
+    try {
+      const res = await generateAiArticleDraftAction(topic, formData.category);
+      if (res.success && res.data) {
+        updateFormData({
+          title: res.data.title || formData.title,
+          summary: res.data.summary,
+          content: res.data.content,
+          readTime: res.data.readTime,
+        });
+        showToast('Draf artikel berhasil dibuat oleh Gemini AI!', 'success');
+      } else {
+        showToast(res.error || 'Gagal membuat artikel dengan AI', 'error');
+      }
+    } catch {
+      showToast('Terjadi kesalahan saat memanggil AI', 'error');
+    } finally {
+      setIsGeneratingAi(false);
+    }
   };
 
   const handleSaveArticle = async () => {
@@ -342,6 +374,178 @@ export default function ArticleManagementView() {
     },
   ];
 
+  const renderMobileCard = (article: HealthArticle) => (
+    <Card
+      key={article.id}
+      elevation={0}
+      sx={{
+        p: 2,
+        borderRadius: 2.5,
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1.5,
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          borderColor: 'primary.main',
+          boxShadow: '0 4px 12px rgba(225, 29, 72, 0.08)',
+        },
+      }}
+    >
+      {/* Top row: Image (if any) & Title & Category */}
+      <Box sx={{ display: 'flex', gap: 1.5 }}>
+        {article.imageUrl ? (
+          <Box
+            component='img'
+            src={article.imageUrl}
+            alt={article.title}
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: 2,
+              objectFit: 'cover',
+              flexShrink: 0,
+              bgcolor: 'grey.100',
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: 2,
+              bgcolor: '#fff1f2',
+              color: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ImageIcon size={28} />
+          </Box>
+        )}
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5, flexWrap: 'wrap' }}>
+            <Chip
+              label={article.category}
+              size='small'
+              sx={{
+                height: 20,
+                fontSize: '0.68rem',
+                bgcolor: '#ffe4e6',
+                color: '#e11d48',
+                fontWeight: 700,
+              }}
+            />
+            <Chip
+              label={article.status}
+              size='small'
+              color={article.status === 'Terbit' ? 'success' : 'default'}
+              sx={{ height: 20, fontSize: '0.68rem', fontWeight: 600 }}
+            />
+          </Box>
+          <Typography
+            variant='subtitle2'
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              lineHeight: 1.3,
+            }}
+          >
+            {article.title}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Author & Read Time */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          bgcolor: 'action.hover',
+          borderRadius: 1.5,
+          p: 1,
+          fontSize: '0.75rem',
+        }}
+      >
+        <Typography variant='caption' sx={{ fontWeight: 600, color: 'text.primary' }}>
+          ✍️ {article.author}
+        </Typography>
+        <Typography
+          variant='caption'
+          color='text.secondary'
+          sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+        >
+          <Clock size={12} /> {article.readTime}
+        </Typography>
+      </Box>
+
+      {/* Action Buttons */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pt: 1,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Button
+          size='small'
+          variant='outlined'
+          startIcon={<Eye size={14} />}
+          onClick={() => handlePreviewArticle(article.id)}
+          sx={{
+            borderRadius: 1.5,
+            fontSize: '0.75rem',
+            textTransform: 'none',
+            borderColor: '#fecdd3',
+            color: 'primary.main',
+            '&:hover': { bgcolor: '#fff1f2', borderColor: 'primary.main' },
+          }}
+        >
+          Pratinjau
+        </Button>
+
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <IconButton
+            size='small'
+            onClick={() => onOpenEdit(article)}
+            sx={{
+              bgcolor: 'action.hover',
+              color: 'text.primary',
+              '&:hover': { bgcolor: 'action.selected' },
+            }}
+          >
+            <Edit size={16} />
+          </IconButton>
+          <IconButton
+            size='small'
+            color='error'
+            onClick={() => handleDeleteRequest(article.id)}
+            sx={{
+              bgcolor: '#fff1f2',
+              color: '#e11d48',
+              '&:hover': { bgcolor: '#ffe4e6' },
+            }}
+          >
+            <Trash2 size={16} />
+          </IconButton>
+        </Box>
+      </Box>
+    </Card>
+  );
+
   return (
     <Box>
       <AdminHeader
@@ -350,17 +554,28 @@ export default function ArticleManagementView() {
       />
 
       {/* Filter Bar */}
-      <Card sx={{ p: 2.5, mb: 3 }}>
+      <Card
+        elevation={0}
+        sx={{
+          p: { xs: 1.75, sm: 2.5 },
+          mb: 3,
+          borderRadius: { xs: 2.5, sm: 3 },
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 2,
+            alignItems: { xs: 'stretch', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1.5,
           }}
         >
-          <Box sx={{ display: 'flex', gap: 2, flex: 1, minWidth: 280 }}>
+          <Box
+            sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}
+          >
             <TextField
               placeholder='Cari judul artikel atau nama penulis...'
               value={searchQuery}
@@ -377,7 +592,7 @@ export default function ArticleManagementView() {
                 },
               }}
             />
-            <FormControl size='small' sx={{ minWidth: 200 }}>
+            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
               <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
                 <MenuItem value='Semua'>Semua Kategori</MenuItem>
                 <MenuItem value='Hipertensi'>Hipertensi</MenuItem>
@@ -393,16 +608,25 @@ export default function ArticleManagementView() {
             variant='contained'
             startIcon={<Plus size={18} />}
             onClick={() => handleOpenAdd()}
+            sx={{
+              width: { xs: '100%', sm: 'auto' },
+              borderRadius: 2,
+              fontWeight: 600,
+              boxShadow: 'none',
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.dark' },
+            }}
           >
             Tulis Artikel Baru
           </Button>
         </Box>
       </Card>
 
-      {/* Articles Table */}
+      {/* Articles Table & Mobile Card View */}
       <DataTable
         columns={columns}
         data={filteredArticles}
+        renderMobileCard={renderMobileCard}
         emptyMessage='Tidak ada artikel yang ditemukan.'
       />
 
@@ -451,7 +675,7 @@ export default function ArticleManagementView() {
                 alt='Cover Preview'
                 sx={{
                   width: '100%',
-                  height: 180,
+                  height: { xs: 140, sm: 180 },
                   objectFit: 'cover',
                   display: 'block',
                 }}
@@ -490,17 +714,17 @@ export default function ArticleManagementView() {
               variant='outlined'
               onClick={() => fileInputRef.current?.click()}
               sx={{
-                p: 3,
+                p: { xs: 2, sm: 3 },
                 textAlign: 'center',
                 border: '2px dashed',
-                borderColor: 'divider',
+                borderColor: '#fecdd3',
                 borderRadius: 2,
-                bgcolor: 'action.hover',
+                bgcolor: '#fff1f2',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 '&:hover': {
                   borderColor: 'primary.main',
-                  bgcolor: 'rgba(14, 165, 233, 0.04)',
+                  bgcolor: '#ffe4e6',
                 },
               }}
             >
@@ -509,7 +733,7 @@ export default function ArticleManagementView() {
                   width: 44,
                   height: 44,
                   borderRadius: '50%',
-                  bgcolor: 'rgba(14, 165, 233, 0.1)',
+                  bgcolor: '#ffe4e6',
                   color: 'primary.main',
                   display: 'flex',
                   alignItems: 'center',
@@ -549,6 +773,66 @@ export default function ArticleManagementView() {
           />
         </Box>
 
+        {/* AI Assistant Generator Banner */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.75,
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: '#fecdd3',
+            bgcolor: '#fff1f2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1.5,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Box
+              sx={{
+                p: 0.75,
+                borderRadius: 1.5,
+                bgcolor: '#ffe4e6',
+                color: 'primary.main',
+                display: 'flex',
+              }}
+            >
+              <Sparkles size={18} />
+            </Box>
+            <Box>
+              <Typography variant='subtitle2' sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.85rem' }}>
+                Asisten Penulis Medis AI
+              </Typography>
+              <Typography variant='caption' color='text.secondary'>
+                Buat judul, ringkasan, dan materi edukasi otomatis dengan Gemini AI
+              </Typography>
+            </Box>
+          </Box>
+
+          <Button
+            size='small'
+            variant='contained'
+            disabled={isGeneratingAi}
+            onClick={handleGenerateAiArticle}
+            startIcon={<Sparkles size={15} />}
+            sx={{
+              borderRadius: 1.5,
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              textTransform: 'none',
+              boxShadow: 'none',
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.dark' },
+              width: { xs: '100%', sm: 'auto' },
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isGeneratingAi ? 'Menulis Artikel...' : 'Tulis dengan AI ✨'}
+          </Button>
+        </Paper>
+
         <TextField
           label='Judul Artikel'
           fullWidth
@@ -558,7 +842,7 @@ export default function ArticleManagementView() {
         />
 
         <Grid container spacing={2}>
-          <Grid size={{ xs: 6 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth size='small'>
               <InputLabel>Kategori</InputLabel>
               <Select
@@ -578,7 +862,7 @@ export default function ArticleManagementView() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ xs: 6 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label='Penulis / Ahli Medis'
               fullWidth
@@ -590,7 +874,7 @@ export default function ArticleManagementView() {
         </Grid>
 
         <Grid container spacing={2}>
-          <Grid size={{ xs: 6 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label='Waktu Baca (misal: 5 min read)'
               fullWidth
@@ -599,7 +883,7 @@ export default function ArticleManagementView() {
               onChange={e => updateFormData({ readTime: e.target.value })}
             />
           </Grid>
-          <Grid size={{ xs: 6 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth size='small'>
               <InputLabel>Status Publikasi</InputLabel>
               <Select

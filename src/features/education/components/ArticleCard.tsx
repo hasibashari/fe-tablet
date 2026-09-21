@@ -1,18 +1,24 @@
-import React from 'react'
-import Link from 'next/link'
-import { Article } from '../types'
-import { Card, CardContent, Typography, Box, Chip, Divider } from '@mui/material'
-import { Clock, Tag, ArrowRight } from 'lucide-react'
+import React from 'react';
+import Link from 'next/link';
+import { Article } from '../types';
+import { Card, CardContent, Typography, Box, Chip, Divider } from '@mui/material';
+import { Clock, Tag, ArrowRight } from 'lucide-react';
 
 interface ArticleCardProps {
-  article: Article
+  article: Article;
 }
 
 export default function ArticleCard({ article }: ArticleCardProps) {
   return (
     <Link
       href={`/user/education/${article.id}`}
-      style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}
+      style={{
+        textDecoration: 'none',
+        color: 'inherit',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
     >
       <Card
         elevation={0}
@@ -29,7 +35,8 @@ export default function ArticleCard({ article }: ArticleCardProps) {
           cursor: 'pointer',
           '&:hover': {
             transform: 'translateY(-6px)',
-            boxShadow: '0 16px 32px -4px rgba(14, 165, 233, 0.12), 0 6px 12px -2px rgba(0, 0, 0, 0.04)',
+            boxShadow:
+              '0 16px 32px -4px rgba(14, 165, 233, 0.12), 0 6px 12px -2px rgba(0, 0, 0, 0.04)',
             borderColor: 'primary.light',
             '& .card-img': {
               transform: 'scale(1.06)',
@@ -45,11 +52,13 @@ export default function ArticleCard({ article }: ArticleCardProps) {
         }}
       >
         {/* Top Image Banner */}
-        <Box sx={{ position: 'relative', height: 210, overflow: 'hidden', bgcolor: 'action.hover' }}>
+        <Box
+          sx={{ position: 'relative', height: 210, overflow: 'hidden', bgcolor: 'action.hover' }}
+        >
           <Chip
             icon={<Tag size={12} style={{ color: '#0284c7' }} />}
             label={article.category}
-            size="small"
+            size='small'
             sx={{
               position: 'absolute',
               top: 14,
@@ -64,8 +73,8 @@ export default function ArticleCard({ article }: ArticleCardProps) {
             }}
           />
           <Box
-            className="card-img"
-            component="img"
+            className='card-img'
+            component='img'
             src={article.imageUrl}
             alt={article.title}
             sx={{
@@ -80,8 +89,8 @@ export default function ArticleCard({ article }: ArticleCardProps) {
         {/* Card Content Body */}
         <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
           <Typography
-            className="article-title"
-            variant="h6"
+            className='article-title'
+            variant='h6'
             sx={{
               fontWeight: 700,
               fontSize: '1.125rem',
@@ -99,7 +108,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
           </Typography>
 
           <Typography
-            variant="body2"
+            variant='body2'
             sx={{
               color: 'text.secondary',
               fontSize: '0.875rem',
@@ -129,16 +138,16 @@ export default function ArticleCard({ article }: ArticleCardProps) {
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <Clock size={14} style={{ color: '#0284c7' }} />
-              <Typography variant="caption" sx={{ color: 'inherit', fontWeight: 600 }}>
+              <Typography variant='caption' sx={{ color: 'inherit', fontWeight: 600 }}>
                 {article.readTime}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="caption" sx={{ color: 'inherit', fontWeight: 500 }}>
+              <Typography variant='caption' sx={{ color: 'inherit', fontWeight: 500 }}>
                 {article.publishedAt}
               </Typography>
               <ArrowRight
-                className="read-more-icon"
+                className='read-more-icon'
                 size={14}
                 style={{
                   marginLeft: 4,
@@ -150,5 +159,5 @@ export default function ArticleCard({ article }: ArticleCardProps) {
         </CardContent>
       </Card>
     </Link>
-  )
+  );
 }

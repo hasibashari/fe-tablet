@@ -92,11 +92,11 @@ export function Pagination({
       sx={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: { xs: 'center', sm: 'space-between' },
         flexWrap: 'wrap',
-        gap: 2,
+        gap: 1.5,
         py: 1.5,
-        px: 2,
+        px: { xs: 1.5, sm: 2 },
         width: '100%',
       }}
     >

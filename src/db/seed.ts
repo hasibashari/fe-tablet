@@ -10,7 +10,7 @@ export async function seedDatabase() {
   await initializeDatabase();
 
   // Load JSON seed data
-  const dataPath = path.join(process.cwd(), 'src', 'lib', 'db', 'seedData.json');
+  const dataPath = path.join(process.cwd(), 'src', 'db', 'seedData.json');
   if (!fs.existsSync(dataPath)) {
     throw new Error(`Seed data file not found at: ${dataPath}`);
   }
@@ -34,7 +34,7 @@ export async function seedDatabase() {
     console.log('  -> Seeding users...');
     const insertUserQuery = `
       INSERT INTO users (
-        id, name, email, password_hash, role, phone, avatar, title, age, gender, date_of_birth, blood_type, height, weight, assigned_doctor_id
+        id, name, email, password_hash, role, phone, avatarUrl, title, age, gender, date_of_birth, blood_type, height, weight, assigned_doctor_id
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
@@ -42,7 +42,7 @@ export async function seedDatabase() {
         password_hash = EXCLUDED.password_hash,
         role = EXCLUDED.role,
         phone = EXCLUDED.phone,
-        avatar = EXCLUDED.avatar,
+        avatarUrl = EXCLUDED.avatarUrl,
         title = EXCLUDED.title,
         age = EXCLUDED.age,
         gender = EXCLUDED.gender,
@@ -62,7 +62,7 @@ export async function seedDatabase() {
         u.passwordHash ?? null,
         u.role,
         u.phone ?? null,
-        u.avatar ?? null,
+        u.avatarUrl ?? null,
         u.title ?? null,
         u.age ?? null,
         u.gender ?? null,
@@ -258,7 +258,7 @@ export async function seedDatabase() {
     console.log('  -> Seeding articles & sections...');
     const insertArticleQuery = `
       INSERT INTO articles (
-        id, title, summary, lead_paragraph, image_url, image_caption, read_time, category, status, views, published_at, author_id, author_name, author_role, author_avatar, author_bio, key_takeaways, tags
+        id, title, summary, lead_paragraph, image_url, image_caption, read_time, category, status, views, published_at, author_id, author_name, author_role, author_avatarUrl, author_bio, key_takeaways, tags
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
@@ -274,7 +274,7 @@ export async function seedDatabase() {
         author_id = EXCLUDED.author_id,
         author_name = EXCLUDED.author_name,
         author_role = EXCLUDED.author_role,
-        author_avatar = EXCLUDED.author_avatar,
+        author_avatarUrl = EXCLUDED.author_avatarUrl,
         author_bio = EXCLUDED.author_bio,
         key_takeaways = EXCLUDED.key_takeaways,
         tags = EXCLUDED.tags,
@@ -305,7 +305,7 @@ export async function seedDatabase() {
         art.authorId ?? null,
         art.authorName ?? null,
         art.authorRole ?? null,
-        art.authorAvatar ?? null,
+        art.authoravatarUrl ?? null,
         art.authorBio ?? null,
         art.keyTakeaways ? JSON.stringify(art.keyTakeaways) : null,
         art.tags ? JSON.stringify(art.tags) : null,

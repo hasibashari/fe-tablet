@@ -115,15 +115,20 @@ export default function AdminDashboardView() {
         subtitle='Pantau performa klinik, kepatuhan pengobatan pasien, dan aktivitas medis secara real-time.'
       />
 
-      {/* Entry Portal Banner - Moved to top for better hierarchy */}
+      {/* Entry Portal Banner */}
       <Card
+        elevation={0}
         sx={{
-          mb: 3.5,
-          p: 3,
+          mb: 3,
+          p: { xs: 2, sm: 3 },
+          borderRadius: { xs: 2.5, sm: 3 },
+          border: '1px solid',
+          borderColor: '#fecdd3',
+          bgcolor: 'background.paper',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
+          alignItems: { xs: 'stretch', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
           gap: 2,
         }}
       >
@@ -131,23 +136,27 @@ export default function AdminDashboardView() {
           <Box
             sx={{
               p: 1.5,
-              borderRadius: 1,
-              bgcolor: 'primary.light',
-              color: 'primary.dark',
+              borderRadius: 2,
+              bgcolor: '#fff1f2',
+              color: 'primary.main',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             <CalendarCheck size={26} />
           </Box>
           <Box>
-            <Typography variant='subtitle1' color='text.primary'>
+            <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 700 }}>
               Pengelolaan Jadwal & Pengingat Obat Pasien
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ mt: 0.25 }}>
-              Akses halaman khusus untuk mengkonfigurasi instruksi dosis, jam minum obat, dan
-              pemantauan kepatuhan lengkap.
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 0.25, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+            >
+              Akses konfigurasi dosis, jam minum obat, dan pemantauan kepatuhan harian pasien.
             </Typography>
           </Box>
         </Box>
@@ -157,40 +166,46 @@ export default function AdminDashboardView() {
           href='/admin/schedules'
           variant='contained'
           endIcon={<ChevronRight size={16} />}
-          sx={{ px: 3, py: 1 }}
+          sx={{
+            px: 2.5,
+            py: 1,
+            borderRadius: 2,
+            fontWeight: 600,
+            boxShadow: 'none',
+            bgcolor: 'primary.main',
+            '&:hover': { bgcolor: 'primary.dark' },
+            width: { xs: '100%', sm: 'auto' },
+          }}
         >
-          Buka Pengelolaan Jadwal
+          Buka Jadwal
         </Button>
       </Card>
 
-      {/* KPI Cards Grid */}
-      <Grid container spacing={{ xs: 2, sm: 2.5 }} sx={{ mb: { xs: 2.5, md: 3.5 } }}>
-        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
+      {/* KPI Cards Grid (2 cols on mobile, 4 cols on desktop) */}
+      <Grid container spacing={{ xs: 1.5, sm: 2.5 }} sx={{ mb: { xs: 2.5, md: 3.5 } }}>
+        <Grid size={{ xs: 6, sm: 6, md: 6, lg: 3 }}>
           <StatCard
-            title='Total Pasien Terdaftar'
+            title='Total Pasien'
             value={stats.totalPatients}
             icon={Users}
             iconBgColor='primary.light'
             iconColor='var(--mui-palette-primary-main)'
             subtitle={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
                 <Chip
                   label='+12 bln ini'
                   size='small'
                   color='success'
-                  sx={{ height: 20, fontSize: '0.7rem' }}
+                  sx={{ height: 18, fontSize: '0.65rem' }}
                 />
-                <Typography variant='caption' color='text.secondary'>
-                  vs bln lalu
-                </Typography>
               </Box>
             }
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 6, lg: 3 }}>
           <StatCard
-            title='Jadwal Obat Aktif'
+            title='Jadwal Aktif'
             value={stats.activeSchedules}
             icon={CalendarCheck}
             iconBgColor='primary.light'
@@ -199,9 +214,9 @@ export default function AdminDashboardView() {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 6, lg: 3 }}>
           <StatCard
-            title='Rata-rata Kepatuhan'
+            title='Kepatuhan Rata-rata'
             value={`${stats.adherenceRate}%`}
             icon={TrendingUp}
             iconBgColor='success.light'
@@ -211,21 +226,21 @@ export default function AdminDashboardView() {
                 variant='determinate'
                 value={stats.adherenceRate}
                 color='success'
-                sx={{ height: 5, borderRadius: 1, mt: 0.5 }}
+                sx={{ height: 4, borderRadius: 1, mt: 0.5 }}
               />
             }
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 6, lg: 3 }}>
           <StatCard
-            title='Pasien Risiko Tinggi'
+            title='Risiko Tinggi'
             value={highRiskPatients.length.toString()}
             icon={AlertTriangle}
             iconBgColor='warning.light'
             iconColor='var(--mui-palette-warning-main)'
             valueColor='var(--mui-palette-warning-main)'
-            subtitle='Memerlukan pantauan medis'
+            subtitle='Butuh pantauan'
           />
         </Grid>
       </Grid>
@@ -235,8 +250,12 @@ export default function AdminDashboardView() {
         {/* Compliance Trend Visualizer */}
         <Grid size={{ xs: 12, lg: 7, xl: 8 }}>
           <Card
+            elevation={0}
             sx={{
-              p: 2.5,
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: { xs: 2.5, sm: 3 },
+              border: '1px solid',
+              borderColor: 'divider',
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
@@ -247,15 +266,21 @@ export default function AdminDashboardView() {
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'flex-start',
+                alignItems: { xs: 'flex-start', sm: 'center' },
                 mb: 2,
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 1,
               }}
             >
               <Box>
-                <Typography variant='subtitle1' color='text.primary'>
-                  Tren Kepatuhan Konsumsi Obat (Mingguan)
+                <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 700 }}>
+                  Tren Kepatuhan Obat (Mingguan)
                 </Typography>
-                <Typography variant='body2' color='text.secondary' sx={{ mt: 0.25 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                  sx={{ mt: 0.25, fontSize: '0.8rem' }}
+                >
                   Persentase jadwal obat yang diminum tepat waktu oleh pasien
                 </Typography>
               </Box>
@@ -264,63 +289,71 @@ export default function AdminDashboardView() {
                 href='/admin/reports'
                 size='small'
                 endIcon={<ArrowUpRight size={15} />}
-                sx={{ fontWeight: 600 }}
+                sx={{
+                  fontWeight: 600,
+                  color: 'primary.main',
+                  alignSelf: { xs: 'flex-start', sm: 'auto' },
+                }}
               >
                 Lihat Detail
               </Button>
             </Box>
 
             {/* Bar Chart Visualizer */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'space-between',
-                height: 190,
-                pt: 3,
-                pb: 1,
-                px: 2,
-              }}
-            >
-              {reports.map(report => (
-                <Box
-                  key={report.date}
-                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
-                >
-                  <Typography
-                    variant='caption'
-                    color='text.primary'
-                    sx={{ fontWeight: 700, mb: 0.75 }}
-                  >
-                    {report.adherencePercentage.toFixed(0)}%
-                  </Typography>
+            <Box sx={{ overflowX: 'auto', pb: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  height: 190,
+                  minWidth: { xs: 320, sm: 'auto' },
+                  pt: 3,
+                  pb: 1,
+                  px: { xs: 1, sm: 2 },
+                }}
+              >
+                {reports.map(report => (
                   <Box
-                    sx={{
-                      width: '50%',
-                      maxWidth: 28,
-                      height: `${report.adherencePercentage * 1.3}px`,
-                      bgcolor: report.adherencePercentage >= 90 ? 'primary.main' : 'warning.main',
-                      borderRadius: '4px 4px 0 0',
-                      transition: 'all 0.2s ease',
-                      '&:hover': { opacity: 0.85, transform: 'scaleY(1.02)' },
-                    }}
-                  />
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                    sx={{ mt: 1, fontWeight: 500 }}
+                    key={report.date}
+                    sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
                   >
-                    {report.date}
-                  </Typography>
-                </Box>
-              ))}
+                    <Typography
+                      variant='caption'
+                      color='text.primary'
+                      sx={{ fontWeight: 700, mb: 0.75, fontSize: '0.72rem' }}
+                    >
+                      {report.adherencePercentage.toFixed(0)}%
+                    </Typography>
+                    <Box
+                      sx={{
+                        width: '50%',
+                        maxWidth: 28,
+                        height: `${report.adherencePercentage * 1.3}px`,
+                        bgcolor: report.adherencePercentage >= 90 ? 'primary.main' : 'warning.main',
+                        borderRadius: '4px 4px 0 0',
+                        transition: 'all 0.2s ease',
+                        '&:hover': { opacity: 0.85, transform: 'scaleY(1.02)' },
+                      }}
+                    />
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{ mt: 1, fontWeight: 500, fontSize: '0.7rem' }}
+                    >
+                      {report.date}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
             </Box>
 
             <Box
               sx={{
                 display: 'flex',
-                gap: 3,
+                gap: 2,
                 justifyContent: 'center',
+                flexWrap: 'wrap',
                 pt: 2,
                 mt: 1,
                 borderTop: 1,
@@ -329,14 +362,14 @@ export default function AdminDashboardView() {
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main' }} />
-                <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 500 }}>
+                <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
                   Kepatuhan Tinggi (≥90%)
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'warning.main' }} />
-                <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 500 }}>
-                  Perlu Ditingkatkan (&lt;90%)
+                <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
+                  Perlu Perhatian (&lt;90%)
                 </Typography>
               </Box>
             </Box>
@@ -346,8 +379,12 @@ export default function AdminDashboardView() {
         {/* High Risk Patients Alert Box */}
         <Grid size={{ xs: 12, lg: 5, xl: 4 }}>
           <Card
+            elevation={0}
             sx={{
-              p: 2.5,
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: { xs: 2.5, sm: 3 },
+              border: '1px solid',
+              borderColor: 'divider',
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
@@ -364,7 +401,7 @@ export default function AdminDashboardView() {
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AlertTriangle size={18} color='var(--mui-palette-warning-main)' />
-                <Typography variant='subtitle1' color='text.primary'>
+                <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 700 }}>
                   Pasien Perlu Perhatian
                 </Typography>
               </Box>
@@ -373,12 +410,13 @@ export default function AdminDashboardView() {
                 href='/admin/users'
                 size='small'
                 endIcon={<ChevronRight size={15} />}
+                sx={{ fontWeight: 600, color: 'primary.main' }}
               >
                 Semua
               </Button>
             </Box>
 
-            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 2, fontSize: '0.8rem' }}>
               Pasien dengan kepatuhan rendah atau membutuhkan dorongan pengingat:
             </Typography>
 
@@ -388,46 +426,57 @@ export default function AdminDashboardView() {
                   key={patient.id}
                   sx={{
                     p: 1.5,
-                    borderRadius: 1.5,
+                    borderRadius: 2,
                     border: '1px solid',
-                    borderColor: 'warning.light',
-                    bgcolor: 'warning.light',
+                    borderColor: '#fed7aa',
+                    bgcolor: '#fffbeb',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     gap: 1,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
                     <Avatar
                       sx={{
                         bgcolor: 'warning.main',
                         color: 'warning.contrastText',
-                        width: 36,
-                        height: 36,
+                        width: 34,
+                        height: 34,
                         fontWeight: 700,
+                        fontSize: '0.85rem',
                       }}
                     >
                       {patient.name.charAt(0)}
                     </Avatar>
-                    <Box>
-                      <Typography variant='subtitle2' color='text.primary'>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography
+                        variant='subtitle2'
+                        color='text.primary'
+                        noWrap
+                        sx={{ fontWeight: 700 }}
+                      >
                         {patient.name}
                       </Typography>
                       <Typography variant='caption' color='text.secondary'>
-                        {patient.age} th
+                        {patient.age} th • {patient.phone}
                       </Typography>
                     </Box>
                   </Box>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label={`${patient.adherenceRate}%`} size='small' color='warning' />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
+                    <Chip
+                      label={`${patient.adherenceRate}%`}
+                      size='small'
+                      color='warning'
+                      sx={{ fontWeight: 700, height: 22, fontSize: '0.72rem' }}
+                    />
                     <Tooltip title='Kirim Pengingat'>
                       <IconButton
                         size='small'
                         color='warning'
                         onClick={() => handleOpenReminder(patient.name, patient.phone)}
-                        sx={{ bgcolor: 'warning.light' }}
+                        sx={{ bgcolor: '#fef3c7', '&:hover': { bgcolor: '#fde68a' } }}
                       >
                         <BellRing size={16} />
                       </IconButton>

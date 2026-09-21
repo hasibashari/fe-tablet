@@ -96,7 +96,7 @@ export async function createPatientAction(data: {
 
     await db.transaction(async client => {
       await client.query(
-        `INSERT INTO users (id, name, email, role, phone, avatar, age, gender, assigned_doctor_id)
+        `INSERT INTO users (id, name, email, role, phone, avatarUrl, age, gender, assigned_doctor_id)
          VALUES ($1, $2, $3, 'patient', $4, $5, $6, $7, $8)`,
         [
           newId,
