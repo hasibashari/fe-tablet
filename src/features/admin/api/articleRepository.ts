@@ -1,7 +1,30 @@
 'use server';
 
 import db from '@/src/db/client';
-import { HealthArticle } from '../types/admin.types';
+import { HealthArticle, ArticleCategory } from '../types/admin.types';
+
+function normalizeArticleCategory(raw?: string | null): ArticleCategory {
+  const c = (raw || '').trim();
+  if (c === 'Anemia' || c === 'TTD' || c.includes('Anemia') || c.includes('TTD')) {
+    return 'Anemia & TTD';
+  }
+  if (c === 'Nutrisi' || c === 'Gizi' || c.includes('Nutrisi') || c.includes('Gizi')) {
+    return 'Nutrisi & Gizi';
+  }
+  if (c.includes('Remaja')) {
+    return 'Kesehatan Remaja';
+  }
+  if (c.includes('Menstruasi') || c.includes('Haid')) {
+    return 'Tips Menstruasi';
+  }
+  if (c.includes('Mitos')) {
+    return 'Mitos & Fakta';
+  }
+  if (c.includes('Gaya Hidup') || c.includes('Lifestyle')) {
+    return 'Gaya Hidup';
+  }
+  return 'Anemia & TTD';
+}
 
 interface ArticleDbRow {
   id: string;
@@ -70,7 +93,7 @@ export async function getAdminArticlesAction(): Promise<HealthArticle[]> {
       result.push({
         id: r.id,
         title: r.title,
-        category: r.category as HealthArticle['category'],
+        category: normalizeArticleCategory(r.category),
         author: r.author_name || 'dr. Sarah Jenkins',
         publishDate: publishDateStr,
         status: r.status as HealthArticle['status'],

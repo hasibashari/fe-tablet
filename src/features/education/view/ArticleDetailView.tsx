@@ -15,21 +15,6 @@ import { useAuth } from '@/src/features/auth/context/AuthContext';
 import ArticleCard from '../components/ArticleCard';
 import { MarkdownRenderer } from '@/src/shared/components/markdown';
 import {
-  Box,
-  Typography,
-  Chip,
-  Avatar,
-  Divider,
-  Button,
-  Grid,
-  Skeleton,
-  Paper,
-  IconButton,
-  Tooltip,
-  Snackbar,
-  Alert,
-} from '@mui/material';
-import {
   ArrowLeft,
   Clock,
   Calendar,
@@ -56,11 +41,17 @@ export default function ArticleDetailView({
   const [bookmarked, setBookmarked] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(24);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const { user } = useAuth();
   const userId = user?.id || 'usr_1';
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -99,8 +90,7 @@ export default function ArticleDetailView({
           });
         } else {
           await navigator.clipboard.writeText(window.location.href);
-          setSnackbarMessage('Tautan artikel berhasil disalin!');
-          setSnackbarOpen(true);
+          showToast('Tautan artikel berhasil disalin!');
         }
       } catch {
         // user cancelled share
@@ -113,12 +103,9 @@ export default function ArticleDetailView({
     const res = await toggleArticleBookmarkAction(userId, article.id);
     if (res.success) {
       setBookmarked(res.isBookmarked);
-      setSnackbarMessage(
-        res.isBookmarked
-          ? 'Artikel disimpan ke bookmark kamu'
-          : 'Artikel dihapus dari bookmark',
+      showToast(
+        res.isBookmarked ? 'Artikel disimpan ke bookmark kamu' : 'Artikel dihapus dari bookmark',
       );
-      setSnackbarOpen(true);
     }
   };
 
@@ -132,243 +119,137 @@ export default function ArticleDetailView({
 
   if (loading) {
     return (
-      <Box sx={{ pb: 8, maxWidth: 840, mx: 'auto', px: { xs: 2, sm: 3 } }}>
-        <Box sx={{ py: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Skeleton variant='rounded' width={160} height={36} sx={{ borderRadius: 999 }} />
-          <Skeleton variant='rounded' width={80} height={36} sx={{ borderRadius: 999 }} />
-        </Box>
-        <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Skeleton variant='rounded' width={120} height={28} sx={{ borderRadius: 999 }} />
-          <Skeleton variant='text' width='90%' height={48} />
-          <Skeleton variant='text' width='70%' height={32} />
-        </Box>
-        <Skeleton variant='rounded' width='100%' height={360} sx={{ borderRadius: 4, mb: 4 }} />
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Skeleton variant='text' width='100%' height={24} />
-          <Skeleton variant='text' width='95%' height={24} />
-          <Skeleton variant='text' width='90%' height={24} />
-        </Box>
-      </Box>
+      <div className='pb-12 max-w-[840px] mx-auto px-4 sm:px-6 animate-pulse'>
+        <div className='py-4 flex justify-between items-center'>
+          <div className='h-9 w-40 bg-slate-200 rounded-full' />
+          <div className='h-9 w-20 bg-slate-200 rounded-full' />
+        </div>
+        <div className='my-6 space-y-3'>
+          <div className='h-7 w-28 bg-slate-200 rounded-full' />
+          <div className='h-10 w-4/5 bg-slate-200 rounded-xl' />
+          <div className='h-6 w-3/5 bg-slate-200 rounded-lg' />
+        </div>
+        <div className='h-[360px] w-full bg-slate-200 rounded-2xl mb-8' />
+        <div className='space-y-3'>
+          <div className='h-4 w-full bg-slate-200 rounded' />
+          <div className='h-4 w-11/12 bg-slate-200 rounded' />
+          <div className='h-4 w-4/5 bg-slate-200 rounded' />
+        </div>
+      </div>
     );
   }
 
   if (!article) {
     return (
-      <Box sx={{ py: 12, textAlign: 'center', maxWidth: 600, mx: 'auto', px: 3 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 6,
-            borderRadius: 4,
-            border: '1px solid #fce7f3',
-            bgcolor: '#ffffff',
-          }}
-        >
-          <Box
-            sx={{
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              bgcolor: '#ffe4e6',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mx: 'auto',
-              mb: 3,
-              color: '#e11d48',
-            }}
-          >
+      <div className='py-20 text-center max-w-[540px] mx-auto px-4'>
+        <div className='p-8 rounded-3xl border border-pink-100 bg-white shadow-xl'>
+          <div className='w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4 text-rose-500'>
             <BookOpen size={32} />
-          </Box>
-          <Typography variant='h6' sx={{ fontWeight: 700, mb: 1, color: '#1e293b' }}>
-            Artikel Tidak Ditemukan
-          </Typography>
-          <Typography variant='body2' sx={{ color: '#64748b', mb: 4 }}>
+          </div>
+          <h2 className='text-xl font-bold text-slate-800 mb-2'>Artikel Tidak Ditemukan</h2>
+          <p className='text-sm text-slate-500 mb-6'>
             Artikel edukasi yang kamu cari mungkin telah dipindahkan atau belum tersedia.
-          </Typography>
-          <Button
-            variant='contained'
-            startIcon={<ArrowLeft size={18} />}
+          </p>
+          <button
             onClick={() => router.push(backHref)}
-            sx={{
-              px: 3.5,
-              py: 1.25,
-              borderRadius: 999,
-              bgcolor: '#e11d48',
-              '&:hover': { bgcolor: '#be123c' },
-            }}
+            className='inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-rose-600 text-white font-semibold hover:bg-rose-700 shadow-md shadow-rose-200 transition-all cursor-pointer'
           >
-            Kembali ke Edukasi
-          </Button>
-        </Paper>
-      </Box>
+            <ArrowLeft size={18} />
+            <span>Kembali ke Edukasi</span>
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ pb: 10, maxWidth: 840, mx: 'auto', px: { xs: 2, sm: 3 } }}>
+    <div className='pb-16 max-w-[840px] mx-auto px-4 sm:px-6'>
       {/* Top Bar Navigation & Actions */}
-      <Box
-        sx={{
-          py: 2.5,
-          mb: 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid #fce7f3',
-        }}
-      >
-        <Link href={backHref} style={{ textDecoration: 'none' }}>
-          <Button
-            variant='text'
-            startIcon={<ArrowLeft size={18} />}
-            sx={{
-              color: '#64748b',
-              fontWeight: 600,
-              px: 2,
-              py: 0.75,
-              borderRadius: 999,
-              '&:hover': { bgcolor: '#fff1f2', color: '#e11d48' },
-            }}
-          >
-            Kembali ke Edukasi
-          </Button>
+      <div className='py-3 mb-6 flex items-center justify-between border-b border-pink-100'>
+        <Link
+          href={backHref}
+          className='inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-600 font-semibold hover:bg-rose-50 hover:text-rose-600 transition-colors text-sm'
+        >
+          <ArrowLeft size={18} />
+          <span>Kembali ke Edukasi</span>
         </Link>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Tooltip title='Bagikan Artikel'>
-            <IconButton
-              onClick={handleShare}
-              sx={{
-                border: '1px solid #fce7f3',
-                bgcolor: '#ffffff',
-                color: '#64748b',
-                '&:hover': { bgcolor: '#fff1f2', color: '#e11d48' },
-              }}
-            >
-              <Share2 size={18} />
-            </IconButton>
-          </Tooltip>
+        <div className='flex items-center gap-2'>
+          <button
+            onClick={handleShare}
+            title='Bagikan Artikel'
+            className='p-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors cursor-pointer shadow-sm'
+          >
+            <Share2 size={18} />
+          </button>
 
-          <Tooltip title={bookmarked ? 'Hapus Bookmark' : 'Simpan Artikel'}>
-            <IconButton
-              onClick={handleBookmarkToggle}
-              sx={{
-                border: '1px solid #fce7f3',
-                bgcolor: bookmarked ? '#ffe4e6' : '#ffffff',
-                color: bookmarked ? '#e11d48' : '#64748b',
-                '&:hover': { bgcolor: '#ffe4e6', color: '#e11d48' },
-              }}
-            >
-              <Bookmark size={18} fill={bookmarked ? '#e11d48' : 'none'} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
+          <button
+            onClick={handleBookmarkToggle}
+            title={bookmarked ? 'Hapus Bookmark' : 'Simpan Artikel'}
+            className={`p-2 rounded-full border transition-colors cursor-pointer shadow-sm ${
+              bookmarked
+                ? 'border-rose-200 bg-rose-50 text-rose-600'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-rose-50 hover:text-rose-600'
+            }`}
+          >
+            <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} />
+          </button>
+        </div>
+      </div>
 
       {/* Article Header */}
-      <Box sx={{ mb: 4 }}>
-        <Chip
-          label={article.category}
-          size='small'
-          sx={{
-            bgcolor: '#ffe4e6',
-            color: '#e11d48',
-            fontWeight: 700,
-            fontSize: '0.75rem',
-            mb: 2,
-            borderRadius: 1.5,
-          }}
-        />
+      <div className='mb-6'>
+        <span className='inline-block px-3 py-1 rounded-lg bg-rose-50 text-rose-600 font-bold text-xs mb-3'>
+          {article.category}
+        </span>
 
-        <Typography
-          variant='h4'
-          component='h1'
-          sx={{
-            fontWeight: 800,
-            color: '#1e293b',
-            lineHeight: 1.25,
-            fontSize: { xs: '1.5rem', sm: '2rem' },
-            mb: 2,
-          }}
-        >
+        <h1 className='text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight mb-3'>
           {article.title}
-        </Typography>
+        </h1>
 
-        <Typography
-          variant='body1'
-          sx={{
-            color: '#64748b',
-            lineHeight: 1.6,
-            fontSize: '1rem',
-            mb: 3,
-          }}
-        >
-          {article.summary}
-        </Typography>
+        <p className='text-base text-slate-600 leading-relaxed mb-6'>{article.summary}</p>
 
         {/* Metadata Bar */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-            p: 2,
-            bgcolor: '#fff5f7',
-            borderRadius: 3,
-            border: '1px solid #fce7f3',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar
-              src={article.author?.avatarUrl}
-              alt={article.author?.name || 'Tim Medis'}
-              sx={{ width: 40, height: 40, border: '1.5px solid #fce7f3' }}
-            >
-              {article.author?.name?.charAt(0) || 'M'}
-            </Avatar>
-            <Box>
-              <Typography variant='subtitle2' sx={{ fontWeight: 700, color: '#1e293b' }}>
+        <div className='flex flex-wrap items-center justify-between gap-3 p-4 bg-[#fff5f7] rounded-2xl border border-pink-100'>
+          <div className='flex items-center gap-3'>
+            <div className='w-10 h-10 rounded-full bg-rose-200 flex items-center justify-center font-bold text-rose-700 text-sm overflow-hidden border border-pink-200'>
+              {article.author?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={article.author.avatarUrl}
+                  alt={article.author.name}
+                  className='w-full h-full object-cover'
+                />
+              ) : (
+                <span>{article.author?.name?.charAt(0) || 'M'}</span>
+              )}
+            </div>
+            <div>
+              <div className='text-sm font-bold text-slate-900'>
                 {article.author?.name || 'Tim Medis Fe-Tablet'}
-              </Typography>
-              <Typography variant='caption' sx={{ color: '#64748b' }}>
+              </div>
+              <div className='text-xs text-slate-500'>
                 {article.author?.role || 'UKS & Fasilitator Kesehatan Remaja'}
-              </Typography>
-            </Box>
-          </Box>
+              </div>
+            </div>
+          </div>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, color: '#64748b' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Calendar size={15} />
-              <Typography variant='caption' sx={{ fontWeight: 600 }}>
-                {article.publishedAt}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Clock size={15} />
-              <Typography variant='caption' sx={{ fontWeight: 600 }}>
-                {article.readTime}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+          <div className='flex items-center gap-4 text-xs font-semibold text-slate-500'>
+            <div className='flex items-center gap-1.5'>
+              <Calendar size={15} className='text-rose-500' />
+              <span>{article.publishedAt}</span>
+            </div>
+            <div className='flex items-center gap-1.5'>
+              <Clock size={15} className='text-rose-500' />
+              <span>{article.readTime}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Featured Cover Image */}
       {article.imageUrl && (
-        <Box
-          sx={{
-            position: 'relative',
-            width: '100%',
-            height: { xs: 220, sm: 380 },
-            borderRadius: 4,
-            overflow: 'hidden',
-            mb: 4,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-          }}
-        >
+        <div className='relative w-full h-[240px] sm:h-[400px] rounded-3xl overflow-hidden mb-8 shadow-md'>
           <Image
             src={article.imageUrl}
             alt={article.title}
@@ -377,48 +258,29 @@ export default function ArticleDetailView({
             sizes='(max-width: 768px) 100vw, 840px'
             priority
           />
-        </Box>
+        </div>
       )}
 
       {/* Key Takeaways Box if available */}
       {article.keyTakeaways && article.keyTakeaways.length > 0 && (
-        <Box
-          sx={{
-            p: 3,
-            mb: 4,
-            bgcolor: '#fff1f2',
-            borderRadius: 3,
-            border: '1px solid #fecdd3',
-          }}
-        >
-          <Typography
-            variant='subtitle2'
-            sx={{
-              fontWeight: 800,
-              color: '#be123c',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              mb: 1.5,
-              fontSize: '0.78rem',
-            }}
-          >
-            Poin Penting (Key Takeaways) 💡
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <div className='p-5 mb-8 bg-rose-50/70 rounded-2xl border border-rose-200/80'>
+          <div className='text-xs font-extrabold uppercase tracking-wider text-rose-700 mb-3 flex items-center gap-1.5'>
+            <span>Poin Penting (Key Takeaways)</span>
+            <span>💡</span>
+          </div>
+          <div className='space-y-2'>
             {article.keyTakeaways.map((point, idx) => (
-              <Box key={idx} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
+              <div key={idx} className='flex items-start gap-2.5'>
                 <CheckCircle2 size={16} className='text-rose-600 shrink-0 mt-0.5' />
-                <Typography variant='body2' sx={{ color: '#334155', fontWeight: 500 }}>
-                  {point}
-                </Typography>
-              </Box>
+                <span className='text-sm font-medium text-slate-700 leading-snug'>{point}</span>
+              </div>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
       )}
 
       {/* Main Markdown Content Body */}
-      <Box sx={{ mb: 6 }}>
+      <div className='mb-10'>
         <MarkdownRenderer
           content={
             article.content ||
@@ -427,79 +289,46 @@ export default function ArticleDetailView({
             'Konten artikel belum tersedia.'
           }
         />
-      </Box>
+      </div>
 
       {/* Like / Feedback Bar */}
-      <Divider sx={{ my: 4, borderColor: '#fce7f3' }} />
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 2,
-          p: 2.5,
-          bgcolor: '#fafafa',
-          borderRadius: 3,
-          border: '1px solid #f1f5f9',
-        }}
-      >
-        <Typography variant='body2' sx={{ color: '#64748b', fontWeight: 600 }}>
+      <div className='h-px bg-slate-100 my-8 w-full' />
+      <div className='flex items-center justify-between flex-wrap gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-200/70'>
+        <div className='text-sm font-semibold text-slate-700'>
           Apakah artikel ini bermanfaat untukmu?
-        </Typography>
-        <Button
-          variant={liked ? 'contained' : 'outlined'}
-          startIcon={<ThumbsUp size={16} />}
+        </div>
+        <button
           onClick={handleLikeToggle}
-          sx={{
-            borderRadius: 999,
-            px: 2.5,
-            borderColor: liked ? '#e11d48' : '#cbd5e1',
-            bgcolor: liked ? '#e11d48' : 'transparent',
-            color: liked ? '#ffffff' : '#475569',
-            '&:hover': {
-              bgcolor: liked ? '#be123c' : '#f1f5f9',
-            },
-          }}
+          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all cursor-pointer shadow-sm ${
+            liked
+              ? 'bg-rose-600 text-white shadow-rose-200 hover:bg-rose-700'
+              : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+          }`}
         >
-          {liked ? `Bermanfaat (${likeCount})` : `Bermanfaat (${likeCount})`}
-        </Button>
-      </Box>
+          <ThumbsUp size={16} fill={liked ? 'currentColor' : 'none'} />
+          <span>Bermanfaat ({likeCount})</span>
+        </button>
+      </div>
 
       {/* Related Articles Section */}
       {relatedArticles.length > 0 && (
-        <Box sx={{ mt: 8 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 800, color: '#1e293b', mb: 3 }}
-          >
-            Artikel Terkait Lainnya
-          </Typography>
-          <Grid container spacing={3}>
+        <div className='mt-12'>
+          <h2 className='text-xl font-extrabold text-slate-900 mb-6'>Artikel Terkait Lainnya</h2>
+          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6'>
             {relatedArticles.map(rel => (
-              <Grid key={rel.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                <ArticleCard article={rel} />
-              </Grid>
+              <ArticleCard key={rel.id} article={rel} />
             ))}
-          </Grid>
-        </Box>
+          </div>
+        </div>
       )}
 
       {/* Toast Notification */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity='success'
-          sx={{ width: '100%', borderRadius: 3 }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {toastMessage && (
+        <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-2xl flex items-center gap-2 animate-bounce'>
+          <CheckCircle2 size={16} className='text-emerald-400' />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+    </div>
   );
 }

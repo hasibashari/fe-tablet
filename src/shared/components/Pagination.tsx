@@ -1,28 +1,19 @@
-'use client'
+'use client';
 
-import React from 'react'
-import {
-  Box,
-  Typography,
-  IconButton,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
-} from '@mui/material'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import React from 'react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface PaginationProps {
-  currentPage: number
-  totalPages: number
-  totalItems?: number
-  pageSize?: number
-  onPageChange: (page: number) => void
-  onPageSizeChange?: (pageSize: number) => void
-  pageSizeOptions?: number[]
-  showItemCount?: boolean
-  showFirstLastButtons?: boolean
-  className?: string
+  currentPage: number;
+  totalPages: number;
+  totalItems?: number;
+  pageSize?: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeOptions?: number[];
+  showItemCount?: boolean;
+  showFirstLastButtons?: boolean;
+  className?: string;
 }
 
 export function Pagination({
@@ -35,247 +26,175 @@ export function Pagination({
   pageSizeOptions = [5, 10, 20],
   showItemCount = true,
   showFirstLastButtons = false,
+  className = '',
 }: PaginationProps) {
-  // If no pages or totalPages <= 0, still show info if items exist or return null
   if (totalPages <= 0 && (!totalItems || totalItems === 0)) {
-    return null
+    return null;
   }
 
-  const effectiveTotalPages = Math.max(1, totalPages)
-  const safeCurrentPage = Math.min(Math.max(1, currentPage), effectiveTotalPages)
+  const effectiveTotalPages = Math.max(1, totalPages);
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), effectiveTotalPages);
 
-  // Calculate item range for "Menampilkan X-Y dari Z data"
-  const startItem = totalItems && totalItems > 0 && pageSize
-    ? (safeCurrentPage - 1) * pageSize + 1
-    : 0
-  const endItem = totalItems && totalItems > 0 && pageSize
-    ? Math.min(safeCurrentPage * pageSize, totalItems)
-    : 0
+  const startItem =
+    totalItems && totalItems > 0 && pageSize ? (safeCurrentPage - 1) * pageSize + 1 : 0;
+  const endItem =
+    totalItems && totalItems > 0 && pageSize
+      ? Math.min(safeCurrentPage * pageSize, totalItems)
+      : 0;
 
-  // Generate page numbers with ellipsis
   const getPageNumbers = () => {
-    const pages: (number | string)[] = []
-    const delta = 1 // pages to show around current page
+    const pages: (number | string)[] = [];
+    const delta = 1;
 
     if (effectiveTotalPages <= 7) {
       for (let i = 1; i <= effectiveTotalPages; i++) {
-        pages.push(i)
+        pages.push(i);
       }
-      return pages
+      return pages;
     }
 
-    const left = safeCurrentPage - delta
-    const right = safeCurrentPage + delta + 1
-    let prev = 0
+    const left = safeCurrentPage - delta;
+    const right = safeCurrentPage + delta + 1;
+    let prev = 0;
 
     for (let i = 1; i <= effectiveTotalPages; i++) {
       if (i === 1 || i === effectiveTotalPages || (i >= left && i < right)) {
         if (prev) {
           if (i - prev === 2) {
-            pages.push(prev + 1)
+            pages.push(prev + 1);
           } else if (i - prev !== 1) {
-            pages.push('...')
+            pages.push('...');
           }
         }
-        pages.push(i)
-        prev = i
+        pages.push(i);
+        prev = i;
       }
     }
 
-    return pages
-  }
+    return pages;
+  };
 
-  const pageNumbers = getPageNumbers()
+  const pageNumbers = getPageNumbers();
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: { xs: 'center', sm: 'space-between' },
-        flexWrap: 'wrap',
-        gap: 1.5,
-        py: 1.5,
-        px: { xs: 1.5, sm: 2 },
-        width: '100%',
-      }}
+    <div
+      className={`flex items-center justify-between flex-wrap gap-3 py-3 px-4 w-full bg-white ${className}`}
     >
       {/* Left: Item Counter & Page Size Selector */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+      <div className='flex items-center gap-3 flex-wrap'>
         {showItemCount && totalItems !== undefined && (
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+          <p className='text-xs sm:text-sm text-[#64748b]'>
             {totalItems === 0 ? (
               '0 data'
             ) : (
               <>
-                Menampilkan <strong>{startItem}–{endItem}</strong> dari <strong>{totalItems}</strong> data
+                Menampilkan <strong className='text-[#1e293b] font-bold'>{startItem}–{endItem}</strong> dari{' '}
+                <strong className='text-[#1e293b] font-bold'>{totalItems}</strong> data
               </>
             )}
-          </Typography>
+          </p>
         )}
 
         {onPageSizeChange && pageSize && pageSizeOptions.length > 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              Tampilkan:
-            </Typography>
-            <FormControl size="small" variant="outlined">
-              <Select
-                value={pageSize}
-                onChange={(e) => onPageSizeChange(Number(e.target.value))}
-                sx={{
-                  height: 32,
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  borderRadius: 1.5,
-                  bgcolor: 'background.paper',
-                  '& .MuiSelect-select': { py: 0.5, px: 1.5 },
-                }}
-              >
-                {pageSizeOptions.map((opt) => (
-                  <MenuItem key={opt} value={opt} sx={{ fontSize: '0.82rem' }}>
-                    {opt} / hal
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+          <div className='flex items-center gap-1.5'>
+            <span className='text-xs text-[#64748b]'>Tampilkan:</span>
+            <select
+              value={pageSize}
+              onChange={e => onPageSizeChange(Number(e.target.value))}
+              className='text-xs font-semibold text-[#1e293b] bg-white border border-[#fce7f3] rounded-lg px-2 py-1 outline-none focus:border-[#e11d48]'
+            >
+              {pageSizeOptions.map(opt => (
+                <option key={opt} value={opt}>
+                  {opt} / hal
+                </option>
+              ))}
+            </select>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Right: Page Navigation Controls */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+      <div className='flex items-center gap-1.5'>
         {showFirstLastButtons && (
-          <IconButton
-            size="small"
+          <button
+            type='button'
             disabled={safeCurrentPage <= 1}
             onClick={() => onPageChange(1)}
-            aria-label="First page"
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 1.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-            }}
+            aria-label='First page'
+            className='w-8 h-8 rounded-lg border border-[#fce7f3] bg-white text-[#64748b] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:not-disabled:bg-rose-50 hover:not-disabled:text-[#e11d48] transition-colors cursor-pointer'
           >
-            <ChevronsLeft size={16} />
-          </IconButton>
+            <ChevronsLeft size={15} />
+          </button>
         )}
 
-        <IconButton
-          size="small"
+        <button
+          type='button'
           disabled={safeCurrentPage <= 1}
           onClick={() => onPageChange(safeCurrentPage - 1)}
-          aria-label="Previous page"
-          sx={{
-            width: 36,
-            height: 36,
-            borderRadius: 1.5,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            '&:hover:not(:disabled)': {
-              borderColor: 'primary.main',
-              color: 'primary.main',
-            },
-          }}
+          aria-label='Previous page'
+          className='w-8 h-8 rounded-lg border border-[#fce7f3] bg-white text-[#64748b] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:not-disabled:bg-rose-50 hover:not-disabled:text-[#e11d48] transition-colors cursor-pointer'
         >
-          <ChevronLeft size={18} />
-        </IconButton>
+          <ChevronLeft size={16} />
+        </button>
 
         {/* Page Buttons */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <div className='flex items-center gap-1'>
           {pageNumbers.map((p, idx) => {
             if (p === '...') {
               return (
-                <Typography
+                <span
                   key={`ellipsis-${idx}`}
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ px: 0.5, userSelect: 'none' }}
+                  className='px-1 text-xs text-[#94a3b8] select-none'
                 >
                   …
-                </Typography>
-              )
+                </span>
+              );
             }
 
-            const pageNum = Number(p)
-            const isActive = pageNum === safeCurrentPage
+            const pageNum = Number(p);
+            const isActive = pageNum === safeCurrentPage;
 
             return (
-              <Button
+              <button
                 key={pageNum}
-                size="small"
-                variant={isActive ? 'contained' : 'outlined'}
+                type='button'
                 onClick={() => onPageChange(pageNum)}
-                sx={{
-                  minWidth: 36,
-                  width: 36,
-                  height: 36,
-                  p: 0,
-                  fontSize: '0.85rem',
-                  fontWeight: isActive ? 700 : 600,
-                  borderRadius: 1.5,
-                  boxShadow: isActive ? '0 2px 8px rgba(14, 165, 233, 0.25)' : 'none',
-                  borderColor: isActive ? 'primary.main' : 'divider',
-                  bgcolor: isActive ? 'primary.main' : 'background.paper',
-                  color: isActive ? 'white' : 'text.primary',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    bgcolor: isActive ? 'primary.dark' : 'rgba(14, 165, 233, 0.08)',
-                  },
-                }}
+                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                  isActive
+                    ? 'bg-[#e11d48] text-white shadow-sm shadow-rose-500/20'
+                    : 'bg-white border border-[#fce7f3] text-[#475569] hover:bg-rose-50 hover:text-[#e11d48]'
+                }`}
               >
                 {pageNum}
-              </Button>
-            )
+              </button>
+            );
           })}
-        </Box>
+        </div>
 
-        <IconButton
-          size="small"
+        <button
+          type='button'
           disabled={safeCurrentPage >= effectiveTotalPages}
           onClick={() => onPageChange(safeCurrentPage + 1)}
-          aria-label="Next page"
-          sx={{
-            width: 36,
-            height: 36,
-            borderRadius: 1.5,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            '&:hover:not(:disabled)': {
-              borderColor: 'primary.main',
-              color: 'primary.main',
-            },
-          }}
+          aria-label='Next page'
+          className='w-8 h-8 rounded-lg border border-[#fce7f3] bg-white text-[#64748b] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:not-disabled:bg-rose-50 hover:not-disabled:text-[#e11d48] transition-colors cursor-pointer'
         >
-          <ChevronRight size={18} />
-        </IconButton>
+          <ChevronRight size={16} />
+        </button>
 
         {showFirstLastButtons && (
-          <IconButton
-            size="small"
+          <button
+            type='button'
             disabled={safeCurrentPage >= effectiveTotalPages}
             onClick={() => onPageChange(effectiveTotalPages)}
-            aria-label="Last page"
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 1.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-            }}
+            aria-label='Last page'
+            className='w-8 h-8 rounded-lg border border-[#fce7f3] bg-white text-[#64748b] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:not-disabled:bg-rose-50 hover:not-disabled:text-[#e11d48] transition-colors cursor-pointer'
           >
-            <ChevronsRight size={16} />
-          </IconButton>
+            <ChevronsRight size={15} />
+          </button>
         )}
-      </Box>
-    </Box>
-  )
+      </div>
+    </div>
+  );
 }
 
-export default Pagination
+export default Pagination;

@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, CalendarCheck, BarChart3, FileText } from 'lucide-react'
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { LayoutDashboard, Users, CalendarCheck, BarChart3, FileText } from 'lucide-react';
 
 const ADMIN_BOTTOM_ITEMS = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -11,22 +11,23 @@ const ADMIN_BOTTOM_ITEMS = [
   { name: 'Jadwal', href: '/admin/schedules', icon: CalendarCheck },
   { name: 'Artikel', href: '/admin/articles', icon: FileText },
   { name: 'Laporan', href: '/admin/reports', icon: BarChart3 },
-]
+];
 
 export default function AdminMobileBottomNav() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-lg border-t border-[#fce7f3] shadow-[0_-4px_20px_rgba(225,29,72,0.06)] pb-safe"
-      aria-label="Navigasi Bawah Admin"
+      className='fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-lg border-t border-[#fce7f3] shadow-[0_-4px_20px_rgba(225,29,72,0.06)]'
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      aria-label='Navigasi Bawah Admin'
     >
-      <div className="flex items-center justify-around h-16 px-2 max-w-lg mx-auto">
-        {ADMIN_BOTTOM_ITEMS.map((item) => {
+      <div className='flex items-center justify-around h-16 px-2 max-w-lg mx-auto'>
+        {ADMIN_BOTTOM_ITEMS.map(item => {
           const isActive =
             pathname === item.href ||
-            (item.href !== '/admin/dashboard' && pathname?.startsWith(item.href))
-          const Icon = item.icon
+            (item.href !== '/admin/dashboard' && pathname?.startsWith(item.href));
+          const Icon = item.icon;
 
           return (
             <Link
@@ -40,9 +41,7 @@ export default function AdminMobileBottomNav() {
             >
               <div
                 className={`relative flex items-center justify-center w-10 h-7 rounded-full transition-all duration-200 ${
-                  isActive
-                    ? 'bg-[#ffe4e6] text-[#e11d48] scale-105 shadow-2xs'
-                    : 'text-[#64748b]'
+                  isActive ? 'bg-[#ffe4e6] text-[#e11d48] scale-105 shadow-2xs' : 'text-[#64748b]'
                 }`}
               >
                 <Icon size={19} className={isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
@@ -55,9 +54,9 @@ export default function AdminMobileBottomNav() {
                 {item.name}
               </span>
             </Link>
-          )
+          );
         })}
       </div>
     </nav>
-  )
+  );
 }

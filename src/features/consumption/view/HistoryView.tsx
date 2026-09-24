@@ -17,6 +17,7 @@ import { Badge } from '@/src/shared/components/ui/Badge';
 import { Button } from '@/src/shared/components/ui/Button';
 import { ConsumptionChart } from '@/src/shared/components/domain/ConsumptionChart';
 import { useAuth } from '@/src/features/auth/context/AuthContext';
+import { publishRealtimeEvent } from '@/src/shared/utils/realtimeSync';
 import {
   getUserDashboardDataAction,
   recordUserConsumptionAction,
@@ -72,16 +73,19 @@ export default function HistoryView() {
     setTodayStatus('recorded');
     setRecordedTime(timeStr);
     await recordUserConsumptionAction(user?.id || 'usr_1', 'recorded');
+    publishRealtimeEvent('MEDICATION_TAKEN', { patientId: user?.id || 'usr_1' });
   };
 
   const handleMissToday = async () => {
     setTodayStatus('missed');
     await recordUserConsumptionAction(user?.id || 'usr_1', 'missed');
+    publishRealtimeEvent('MEDICATION_TAKEN', { patientId: user?.id || 'usr_1' });
   };
 
   const handleResetToday = async () => {
     setTodayStatus('pending');
     await recordUserConsumptionAction(user?.id || 'usr_1', 'pending');
+    publishRealtimeEvent('MEDICATION_TAKEN', { patientId: user?.id || 'usr_1' });
   };
 
   return (

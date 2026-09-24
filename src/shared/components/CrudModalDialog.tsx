@@ -1,17 +1,6 @@
 'use client';
 
-import React, { ReactNode } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Box,
-  Button,
-  Breakpoint,
-  IconButton,
-  Typography,
-} from '@mui/material';
+import React, { ReactNode, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 export interface CrudModalDialogProps {
@@ -22,7 +11,7 @@ export interface CrudModalDialogProps {
   submitText?: string;
   cancelText?: string;
   submitting?: boolean;
-  maxWidth?: Breakpoint;
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
   children: ReactNode;
 }
 
@@ -37,99 +26,84 @@ export function CrudModalDialog({
   maxWidth = 'sm',
   children,
 }: CrudModalDialogProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open && !submitting) {
+        onClose();
+      }
+    };
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, submitting, onClose]);
+
+  if (!open) return null;
+
+  const maxWidthClasses = {
+    sm: 'max-w-lg',
+    md: 'max-w-2xl',
+    lg: 'max-w-4xl',
+    xl: 'max-w-6xl',
+  };
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth={maxWidth}
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            m: { xs: 1.5, sm: 3 },
-            maxHeight: { xs: 'calc(100% - 24px)', sm: 'calc(100% - 64px)' },
-            borderRadius: { xs: 3, sm: 3 },
-            overflow: 'hidden',
-          },
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          p: { xs: 2, sm: 2.5 },
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
+    <div className='fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
+      {/* Click outside backdrop */}
+      <div
+        className='absolute inset-0'
+        onClick={() => {
+          if (!submitting) onClose();
         }}
-      >
-        <Typography variant='h6' sx={{ fontWeight: 700, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-          {title}
-        </Typography>
-        <IconButton
-          size='small'
-          onClick={onClose}
-          disabled={submitting}
-          sx={{
-            color: 'text.secondary',
-            bgcolor: 'action.hover',
-            '&:hover': { bgcolor: 'action.selected' },
-          }}
-        >
-          <X size={18} />
-        </IconButton>
-      </DialogTitle>
+      />
 
-      <DialogContent
-        sx={{
-          p: { xs: 2, sm: 3 },
-          overflowY: 'auto',
-        }}
+      {/* Modal Dialog Content */}
+      <div
+        className={`relative z-10 w-full ${
+          maxWidthClasses[maxWidth] || 'max-w-lg'
+        } bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-[#fce7f3] flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden`}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>{children}</Box>
-      </DialogContent>
+        {/* Header */}
+        <div className='flex items-center justify-between px-5 py-4 border-b border-[#fce7f3] bg-[#fff5f7]/50'>
+          <h3 className='text-base sm:text-lg font-bold text-[#1e293b] leading-snug'>{title}</h3>
+          <button
+            type='button'
+            onClick={onClose}
+            disabled={submitting}
+            className='w-8 h-8 rounded-full bg-slate-100 text-[#64748b] hover:bg-rose-100 hover:text-[#e11d48] flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50'
+          >
+            <X size={16} />
+          </button>
+        </div>
 
-      <DialogActions
-        sx={{
-          p: { xs: 2, sm: 2.5 },
-          borderTop: '1px solid',
-          borderColor: 'divider',
-          flexDirection: { xs: 'column-reverse', sm: 'row' },
-          gap: { xs: 1, sm: 1.5 },
-        }}
-      >
-        <Button
-          onClick={onClose}
-          color='inherit'
-          disabled={submitting}
-          sx={{
-            width: { xs: '100%', sm: 'auto' },
-            minHeight: 44,
-            borderRadius: 2,
-            fontWeight: 600,
-          }}
-        >
-          {cancelText}
-        </Button>
-        <Button
-          onClick={onSubmit}
-          variant='contained'
-          disabled={submitting}
-          sx={{
-            width: { xs: '100%', sm: 'auto' },
-            minHeight: 44,
-            borderRadius: 2,
-            fontWeight: 600,
-            boxShadow: 'none',
-            bgcolor: 'primary.main',
-            '&:hover': { bgcolor: 'primary.dark' },
-          }}
-        >
-          {submitting ? 'Menyimpan...' : submitText}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        {/* Body Content */}
+        <div className='p-5 overflow-y-auto flex-1 flex flex-col gap-4'>{children}</div>
+
+        {/* Footer Actions */}
+        <div className='flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 px-5 py-3.5 border-t border-[#fce7f3] bg-[#fff5f7]/30'>
+          <button
+            type='button'
+            onClick={onClose}
+            disabled={submitting}
+            className='w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-bold text-[#64748b] hover:text-[#1e293b] hover:bg-slate-100 rounded-xl transition-colors cursor-pointer disabled:opacity-50'
+          >
+            {cancelText}
+          </button>
+          <button
+            type='button'
+            onClick={onSubmit}
+            disabled={submitting}
+            className='w-full sm:w-auto px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-[#e11d48] hover:bg-[#be123c] rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50'
+          >
+            {submitting ? 'Menyimpan...' : submitText}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

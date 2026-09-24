@@ -3,20 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  Button,
-  Chip,
-  Avatar,
-  LinearProgress,
-  Snackbar,
-  Alert,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import {
   Users,
   CalendarCheck,
   TrendingUp,
@@ -28,6 +14,7 @@ import {
 import AdminHeader from '../components/AdminHeader';
 import StatCard from '@/src/shared/components/StatCard';
 import SendReminderModal from '../components/SendReminderModal';
+import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
 import { getAdminStatsAction } from '../api/adminStatsRepository';
 import { getPatientsAction } from '../api/patientRepository';
 import { getComplianceReportsAction } from '../api/complianceRepository';
@@ -108,394 +95,218 @@ export default function AdminDashboardView() {
   };
 
   return (
-    <Box>
+    <div>
       <AdminHeader
         title='Dashboard Utama Admin'
         subtitle='Pantau performa klinik, kepatuhan pengobatan pasien, dan aktivitas medis secara real-time.'
       />
 
       {/* Entry Portal Banner */}
-      <Card
-        elevation={0}
-        sx={{
-          mb: 3,
-          p: { xs: 2, sm: 3 },
-          borderRadius: { xs: 2.5, sm: 3 },
-          border: '1px solid',
-          borderColor: '#fecdd3',
-          bgcolor: 'background.paper',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: { xs: 'stretch', sm: 'center' },
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 2,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: 2,
-              bgcolor: '#fff1f2',
-              color: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
+      <div className='mb-6 p-4 sm:p-6 rounded-3xl border border-rose-200 bg-white shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4'>
+        <div className='flex items-center gap-4'>
+          <div className='w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100'>
             <CalendarCheck size={26} />
-          </Box>
-          <Box>
-            <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 700 }}>
+          </div>
+          <div>
+            <h3 className='font-bold text-slate-800 text-sm sm:text-base leading-tight'>
               Pengelolaan Jadwal & Pengingat Obat Pasien
-            </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mt: 0.25, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-            >
+            </h3>
+            <p className='text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed'>
               Akses konfigurasi dosis, jam minum obat, dan pemantauan kepatuhan harian pasien.
-            </Typography>
-          </Box>
-        </Box>
+            </p>
+          </div>
+        </div>
 
-        <Button
-          component={Link}
+        <Link
           href='/admin/schedules'
-          variant='contained'
-          endIcon={<ChevronRight size={16} />}
-          sx={{
-            px: 2.5,
-            py: 1,
-            borderRadius: 2,
-            fontWeight: 600,
-            boxShadow: 'none',
-            bgcolor: 'primary.main',
-            '&:hover': { bgcolor: 'primary.dark' },
-            width: { xs: '100%', sm: 'auto' },
-          }}
+          className='inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200 transition-all cursor-pointer whitespace-nowrap'
         >
-          Buka Jadwal
-        </Button>
-      </Card>
+          <span>Buka Jadwal</span>
+          <ChevronRight size={16} />
+        </Link>
+      </div>
 
-      {/* KPI Cards Grid (2 cols on mobile, 4 cols on desktop) */}
-      <Grid container spacing={{ xs: 1.5, sm: 2.5 }} sx={{ mb: { xs: 2.5, md: 3.5 } }}>
-        <Grid size={{ xs: 6, sm: 6, md: 6, lg: 3 }}>
-          <StatCard
-            title='Total Pasien'
-            value={stats.totalPatients}
-            icon={Users}
-            iconBgColor='primary.light'
-            iconColor='var(--mui-palette-primary-main)'
-            subtitle={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                <Chip
-                  label='+12 bln ini'
-                  size='small'
-                  color='success'
-                  sx={{ height: 18, fontSize: '0.65rem' }}
-                />
-              </Box>
-            }
-          />
-        </Grid>
+      {/* KPI Cards Grid */}
+      <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6'>
+        <StatCard
+          title='Total Pasien'
+          value={stats.totalPatients}
+          icon={Users}
+          iconBgColor='#ffe4e6'
+          iconColor='#e11d48'
+          subtitle={
+            <div className='flex items-center gap-1 mt-1'>
+              <span className='px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-extrabold'>
+                +12 bln ini
+              </span>
+            </div>
+          }
+        />
 
-        <Grid size={{ xs: 6, sm: 6, md: 6, lg: 3 }}>
-          <StatCard
-            title='Jadwal Aktif'
-            value={stats.activeSchedules}
-            icon={CalendarCheck}
-            iconBgColor='primary.light'
-            iconColor='var(--mui-palette-primary-main)'
-            subtitle={`${stats.totalPatients} pasien aktif`}
-          />
-        </Grid>
+        <StatCard
+          title='Jadwal Aktif'
+          value={stats.activeSchedules}
+          icon={CalendarCheck}
+          iconBgColor='#ffe4e6'
+          iconColor='#e11d48'
+          subtitle={`${stats.totalPatients} pasien aktif`}
+        />
 
-        <Grid size={{ xs: 6, sm: 6, md: 6, lg: 3 }}>
-          <StatCard
-            title='Kepatuhan Rata-rata'
-            value={`${stats.adherenceRate}%`}
-            icon={TrendingUp}
-            iconBgColor='success.light'
-            iconColor='var(--mui-palette-success-main)'
-            subtitle={
-              <LinearProgress
-                variant='determinate'
-                value={stats.adherenceRate}
-                color='success'
-                sx={{ height: 4, borderRadius: 1, mt: 0.5 }}
+        <StatCard
+          title='Kepatuhan Rata-rata'
+          value={`${stats.adherenceRate}%`}
+          icon={TrendingUp}
+          iconBgColor='#dcfce7'
+          iconColor='#16a34a'
+          subtitle={
+            <div className='w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1.5'>
+              <div
+                className='bg-emerald-500 h-full rounded-full transition-all duration-500'
+                style={{ width: `${stats.adherenceRate}%` }}
               />
-            }
-          />
-        </Grid>
+            </div>
+          }
+        />
 
-        <Grid size={{ xs: 6, sm: 6, md: 6, lg: 3 }}>
-          <StatCard
-            title='Risiko Tinggi'
-            value={highRiskPatients.length.toString()}
-            icon={AlertTriangle}
-            iconBgColor='warning.light'
-            iconColor='var(--mui-palette-warning-main)'
-            valueColor='var(--mui-palette-warning-main)'
-            subtitle='Butuh pantauan'
-          />
-        </Grid>
-      </Grid>
+        <StatCard
+          title='Risiko Tinggi'
+          value={highRiskPatients.length.toString()}
+          icon={AlertTriangle}
+          iconBgColor='#fef3c7'
+          iconColor='#d97706'
+          valueColor='#d97706'
+          subtitle='Butuh pantauan'
+        />
+      </div>
 
       {/* Main Content Grid: Compliance Chart & High Risk Patients */}
-      <Grid container spacing={{ xs: 2.5, md: 3 }}>
+      <div className='grid grid-cols-1 lg:grid-cols-12 gap-6'>
         {/* Compliance Trend Visualizer */}
-        <Grid size={{ xs: 12, lg: 7, xl: 8 }}>
-          <Card
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 2.5 },
-              borderRadius: { xs: 2.5, sm: 3 },
-              border: '1px solid',
-              borderColor: 'divider',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: { xs: 'flex-start', sm: 'center' },
-                mb: 2,
-                flexDirection: { xs: 'column', sm: 'row' },
-                gap: 1,
-              }}
+        <div className='lg:col-span-7 xl:col-span-8 p-5 sm:p-6 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between'>
+          <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4'>
+            <div>
+              <h3 className='font-bold text-slate-800 text-base'>Tren Kepatuhan Obat (Mingguan)</h3>
+              <p className='text-xs text-slate-500 mt-0.5'>
+                Persentase jadwal obat yang diminum tepat waktu oleh pasien
+              </p>
+            </div>
+            <Link
+              href='/admin/reports'
+              className='inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors'
             >
-              <Box>
-                <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 700 }}>
-                  Tren Kepatuhan Obat (Mingguan)
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ mt: 0.25, fontSize: '0.8rem' }}
-                >
-                  Persentase jadwal obat yang diminum tepat waktu oleh pasien
-                </Typography>
-              </Box>
-              <Button
-                component={Link}
-                href='/admin/reports'
-                size='small'
-                endIcon={<ArrowUpRight size={15} />}
-                sx={{
-                  fontWeight: 600,
-                  color: 'primary.main',
-                  alignSelf: { xs: 'flex-start', sm: 'auto' },
-                }}
-              >
-                Lihat Detail
-              </Button>
-            </Box>
+              <span>Lihat Detail</span>
+              <ArrowUpRight size={14} />
+            </Link>
+          </div>
 
-            {/* Bar Chart Visualizer */}
-            <Box sx={{ overflowX: 'auto', pb: 1 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  height: 190,
-                  minWidth: { xs: 320, sm: 'auto' },
-                  pt: 3,
-                  pb: 1,
-                  px: { xs: 1, sm: 2 },
-                }}
-              >
-                {reports.map((report, idx) => {
-                  const dateLabel =
-                    typeof report.date === 'string'
-                      ? report.date
-                      : report.date && typeof report.date === 'object'
-                      ? new Date(String(report.date)).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+          {/* Bar Chart Visualizer */}
+          <div className='overflow-x-auto pb-2'>
+            <div className='flex items-end justify-between h-48 min-w-[320px] pt-6 pb-2 px-2 sm:px-4'>
+              {reports.map((report, idx) => {
+                const dateLabel =
+                  typeof report.date === 'string'
+                    ? report.date
+                    : report.date && typeof report.date === 'object'
+                      ? new Date(String(report.date)).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                        })
                       : String(report.date || '');
 
-                  return (
-                    <Box
-                      key={`${dateLabel}-${idx}`}
-                      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
-                    >
-                      <Typography
-                        variant='caption'
-                        color='text.primary'
-                        sx={{ fontWeight: 700, mb: 0.75, fontSize: '0.72rem' }}
-                      >
-                        {report.adherencePercentage.toFixed(0)}%
-                      </Typography>
-                      <Box
-                        sx={{
-                          width: '50%',
-                          maxWidth: 28,
-                          height: `${report.adherencePercentage * 1.3}px`,
-                          bgcolor: report.adherencePercentage >= 90 ? 'primary.main' : 'warning.main',
-                          borderRadius: '4px 4px 0 0',
-                          transition: 'all 0.2s ease',
-                          '&:hover': { opacity: 0.85, transform: 'scaleY(1.02)' },
-                        }}
-                      />
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                        sx={{ mt: 1, fontWeight: 500, fontSize: '0.7rem' }}
-                      >
-                        {dateLabel}
-                      </Typography>
-                    </Box>
-                  );
-                })}
-              </Box>
-            </Box>
+                return (
+                  <div key={`${dateLabel}-${idx}`} className='flex flex-col items-center flex-1'>
+                    <span className='font-bold text-[11px] text-slate-700 mb-1.5'>
+                      {report.adherencePercentage.toFixed(0)}%
+                    </span>
+                    <div
+                      className={`w-1/2 max-w-[28px] rounded-t-md transition-all duration-300 hover:opacity-85 ${
+                        report.adherencePercentage >= 90 ? 'bg-rose-500' : 'bg-amber-500'
+                      }`}
+                      style={{ height: `${report.adherencePercentage * 1.3}px` }}
+                    />
+                    <span className='text-[11px] text-slate-400 font-medium mt-2 whitespace-nowrap'>
+                      {dateLabel}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-                pt: 2,
-                mt: 1,
-                borderTop: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main' }} />
-                <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
-                  Kepatuhan Tinggi (≥90%)
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'warning.main' }} />
-                <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
-                  Perlu Perhatian (&lt;90%)
-                </Typography>
-              </Box>
-            </Box>
-          </Card>
-        </Grid>
+          <div className='flex items-center justify-center gap-6 pt-4 mt-2 border-t border-slate-100 flex-wrap'>
+            <div className='flex items-center gap-2'>
+              <span className='w-2.5 h-2.5 rounded-full bg-rose-500' />
+              <span className='text-xs font-semibold text-slate-600'>Kepatuhan Tinggi (≥90%)</span>
+            </div>
+            <div className='flex items-center gap-2'>
+              <span className='w-2.5 h-2.5 rounded-full bg-amber-500' />
+              <span className='text-xs font-semibold text-slate-600'>
+                Perlu Perhatian (&lt;90%)
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* High Risk Patients Alert Box */}
-        <Grid size={{ xs: 12, lg: 5, xl: 4 }}>
-          <Card
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 2.5 },
-              borderRadius: { xs: 2.5, sm: 3 },
-              border: '1px solid',
-              borderColor: 'divider',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 1.5,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AlertTriangle size={18} color='var(--mui-palette-warning-main)' />
-                <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 700 }}>
-                  Pasien Perlu Perhatian
-                </Typography>
-              </Box>
-              <Button
-                component={Link}
+        <div className='lg:col-span-5 xl:col-span-4 p-5 sm:p-6 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between'>
+          <div>
+            <div className='flex items-center justify-between mb-2'>
+              <div className='flex items-center gap-2'>
+                <AlertTriangle size={18} className='text-amber-500' />
+                <h3 className='font-bold text-slate-800 text-base'>Pasien Perlu Perhatian</h3>
+              </div>
+              <Link
                 href='/admin/users'
-                size='small'
-                endIcon={<ChevronRight size={15} />}
-                sx={{ fontWeight: 600, color: 'primary.main' }}
+                className='inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors'
               >
-                Semua
-              </Button>
-            </Box>
+                <span>Semua</span>
+                <ChevronRight size={14} />
+              </Link>
+            </div>
 
-            <Typography variant='body2' color='text.secondary' sx={{ mb: 2, fontSize: '0.8rem' }}>
+            <p className='text-xs text-slate-500 mb-4'>
               Pasien dengan kepatuhan rendah atau membutuhkan dorongan pengingat:
-            </Typography>
+            </p>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1 }}>
+            <div className='space-y-3'>
               {highRiskPatients.slice(0, 3).map(patient => (
-                <Box
+                <div
                   key={patient.id}
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: '#fed7aa',
-                    bgcolor: '#fffbeb',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
+                  className='p-3.5 rounded-2xl border border-amber-200 bg-amber-50/60 flex items-center justify-between gap-2'
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
-                    <Avatar
-                      sx={{
-                        bgcolor: 'warning.main',
-                        color: 'warning.contrastText',
-                        width: 34,
-                        height: 34,
-                        fontWeight: 700,
-                        fontSize: '0.85rem',
-                      }}
-                    >
+                  <div className='flex items-center gap-3 min-w-0'>
+                    <div className='w-9 h-9 rounded-xl bg-amber-500 text-white font-bold text-sm flex items-center justify-center shrink-0'>
                       {patient.name.charAt(0)}
-                    </Avatar>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        variant='subtitle2'
-                        color='text.primary'
-                        noWrap
-                        sx={{ fontWeight: 700 }}
-                      >
+                    </div>
+                    <div className='min-w-0'>
+                      <div className='font-bold text-xs sm:text-sm text-slate-900 truncate'>
                         {patient.name}
-                      </Typography>
-                      <Typography variant='caption' color='text.secondary'>
+                      </div>
+                      <div className='text-[11px] text-slate-500'>
                         {patient.age} th • {patient.phone}
-                      </Typography>
-                    </Box>
-                  </Box>
+                      </div>
+                    </div>
+                  </div>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
-                    <Chip
-                      label={`${patient.adherenceRate}%`}
-                      size='small'
-                      color='warning'
-                      sx={{ fontWeight: 700, height: 22, fontSize: '0.72rem' }}
-                    />
-                    <Tooltip title='Kirim Pengingat'>
-                      <IconButton
-                        size='small'
-                        color='warning'
-                        onClick={() => handleOpenReminder(patient.name, patient.phone)}
-                        sx={{ bgcolor: '#fef3c7', '&:hover': { bgcolor: '#fde68a' } }}
-                      >
-                        <BellRing size={16} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
+                  <div className='flex items-center gap-2 shrink-0'>
+                    <span className='px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs'>
+                      {patient.adherenceRate}%
+                    </span>
+                    <button
+                      type='button'
+                      title='Kirim Pengingat'
+                      onClick={() => handleOpenReminder(patient.name, patient.phone)}
+                      className='p-1.5 rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors cursor-pointer'
+                    >
+                      <BellRing size={16} />
+                    </button>
+                  </div>
+                </div>
               ))}
-            </Box>
-          </Card>
-        </Grid>
-      </Grid>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Send Reminder Modal */}
       <SendReminderModal
@@ -510,20 +321,12 @@ export default function AdminDashboardView() {
       />
 
       {/* Toast Feedback */}
-      <Snackbar
+      <ToastFeedback
         open={toastOpen}
-        autoHideDuration={4000}
+        message={toastMsg}
+        severity='success'
         onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setToastOpen(false)}
-          severity='success'
-          sx={{ width: '100%', fontWeight: 600, borderRadius: 2 }}
-        >
-          {toastMsg}
-        </Alert>
-      </Snackbar>
-    </Box>
+      />
+    </div>
   );
 }

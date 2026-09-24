@@ -2,29 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Box,
-  Typography,
-  Card,
-  Button,
-  TextField,
-  InputAdornment,
-  Chip,
-  FormControl,
-  Select,
-  MenuItem,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import {
-  Search,
-  Plus,
-  Eye,
-  Edit,
-  Trash2,
-  Clock,
-  Image as ImageIcon,
-} from 'lucide-react';
+import { Search, Plus, Eye, Edit, Trash2, Clock, Image as ImageIcon } from 'lucide-react';
 import AdminHeader from '../components/AdminHeader';
 import ArticleFormModal, { ArticleFormData } from '../components/ArticleFormModal';
 import { DataTable, Column } from '@/src/shared/components/DataTable';
@@ -40,6 +18,7 @@ import {
   deleteAdminArticleAction,
 } from '../api/articleRepository';
 import { HealthArticle, ArticleCategory } from '../types/admin.types';
+import { ARTICLE_CATEGORIES } from '@/src/features/education/constants/education.constants';
 
 const initialArticleFormData: ArticleFormData = {
   title: '',
@@ -197,79 +176,51 @@ export default function ArticleManagementView() {
       id: 'no',
       label: 'No.',
       width: '5%',
-      renderCell: (_, index) => (
-        <Typography variant='body2' color='text.secondary'>
-          {index + 1}
-        </Typography>
-      ),
+      renderCell: (_, index) => <span className='text-slate-400 text-sm'>{index + 1}</span>,
     },
     {
       id: 'judul',
       label: 'Judul Artikel',
       width: '35%',
       renderCell: article => (
-        <Box>
-          <Typography variant='subtitle2' color='text.primary' sx={{ fontWeight: 600 }}>
-            {article.title}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-            <Typography variant='caption' color='text.secondary'>
-              ID: {article.id}
-            </Typography>
-            <Chip
-              label={article.category}
-              size='small'
-              sx={{
-                height: 20,
-                fontSize: '0.7rem',
-                bgcolor: '#ffe4e6',
-                color: '#e11d48',
-                fontWeight: 700,
-              }}
-            />
-          </Box>
-        </Box>
+        <div>
+          <div className='font-bold text-slate-900 text-sm leading-snug'>{article.title}</div>
+          <div className='flex items-center gap-2 mt-1 text-xs text-slate-400'>
+            <span>ID: {article.id}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'kategori',
+      label: 'Kategori',
+      width: '18%',
+      renderCell: article => (
+        <span className='inline-flex items-center px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-pink-200 text-xs font-bold'>
+          {article.category}
+        </span>
       ),
     },
     {
       id: 'penulis',
       label: 'Penulis',
-      width: '20%',
+      width: '18%',
       renderCell: article => (
-        <Typography variant='body2' color='text.primary' sx={{ fontWeight: 600 }}>
-          {article.author}
-        </Typography>
+        <span className='font-semibold text-slate-800 text-sm'>{article.author}</span>
       ),
     },
     {
       id: 'publikasi_waktu',
       label: 'Publikasi & Waktu',
-      width: '20%',
+      width: '14%',
       renderCell: article => (
-        <Box>
-          <Typography variant='body2' color='text.primary'>
-            {article.publishDate}
-          </Typography>
-          <Typography
-            variant='caption'
-            color='text.secondary'
-            sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
-          >
-            <Clock size={14} /> {article.readTime}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      width: '10%',
-      renderCell: article => (
-        <Chip
-          label={article.status}
-          size='small'
-          color={article.status === 'Terbit' ? 'success' : 'default'}
-        />
+        <div>
+          <div className='text-slate-800 text-xs sm:text-sm font-medium'>{article.publishDate}</div>
+          <div className='flex items-center gap-1 text-xs text-slate-400 mt-0.5'>
+            <Clock size={12} />
+            <span>{article.readTime}</span>
+          </div>
+        </div>
       ),
     },
     {
@@ -278,261 +229,151 @@ export default function ArticleManagementView() {
       align: 'right',
       width: '10%',
       renderCell: article => (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-          <Tooltip title='Lihat Detail Artikel'>
-            <IconButton
-              size='small'
-              color='primary'
-              onClick={() => handlePreviewArticle(article.id)}
-            >
-              <Eye size={16} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='Edit Artikel'>
-            <IconButton size='small' onClick={() => onOpenEdit(article)}>
-              <Edit size={16} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='Hapus Artikel'>
-            <IconButton size='small' color='error' onClick={() => handleDeleteRequest(article.id)}>
-              <Trash2 size={16} />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <div className='flex items-center justify-end gap-1'>
+          <button
+            type='button'
+            title='Lihat Detail Artikel'
+            onClick={() => handlePreviewArticle(article.id)}
+            className='p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer'
+          >
+            <Eye size={16} />
+          </button>
+          <button
+            type='button'
+            title='Edit Artikel'
+            onClick={() => onOpenEdit(article)}
+            className='p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer'
+          >
+            <Edit size={16} />
+          </button>
+          <button
+            type='button'
+            title='Hapus Artikel'
+            onClick={() => handleDeleteRequest(article.id)}
+            className='p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer'
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
       ),
     },
   ];
 
   const renderMobileCard = (article: HealthArticle) => (
-    <Card
+    <div
       key={article.id}
-      elevation={0}
-      sx={{
-        p: 2,
-        borderRadius: 2.5,
-        border: '1px solid #fce7f3',
-        bgcolor: '#ffffff',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1.5,
-        boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
-      }}
+      className='p-4 rounded-2xl border border-pink-100 bg-white shadow-sm flex flex-col gap-3'
     >
-      <Box sx={{ display: 'flex', gap: 1.5 }}>
+      <div className='flex gap-3'>
         {article.imageUrl ? (
-          <Box
-            component='img'
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={article.imageUrl}
             alt={article.title}
-            sx={{
-              width: 64,
-              height: 64,
-              borderRadius: 2,
-              objectFit: 'cover',
-              flexShrink: 0,
-            }}
+            className='w-16 h-16 rounded-xl object-cover shrink-0'
           />
         ) : (
-          <Box
-            sx={{
-              width: 64,
-              height: 64,
-              borderRadius: 2,
-              bgcolor: '#fff1f2',
-              color: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
+          <div className='w-16 h-16 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0'>
             <ImageIcon size={28} />
-          </Box>
+          </div>
         )}
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5, flexWrap: 'wrap' }}>
-            <Chip
-              label={article.category}
-              size='small'
-              sx={{
-                height: 20,
-                fontSize: '0.68rem',
-                bgcolor: '#ffe4e6',
-                color: '#e11d48',
-                fontWeight: 700,
-              }}
-            />
-            <Chip
-              label={article.status}
-              size='small'
-              color={article.status === 'Terbit' ? 'success' : 'default'}
-              sx={{ height: 20, fontSize: '0.68rem', fontWeight: 600 }}
-            />
-          </Box>
-          <Typography
-            variant='subtitle2'
-            sx={{
-              fontWeight: 700,
-              color: 'text.primary',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              lineHeight: 1.3,
-            }}
-          >
+        <div className='flex-1 min-w-0'>
+          <div className='flex items-center gap-1.5 mb-1 flex-wrap'>
+            <span className='px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-pink-100 font-bold text-[11px]'>
+              {article.category}
+            </span>
+          </div>
+          <h4 className='font-bold text-slate-900 text-sm leading-snug line-clamp-2'>
             {article.title}
-          </Typography>
-        </Box>
-      </Box>
+          </h4>
+        </div>
+      </div>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          bgcolor: '#fafafa',
-          borderRadius: 1.5,
-          p: 1,
-          fontSize: '0.75rem',
-        }}
-      >
-        <Typography variant='caption' sx={{ fontWeight: 600, color: 'text.primary' }}>
-          ✍️ {article.author}
-        </Typography>
-        <Typography
-          variant='caption'
-          color='text.secondary'
-          sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-        >
+      <div className='flex items-center justify-between bg-slate-50 rounded-xl p-2.5 text-xs'>
+        <span className='font-semibold text-slate-700'>✍️ {article.author}</span>
+        <span className='flex items-center gap-1 text-slate-400'>
           <Clock size={12} /> {article.readTime}
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          pt: 1,
-          borderTop: '1px solid #f1f5f9',
-        }}
-      >
-        <Button
-          size='small'
-          variant='outlined'
-          startIcon={<Eye size={14} />}
+      <div className='flex items-center justify-between pt-2 border-t border-slate-100'>
+        <button
+          type='button'
           onClick={() => handlePreviewArticle(article.id)}
-          sx={{
-            borderRadius: 1.5,
-            fontSize: '0.75rem',
-            textTransform: 'none',
-            borderColor: '#fecdd3',
-            color: 'primary.main',
-            '&:hover': { bgcolor: '#fff1f2', borderColor: 'primary.main' },
-          }}
+          className='inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 text-xs font-semibold hover:bg-rose-50 transition-colors cursor-pointer'
         >
-          Pratinjau
-        </Button>
+          <Eye size={14} />
+          <span>Pratinjau</span>
+        </button>
 
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton
-            size='small'
+        <div className='flex gap-1'>
+          <button
+            type='button'
             onClick={() => onOpenEdit(article)}
-            sx={{ bgcolor: '#f1f5f9', color: '#334155', '&:hover': { bgcolor: '#e2e8f0' } }}
+            className='p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer'
           >
             <Edit size={16} />
-          </IconButton>
-          <IconButton
-            size='small'
-            color='error'
+          </button>
+          <button
+            type='button'
             onClick={() => handleDeleteRequest(article.id)}
-            sx={{ bgcolor: '#fff1f2', color: '#e11d48', '&:hover': { bgcolor: '#ffe4e6' } }}
+            className='p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer'
           >
             <Trash2 size={16} />
-          </IconButton>
-        </Box>
-      </Box>
-    </Card>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 
   return (
-    <Box>
+    <div>
       <AdminHeader
         title='Manajemen Artikel Edukasi'
         subtitle='Publikasikan konten medis interaktif untuk meningkatkan kepatuhan dan pemahaman siswi.'
       />
 
       {/* Filter Bar */}
-      <Card
-        elevation={0}
-        sx={{
-          p: { xs: 1.75, sm: 2.5 },
-          mb: 3,
-          borderRadius: { xs: 2.5, sm: 3 },
-          border: '1px solid #fce7f3',
-          boxShadow: '0 2px 8px rgba(225, 29, 72, 0.03)',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 1.5,
-          }}
-        >
-          <Box
-            sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}
-          >
-            <TextField
+      <div className='p-4 sm:p-5 mb-6 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'>
+        <div className='flex flex-col sm:flex-row gap-3 flex-1'>
+          <div className='relative flex-1'>
+            <span className='absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400'>
+              <Search size={18} />
+            </span>
+            <input
+              type='text'
               placeholder='Cari judul artikel atau nama penulis...'
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              size='small'
-              fullWidth
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
+              className='w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
             />
-            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-              <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-                <MenuItem value='Semua'>Semua Kategori</MenuItem>
-                <MenuItem value='Anemia & TTD'>Anemia & TTD</MenuItem>
-                <MenuItem value='Nutrisi & Gizi'>Nutrisi & Gizi</MenuItem>
-                <MenuItem value='Kesehatan Remaja'>Kesehatan Remaja</MenuItem>
-                <MenuItem value='Tips Menstruasi'>Tips Menstruasi</MenuItem>
-                <MenuItem value='Mitos & Fakta'>Mitos & Fakta</MenuItem>
-                <MenuItem value='Gaya Hidup'>Gaya Hidup</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+          </div>
 
-          <Button
-            variant='contained'
-            startIcon={<Plus size={18} />}
-            onClick={() => handleOpenAdd()}
-            sx={{
-              width: { xs: '100%', sm: 'auto' },
-              borderRadius: 2,
-              fontWeight: 600,
-              boxShadow: 'none',
-              bgcolor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.dark' },
-            }}
-          >
-            Tulis Artikel Baru
-          </Button>
-        </Box>
-      </Card>
+          <div className='min-w-full sm:min-w-[180px]'>
+            <select
+              value={categoryFilter}
+              onChange={e => setCategoryFilter(e.target.value)}
+              className='w-full px-3.5 py-2.5 rounded-xl border border-pink-100 bg-slate-50 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all cursor-pointer'
+            >
+              {ARTICLE_CATEGORIES.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat === 'Semua' ? 'Semua Kategori' : cat}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <button
+          type='button'
+          onClick={() => handleOpenAdd()}
+          className='inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200 transition-all cursor-pointer whitespace-nowrap'
+        >
+          <Plus size={18} />
+          <span>Tulis Artikel Baru</span>
+        </button>
+      </div>
 
       {/* Articles Table & Mobile Card View */}
       <DataTable
@@ -571,6 +412,6 @@ export default function ArticleManagementView() {
         severity={toastSeverity}
         onClose={hideToast}
       />
-    </Box>
+    </div>
   );
 }

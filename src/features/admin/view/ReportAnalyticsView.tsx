@@ -1,19 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  Grid,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  LinearProgress,
-  Chip,
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import { Printer, TrendingUp, CheckCircle2, AlertCircle, FileSpreadsheet } from 'lucide-react';
 import AdminHeader from '../components/AdminHeader';
 import { getComplianceReportsAction } from '../api/complianceRepository';
@@ -25,7 +12,7 @@ export default function ReportAnalyticsView() {
   const [reports, setReports] = useState<ComplianceReport[]>([]);
   const [patients, setPatients] = useState<PatientUser[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true;
     const fetchReports = async () => {
       const [r, p] = await Promise.all([getComplianceReportsAction(), getPatientsAction()]);
@@ -61,308 +48,193 @@ export default function ReportAnalyticsView() {
   };
 
   return (
-    <Box>
+    <div className='space-y-6'>
       <AdminHeader
         title='Laporan & Analitik Klinik'
         subtitle='Analisis statistik kepatuhan konsumsi obat pasien, tren aktivitas harian, serta ekspor dokumen medis.'
       />
 
       {/* Control Bar */}
-      <Card
-        elevation={0}
-        sx={{
-          p: { xs: 2, sm: 2.5 },
-          mb: 3,
-          borderRadius: { xs: 2.5, sm: 3 },
-          border: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 200 } }}>
-              <InputLabel>Periode Laporan</InputLabel>
-              <Select
+      <div className='bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-pink-100 shadow-sm'>
+        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+          <div className='flex items-center gap-3 flex-wrap'>
+            <div className='flex items-center gap-2'>
+              <label htmlFor='report-period' className='text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:inline'>
+                Periode:
+              </label>
+              <select
+                id='report-period'
                 value={period}
-                label='Periode Laporan'
                 onChange={e => setPeriod(e.target.value)}
-                sx={{ borderRadius: 2 }}
+                className='px-3.5 py-2 bg-slate-50 border border-pink-100 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all cursor-pointer'
               >
-                <MenuItem value='7-hari'>7 Hari Terakhir</MenuItem>
-                <MenuItem value='30-hari'>30 Hari Terakhir</MenuItem>
-                <MenuItem value='3-bulan'>3 Bulan Terakhir</MenuItem>
-              </Select>
-            </FormControl>
-            <Chip
-              label='Data Real-Time'
-              size='small'
-              sx={{
-                bgcolor: '#ecfdf5',
-                color: '#059669',
-                borderColor: '#a7f3d0',
-                border: '1px solid',
-                fontWeight: 700,
-                fontSize: '0.72rem',
-              }}
-            />
-          </Box>
+                <option value='7-hari'>7 Hari Terakhir</option>
+                <option value='30-hari'>30 Hari Terakhir</option>
+                <option value='3-bulan'>3 Bulan Terakhir</option>
+              </select>
+            </div>
+            <span className='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200'>
+              Data Real-Time
+            </span>
+          </div>
 
-          <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <Button
-              variant='outlined'
-              startIcon={<FileSpreadsheet size={18} />}
+          <div className='flex items-center gap-2.5 flex-col sm:flex-row'>
+            <button
               onClick={handleExportCSV}
-              sx={{
-                color: 'text.primary',
-                borderColor: 'divider',
-                borderRadius: 2,
-                fontWeight: 600,
-                width: { xs: '100%', sm: 'auto' },
-                '&:hover': { borderColor: 'primary.main', bgcolor: '#fff1f2' },
-              }}
+              className='w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 border border-pink-200 hover:border-rose-300 hover:bg-rose-50/60 text-slate-700 font-semibold rounded-xl text-xs sm:text-sm transition-all'
             >
-              Ekspor CSV
-            </Button>
-            <Button
-              variant='contained'
-              startIcon={<Printer size={18} />}
+              <FileSpreadsheet size={17} className='text-emerald-600' />
+              <span>Ekspor CSV</span>
+            </button>
+            <button
               onClick={() => window.print()}
-              sx={{
-                borderRadius: 2,
-                fontWeight: 600,
-                boxShadow: 'none',
-                bgcolor: 'primary.main',
-                '&:hover': { bgcolor: 'primary.dark' },
-                width: { xs: '100%', sm: 'auto' },
-              }}
+              className='w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-sm transition-all'
             >
-              Cetak Laporan PDF
-            </Button>
-          </Box>
-        </Box>
-      </Card>
+              <Printer size={17} />
+              <span>Cetak Laporan PDF</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Summary KPI row */}
-      <Grid container spacing={{ xs: 1.5, sm: 2.5 }} sx={{ mb: { xs: 2.5, md: 3.5 } }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Card
-            elevation={0}
-            sx={{
-              p: 2,
-              borderRadius: 2.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <CheckCircle2 color='var(--mui-palette-success-main)' size={18} />
-              <Typography variant='subtitle2' color='text.secondary' sx={{ fontWeight: 600 }}>
-                Obat Diminum Tepat Waktu
-              </Typography>
-            </Box>
-            <Typography variant='h5' color='text.primary' sx={{ fontWeight: 800, mb: 0.5 }}>
-              {totalTaken.toLocaleString('id-ID')} Dosis
-            </Typography>
-            <Typography variant='caption' color='success.main' sx={{ fontWeight: 700 }}>
-              {overallRate}% Dari Total Dosis Terjadwal
-            </Typography>
-          </Card>
-        </Grid>
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4'>
+        {/* Card 1 */}
+        <div className='bg-white rounded-2xl p-4 sm:p-5 border border-pink-100 shadow-sm'>
+          <div className='flex items-center gap-2 mb-2'>
+            <CheckCircle2 size={18} className='text-emerald-600' />
+            <h3 className='text-xs sm:text-sm font-semibold text-slate-600'>
+              Obat Diminum Tepat Waktu
+            </h3>
+          </div>
+          <div className='text-xl sm:text-2xl font-bold text-slate-900 mb-1'>
+            {totalTaken.toLocaleString('id-ID')} Dosis
+          </div>
+          <p className='text-xs font-bold text-emerald-600'>
+            {overallRate}% Dari Total Dosis Terjadwal
+          </p>
+        </div>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Card
-            elevation={0}
-            sx={{
-              p: 2,
-              borderRadius: 2.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <AlertCircle color='var(--mui-palette-warning-main)' size={18} />
-              <Typography variant='subtitle2' color='text.secondary' sx={{ fontWeight: 600 }}>
-                Obat Terlewat / Lupa
-              </Typography>
-            </Box>
-            <Typography variant='h5' color='warning.main' sx={{ fontWeight: 800, mb: 0.5 }}>
-              {totalMissed.toLocaleString('id-ID')} Dosis
-            </Typography>
-            <Typography variant='caption' color='warning.main' sx={{ fontWeight: 700 }}>
-              {(100 - parseFloat(overallRate)).toFixed(1)}% Butuh Tindak Lanjut
-            </Typography>
-          </Card>
-        </Grid>
+        {/* Card 2 */}
+        <div className='bg-white rounded-2xl p-4 sm:p-5 border border-pink-100 shadow-sm'>
+          <div className='flex items-center gap-2 mb-2'>
+            <AlertCircle size={18} className='text-amber-500' />
+            <h3 className='text-xs sm:text-sm font-semibold text-slate-600'>
+              Obat Terlewat / Lupa
+            </h3>
+          </div>
+          <div className='text-xl sm:text-2xl font-bold text-amber-600 mb-1'>
+            {totalMissed.toLocaleString('id-ID')} Dosis
+          </div>
+          <p className='text-xs font-bold text-amber-600'>
+            {(100 - parseFloat(overallRate)).toFixed(1)}% Butuh Tindak Lanjut
+          </p>
+        </div>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Card
-            elevation={0}
-            sx={{
-              p: 2,
-              borderRadius: 2.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <TrendingUp color='var(--mui-palette-primary-main)' size={18} />
-              <Typography variant='subtitle2' color='text.secondary' sx={{ fontWeight: 600 }}>
-                Skor Efektivitas Klinik
-              </Typography>
-            </Box>
-            <Typography variant='h5' color='primary.main' sx={{ fontWeight: 800, mb: 0.5 }}>
-              Sangat Baik (A)
-            </Typography>
-            <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 500 }}>
-              Berdasarkan Indikator Standar Medis
-            </Typography>
-          </Card>
-        </Grid>
-      </Grid>
+        {/* Card 3 */}
+        <div className='bg-white rounded-2xl p-4 sm:p-5 border border-pink-100 shadow-sm'>
+          <div className='flex items-center gap-2 mb-2'>
+            <TrendingUp size={18} className='text-rose-600' />
+            <h3 className='text-xs sm:text-sm font-semibold text-slate-600'>
+              Skor Efektivitas Klinik
+            </h3>
+          </div>
+          <div className='text-xl sm:text-2xl font-bold text-rose-600 mb-1'>
+            Sangat Baik (A)
+          </div>
+          <p className='text-xs font-medium text-slate-500'>
+            Berdasarkan Indikator Standar Medis
+          </p>
+        </div>
+      </div>
 
       {/* Detail Breakdown Grid */}
-      <Grid container spacing={{ xs: 2.5, md: 3 }}>
+      <div className='grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6'>
         {/* Table breakdown */}
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 2.5, md: 3 },
-              borderRadius: { xs: 2.5, sm: 3 },
-              border: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography
-              variant='h6'
-              color='text.primary'
-              sx={{ mb: 2, fontWeight: 700, fontSize: { xs: '1rem', sm: '1.15rem' } }}
-            >
-              Rincian Kepatuhan Konsumsi Harian Pasien
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {reports.map((report, idx) => {
-                const dateLabel =
-                  typeof report.date === 'string'
-                    ? report.date
-                    : report.date && typeof report.date === 'object'
-                      ? new Date(String(report.date)).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                        })
-                      : String(report.date || '');
+        <div className='lg:col-span-8 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-pink-100 shadow-sm'>
+          <h3 className='text-sm sm:text-base font-bold text-slate-900 mb-4'>
+            Rincian Kepatuhan Konsumsi Harian Pasien
+          </h3>
+          <div className='space-y-4'>
+            {reports.map((report, idx) => {
+              const dateLabel =
+                typeof report.date === 'string'
+                  ? report.date
+                  : report.date && typeof report.date === 'object'
+                    ? new Date(String(report.date)).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                      })
+                    : String(report.date || '');
 
-                return (
-                  <Box
-                    key={`${dateLabel}-${idx}`}
-                    sx={{ pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 1,
-                        gap: 1,
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <Typography variant='subtitle2' color='text.primary' sx={{ fontWeight: 600 }}>
-                        {dateLabel}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.primary'
-                        sx={{ fontWeight: 700, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-                      >
-                        {report.adherencePercentage}% ({report.takenCount} diminum,{' '}
-                        {report.missedCount} terlewat)
-                      </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant='determinate'
-                      value={report.adherencePercentage}
-                      sx={{
-                        height: 8,
-                        borderRadius: 2,
-                        bgcolor: 'grey.100',
-                        '& .MuiLinearProgress-bar': {
-                          bgcolor:
-                            report.adherencePercentage >= 90 ? 'primary.main' : 'warning.main',
-                        },
+              const isGood = report.adherencePercentage >= 90;
+
+              return (
+                <div
+                  key={`${dateLabel}-${idx}`}
+                  className='pb-3.5 border-b border-pink-50 last:border-0 last:pb-0'
+                >
+                  <div className='flex justify-between items-center mb-1.5 gap-2 flex-wrap'>
+                    <span className='text-xs sm:text-sm font-semibold text-slate-800'>
+                      {dateLabel}
+                    </span>
+                    <span className='text-xs sm:text-sm font-bold text-slate-700'>
+                      {report.adherencePercentage}% ({report.takenCount} diminum,{' '}
+                      {report.missedCount} terlewat)
+                    </span>
+                  </div>
+                  <div className='w-full bg-slate-100 rounded-full h-2.5 overflow-hidden'>
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        isGood ? 'bg-rose-600' : 'bg-amber-500'
+                      }`}
+                      style={{
+                        width: `${Math.min(100, Math.max(0, report.adherencePercentage))}%`,
                       }}
                     />
-                  </Box>
-                );
-              })}
-            </Box>
-          </Card>
-        </Grid>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Patient Adherence Leaderboard */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 2.5 },
-              borderRadius: { xs: 2.5, sm: 3 },
-              bgcolor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 700, mb: 2 }}>
-              Distribusi Kepatuhan Pasien
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {patients.slice(0, 5).map(p => (
-                <Box
+        <div className='lg:col-span-4 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-pink-100 shadow-sm'>
+          <h3 className='text-sm sm:text-base font-bold text-slate-900 mb-4'>
+            Distribusi Kepatuhan Pasien
+          </h3>
+          <div className='space-y-2.5'>
+            {patients.slice(0, 5).map(p => {
+              const isGood = p.adherenceRate >= 90;
+              return (
+                <div
                   key={p.id}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    p: 1.25,
-                    borderRadius: 2,
-                    bgcolor: 'action.hover',
-                  }}
+                  className='flex justify-between items-center p-3 rounded-xl bg-rose-50/30 border border-pink-50 hover:bg-rose-50/60 transition-colors'
                 >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant='subtitle2'
-                      color='text.primary'
-                      noWrap
-                      sx={{ fontWeight: 700 }}
-                    >
+                  <div className='min-w-0 pr-2'>
+                    <p className='text-xs sm:text-sm font-bold text-slate-900 truncate'>
                       {p.name}
-                    </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    </p>
+                    <p className='text-[11px] text-slate-500 truncate'>
                       {p.assignedDoctor.split(',')[0]}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label={`${p.adherenceRate}%`}
-                    size='small'
-                    color={p.adherenceRate >= 90 ? 'success' : 'warning'}
-                    sx={{ fontWeight: 700, height: 22, fontSize: '0.72rem', flexShrink: 0 }}
-                  />
-                </Box>
-              ))}
-            </Box>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${
+                      isGood
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    }`}
+                  >
+                    {p.adherenceRate}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

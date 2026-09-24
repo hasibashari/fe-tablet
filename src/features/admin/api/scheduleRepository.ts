@@ -1,7 +1,7 @@
 'use server';
 
 import db from '@/src/db/client';
-import { MedicationSchedule } from '../types/admin.types';
+import { MedicationSchedule, ScheduleCategory } from '../types/admin.types';
 
 interface ScheduleDbRow {
   id: string;
@@ -32,19 +32,87 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
     `);
     const rows = res.rows;
 
+    // Timezone Asia/Jakarta (WIB)
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }); // 'YYYY-MM-DD'
+    const currentDayName = new Intl.DateTimeFormat('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      weekday: 'long',
+    }).format(now); // 'Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'
+
+    const timeFormatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Jakarta',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const [hStr, mStr] = timeFormatter.format(now).split(':');
+    const nowTotalMinutes = parseInt(hStr, 10) * 60 + parseInt(mStr, 10);
+
+    // Fetch logs recorded for today and recent weekly logs
+    const logsRes = await db.query<{
+      user_id: string;
+      schedule_id: string | null;
+      status: string;
+      scheduled_date: string;
+      taken_at: string | null;
+    }>(
+      `SELECT user_id, schedule_id, status, scheduled_date, taken_at 
+       FROM consumption_logs 
+       WHERE scheduled_date = $1 OR scheduled_date >= CURRENT_DATE - INTERVAL '6 days'
+       ORDER BY scheduled_date DESC`,
+      [todayStr],
+    );
+    const recentLogs = logsRes.rows;
+
+    // Batch fetch schedule time slots
+    const allSlotsRes = await db.query<{ schedule_id: string; time: string }>(
+      `SELECT schedule_id, time FROM schedule_time_slots ORDER BY time ASC`,
+    );
+    const slotsByScheduleId: Record<string, string[]> = {};
+    for (const slot of allSlotsRes.rows) {
+      if (!slotsByScheduleId[slot.schedule_id]) {
+        slotsByScheduleId[slot.schedule_id] = [];
+      }
+      slotsByScheduleId[slot.schedule_id].push(slot.time);
+    }
+
     const result: MedicationSchedule[] = [];
 
     for (const r of rows) {
-      const timeSlotsRes = await db.query<{ time: string }>(
-        `SELECT time FROM schedule_time_slots WHERE schedule_id = $1 ORDER BY time ASC`,
-        [r.id],
-      );
-      const timeSlots = timeSlotsRes.rows;
-      const slots = timeSlots.length > 0 ? timeSlots.map(ts => ts.time) : [r.time_slot || '08:00'];
+      const customSlots = slotsByScheduleId[r.id];
+      const slots = customSlots && customSlots.length > 0 ? customSlots : [r.time_slot || '08:00'];
 
-      const isDaily = r.frequency === 'daily';
-      const isSupplement = (r.tablet_name || '').toLowerCase().includes('vitamin') || (r.tablet_name || '').toLowerCase().includes('suplemen');
-      const category = isSupplement ? 'Suplemen Tambahan' : isDaily ? 'Terapi Anemia' : 'TTD Rutin';
+      const isDaily =
+        r.frequency === 'daily' ||
+        r.frequency === 'Harian' ||
+        (r.day_of_week || '').toLowerCase().includes('setiap hari') ||
+        (r.day_of_week || '').toLowerCase().includes('harian');
+      const isSupplement =
+        (r.tablet_name || '').toLowerCase().includes('vitamin') ||
+        (r.tablet_name || '').toLowerCase().includes('suplemen');
+      const category: ScheduleCategory = isSupplement
+        ? 'Suplemen Tambahan'
+        : isDaily
+          ? 'Terapi Anemia'
+          : 'TTD Rutin';
+
+      // Match consumption log: for daily check today, for weekly check this week
+      const log = isDaily
+        ? recentLogs.find(
+            l =>
+              l.user_id === r.user_id &&
+              (l.schedule_id === r.id || !l.schedule_id) &&
+              (typeof l.scheduled_date === 'string'
+                ? l.scheduled_date.startsWith(todayStr)
+                : new Date(l.scheduled_date).toISOString().split('T')[0] === todayStr),
+          )
+        : recentLogs.find(
+            l => l.user_id === r.user_id && (l.schedule_id === r.id || !l.schedule_id),
+          );
+
+      const isCompleted = log && (log.status === 'ON_TIME' || log.status === 'LATE');
+      const todayStatus: 'COMPLETED' | 'PENDING' = isCompleted ? 'COMPLETED' : 'PENDING';
 
       result.push({
         id: r.id,
@@ -59,9 +127,10 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
         endDate: '2026-12-31',
         status: r.status,
         category,
-        instructions: r.instructions || 'Minum setelah makan malam atau sebelum tidur dengan air putih.',
+        instructions:
+          r.instructions || 'Minum setelah makan malam atau sebelum tidur dengan air putih.',
         lastReminderSent: `${r.day_of_week || 'Sabtu'}, ${r.time_slot || '08:00'} WIB`,
-        todayStatus: 'COMPLETED',
+        todayStatus,
       });
     }
 
@@ -126,7 +195,8 @@ export async function createScheduleAction(data: {
     const newId = `sch_${Date.now().toString().slice(-6)}`;
     const mainSlot = data.timeSlots[0] || '08:00';
     const dayOfWeek = data.dayOfWeek || 'Sabtu';
-    const dbFrequency = data.frequency === 'Harian' || data.category === 'Terapi Anemia' ? 'daily' : 'weekly';
+    const dbFrequency =
+      data.frequency === 'Harian' || data.category === 'Terapi Anemia' ? 'daily' : 'weekly';
 
     await db.transaction(async client => {
       // Upsert/override any active schedule for this user
@@ -142,7 +212,8 @@ export async function createScheduleAction(data: {
           dbFrequency,
           dayOfWeek,
           mainSlot,
-          data.instructions || 'Minum 1 tablet setelah sarapan atau sebelum tidur dengan air putih.',
+          data.instructions ||
+            'Minum 1 tablet setelah sarapan atau sebelum tidur dengan air putih.',
         ],
       );
 

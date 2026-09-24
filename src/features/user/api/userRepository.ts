@@ -111,7 +111,7 @@ function calculateNextSchedule(targetDayName: string, targetTime: string) {
 // ============================================================
 export async function getUserDashboardDataAction(userId?: string): Promise<UserDashboardData> {
   try {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 
     // 1. Find user or fallback to first user
     let effectiveUserId = userId;
@@ -211,7 +211,8 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
     let tabletName = 'Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)';
     let frequency = 'Mingguan';
     let remind15MinBefore = true;
-    let instructions = 'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.';
+    let instructions =
+      'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.';
 
     if (scheduleRes.rows.length > 0) {
       const sch = scheduleRes.rows[0];
@@ -295,7 +296,8 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         name: 'Sarah Azzahra',
         email: 'sarah@email.com',
         phone: '0812-3456-7890',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        avatarUrl:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         streakCount: 6,
         hbLevel: 12.4,
         schoolOrOrg: 'SMA Negeri 1 Sehat',
@@ -315,7 +317,8 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         remind15MinBefore: true,
         nextDate,
         daysRemaining,
-        instructions: 'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
+        instructions:
+          'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
       },
       featuredArticle: null,
     };
@@ -330,9 +333,15 @@ export async function recordUserConsumptionAction(
   status: 'recorded' | 'missed' | 'pending' = 'recorded',
 ): Promise<{ success: boolean; status: 'recorded' | 'missed' | 'pending'; error?: string }> {
   try {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const nowTimeStr =
-      new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    const timeFormatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Jakarta',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const nowTimeStr = timeFormatter.format(now) + ' WIB';
 
     if (status === 'pending') {
       await db.query(`DELETE FROM consumption_logs WHERE user_id = $1 AND scheduled_date = $2`, [
@@ -343,17 +352,48 @@ export async function recordUserConsumptionAction(
     }
 
     const dbStatus = status === 'recorded' ? 'ON_TIME' : 'MISSED';
-    const logId = `log_${Date.now().toString().slice(-6)}`;
 
-    await db.query(
-      `INSERT INTO consumption_logs (
-        id, user_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
-      ) VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', 'TTD', '1 Tablet', $3, '08:00', $4, $5, 'Self')
-      ON CONFLICT (id) DO UPDATE SET
-        status = EXCLUDED.status,
-        taken_at = EXCLUDED.taken_at`,
-      [logId, userId, todayStr, status === 'recorded' ? nowTimeStr : null, dbStatus],
+    // Get user active schedule details
+    const schedRes = await db.query<{ id: string; tablet_name: string; dosage: string }>(
+      `SELECT id, tablet_name, dosage FROM reminder_schedules WHERE user_id = $1 AND status = 'Aktif' LIMIT 1`,
+      [userId],
     );
+    const activeSched = schedRes.rows[0];
+    const schedId = activeSched?.id || null;
+    const title = activeSched?.tablet_name || 'Tablet Tambah Darah (TTD)';
+    const dosage = activeSched?.dosage || '1 Tablet';
+
+    // Check existing log for today
+    const existingLogRes = await db.query<{ id: string }>(
+      `SELECT id FROM consumption_logs WHERE user_id = $1 AND scheduled_date = $2 ORDER BY created_at DESC LIMIT 1`,
+      [userId, todayStr],
+    );
+
+    if (existingLogRes.rows.length > 0) {
+      await db.query(
+        `UPDATE consumption_logs 
+         SET status = $1, taken_at = $2, taken_by = 'Self', schedule_id = COALESCE($3, schedule_id)
+         WHERE id = $4`,
+        [dbStatus, status === 'recorded' ? nowTimeStr : null, schedId, existingLogRes.rows[0].id],
+      );
+    } else {
+      const logId = `log_${Date.now().toString().slice(-6)}`;
+      await db.query(
+        `INSERT INTO consumption_logs (
+          id, user_id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
+        ) VALUES ($1, $2, $3, $4, 'TTD', $5, $6, '08:00', $7, $8, 'Self')`,
+        [
+          logId,
+          userId,
+          schedId,
+          title,
+          dosage,
+          todayStr,
+          status === 'recorded' ? nowTimeStr : null,
+          dbStatus,
+        ],
+      );
+    }
 
     // Sync streak in user_profiles
     if (status === 'recorded') {
@@ -394,7 +434,9 @@ export async function getUserScheduleAction(userId?: string): Promise<UserSchedu
   return {
     ...dashboard.activeSchedule,
     patientId: dashboard.user.id,
-    instructions: dashboard.activeSchedule.instructions || 'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
+    instructions:
+      dashboard.activeSchedule.instructions ||
+      'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
   };
 }
 

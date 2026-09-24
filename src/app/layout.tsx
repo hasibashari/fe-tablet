@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Cormorant_Garamond, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/src/features/auth';
+import ServiceWorkerRegister from '@/src/shared/components/ServiceWorkerRegister';
 
 const cormorantSerif = Cormorant_Garamond({
   variable: '--font-serif',
@@ -50,10 +52,6 @@ export const metadata: Metadata = {
   },
 };
 
-import ThemeRegistry from '@/src/shared/components/ThemeRegistry';
-import { AuthProvider } from '@/src/features/auth';
-import ServiceWorkerRegister from '@/src/shared/components/ServiceWorkerRegister';
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -69,12 +67,10 @@ export default function RootLayout({
         suppressHydrationWarning
         className='min-h-full flex flex-col font-sans bg-[#fff5f7] text-[#1e293b]'
       >
-        <ThemeRegistry>
-          <AuthProvider>
-            <ServiceWorkerRegister />
-            {children}
-          </AuthProvider>
-        </ThemeRegistry>
+        <AuthProvider>
+          <ServiceWorkerRegister />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

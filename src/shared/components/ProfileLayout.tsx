@@ -1,20 +1,11 @@
 'use client';
 
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Avatar,
-  Button,
-  Grid,
-  Skeleton,
-} from '@mui/material';
+import Image from 'next/image';
 import { Edit2 } from 'lucide-react';
 
 export interface ProfileContactItem {
-  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
+  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
   label?: string;
   value: React.ReactNode;
 }
@@ -23,30 +14,23 @@ export interface ProfileMetricItem {
   label: string;
   value: React.ReactNode;
   subtitle?: string;
-  icon: React.ComponentType<{ size?: number }>;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   iconBgColor?: string;
   iconColor?: string;
 }
 
 export interface ProfileLayoutProps {
-  /** Page Header */
   title: string;
   subtitle?: string;
   onEditClick?: () => void;
   editButtonText?: string;
-
-  /** Main Profile Card */
   name: string;
   avatarUrl?: string;
   badges?: React.ReactNode;
   secondaryText?: React.ReactNode;
   contactItems: ProfileContactItem[];
-
-  /** Metrics / Highlights Section */
   metricsTitle?: string;
   metrics?: ProfileMetricItem[];
-
-  /** State & Extra Content */
   loading?: boolean;
   children?: React.ReactNode;
 }
@@ -68,254 +52,135 @@ export default function ProfileLayout({
 }: ProfileLayoutProps) {
   if (loading) {
     return (
-      <Box sx={{ pb: 5, width: '100%' }}>
-        <Skeleton variant='text' width={220} height={40} />
-        <Skeleton variant='text' width={340} height={24} sx={{ mb: 3 }} />
-        <Skeleton variant='rectangular' height={200} sx={{ borderRadius: 2, mb: 4 }} />
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant='rounded' height={100} sx={{ borderRadius: 2 }} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant='rounded' height={100} sx={{ borderRadius: 2 }} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Skeleton variant='rounded' height={100} sx={{ borderRadius: 2 }} />
-          </Grid>
-        </Grid>
-      </Box>
+      <div className='w-full pb-8 animate-pulse flex flex-col gap-5'>
+        <div className='h-8 bg-rose-200/50 rounded-lg w-48' />
+        <div className='h-4 bg-rose-200/30 rounded-lg w-72' />
+        <div className='h-48 bg-white rounded-2xl border border-[#fce7f3]' />
+        <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+          <div className='h-24 bg-white rounded-2xl border border-[#fce7f3]' />
+          <div className='h-24 bg-white rounded-2xl border border-[#fce7f3]' />
+          <div className='h-24 bg-white rounded-2xl border border-[#fce7f3]' />
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ pb: 5, width: '100%' }}>
+    <div className='w-full pb-8 flex flex-col gap-6'>
       {/* 1. Header Section */}
-      <Box
-        sx={{
-          mb: 4,
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          justifyContent: 'space-between',
-          gap: 2,
-        }}
-      >
-        <Box>
-          <Typography
-            variant='h4'
-            component='h1'
-            sx={{
-              fontWeight: 700,
-              color: 'text.primary',
-              fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
-            }}
-          >
+      <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3'>
+        <div>
+          <h1 className='text-2xl sm:text-3xl font-extrabold text-[#1e293b] tracking-tight'>
             {title}
-          </Typography>
-          {subtitle && (
-            <Typography variant='body1' sx={{ color: 'text.secondary', mt: 0.5 }}>
-              {subtitle}
-            </Typography>
-          )}
-        </Box>
+          </h1>
+          {subtitle && <p className='text-xs sm:text-sm text-[#64748b] mt-0.5'>{subtitle}</p>}
+        </div>
 
         {onEditClick && (
-          <Button
-            variant='contained'
-            startIcon={<Edit2 size={16} />}
+          <button
+            type='button'
             onClick={onEditClick}
-            sx={{
-              bgcolor: 'primary.light',
-              color: 'primary.dark',
-              boxShadow: 'none',
-              borderRadius: 1.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 2.5,
-              py: 1,
-              '&:hover': {
-                bgcolor: 'rgba(2, 132, 199, 0.18)',
-                boxShadow: 'none',
-              },
-            }}
+            className='inline-flex items-center gap-2 px-4 py-2 bg-rose-100/80 hover:bg-rose-200/80 text-[#e11d48] rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer'
           >
-            {editButtonText}
-          </Button>
+            <Edit2 size={15} />
+            <span>{editButtonText}</span>
+          </button>
         )}
-      </Box>
+      </div>
 
       {/* 2. Main Profile Card */}
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          mb: 4,
-          bgcolor: 'background.paper',
-        }}
-      >
-        <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              alignItems: { xs: 'center', md: 'flex-start' },
-              gap: 4,
-            }}
-          >
-            <Avatar
-              src={avatarUrl}
-              alt={name}
-              sx={{
-                width: 120,
-                height: 120,
-                fontSize: '2.5rem',
-                fontWeight: 700,
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
-                border: '4px solid #ffffff',
-                flexShrink: 0,
-              }}
-            >
-              {name ? name.substring(0, 2).toUpperCase() : 'U'}
-            </Avatar>
+      <div className='p-6 bg-white rounded-2xl border border-[#fce7f3] shadow-xs flex flex-col md:flex-row items-center md:items-start gap-6'>
+        <div className='relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden ring-4 ring-rose-200 shrink-0 shadow-md'>
+          <Image
+            src={
+              avatarUrl ||
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'Admin')}`
+            }
+            alt={name}
+            fill
+            className='object-cover'
+            sizes='112px'
+          />
+        </div>
 
-            <Box sx={{ flexGrow: 1, textAlign: { xs: 'center', md: 'left' } }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: { xs: 'center', md: 'flex-start' },
-                  gap: 1.5,
-                  flexWrap: 'wrap',
-                  mb: badges || secondaryText ? 0.75 : 2,
-                }}
-              >
-                <Typography variant='h5' sx={{ fontWeight: 700, color: 'text.primary' }}>
-                  {name}
-                </Typography>
-                {badges}
-              </Box>
+        <div className='flex-1 text-center md:text-left min-w-0'>
+          <div className='flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1.5'>
+            <h2 className='text-lg sm:text-xl font-bold text-[#1e293b]'>{name}</h2>
+            {badges}
+          </div>
 
-              {secondaryText && (
-                <Typography variant='body2' sx={{ color: 'text.secondary', mb: 2 }}>
-                  {secondaryText}
-                </Typography>
-              )}
+          {secondaryText && (
+            <div className='text-xs sm:text-sm text-[#64748b] mb-4'>{secondaryText}</div>
+          )}
 
-              <Grid container spacing={2} sx={{ mt: secondaryText ? 0 : 1 }}>
-                {contactItems.map((item, index) => {
-                  const IconComp = item.icon;
-                  return (
-                    <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1.5,
-                          color: 'text.primary',
-                        }}
-                      >
-                        <IconComp size={18} style={{ color: 'var(--mui-palette-primary-main)' }} />
-                        <Box>
-                          {item.label && (
-                            <Typography
-                              variant='caption'
-                              sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2 }}
-                            >
-                              {item.label}
-                            </Typography>
-                          )}
-                          <Typography variant='body2' sx={{ fontWeight: item.label ? 500 : 400 }}>
-                            {item.value}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 pt-2'>
+            {contactItems.map((item, index) => {
+              const IconComp = item.icon;
+              return (
+                <div key={index} className='flex items-center gap-2.5 text-left'>
+                  <div className='w-8 h-8 rounded-lg bg-rose-50 text-[#e11d48] flex items-center justify-center shrink-0'>
+                    <IconComp size={16} />
+                  </div>
+                  <div className='min-w-0'>
+                    {item.label && (
+                      <span className='text-[10px] text-[#94a3b8] block leading-tight'>
+                        {item.label}
+                      </span>
+                    )}
+                    <span className='text-xs font-semibold text-[#1e293b] truncate block'>
+                      {item.value}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* 3. Metrics / Highlights Section */}
       {metrics && metrics.length > 0 && (
-        <Box sx={{ mb: 4 }}>
+        <div>
           {metricsTitle && (
-            <Typography variant='h6' sx={{ fontWeight: 700, color: 'text.primary', mb: 2.5 }}>
-              {metricsTitle}
-            </Typography>
+            <h3 className='text-base font-bold text-[#1e293b] mb-3'>{metricsTitle}</h3>
           )}
 
-          <Grid container spacing={3}>
+          <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
             {metrics.map((metric, index) => {
               const IconComp = metric.icon;
               return (
-                <Grid key={index} size={{ xs: 12, sm: 4 }}>
-                  <Card
-                    elevation={0}
-                    sx={{
-                      borderRadius: 2,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      p: 2.5,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      bgcolor: 'background.paper',
-                      height: '100%',
+                <div
+                  key={index}
+                  className='p-4 bg-white rounded-2xl border border-[#fce7f3] shadow-xs flex items-center gap-3.5'
+                >
+                  <div
+                    style={{
+                      backgroundColor: metric.iconBgColor || '#ffe4e6',
+                      color: metric.iconColor || '#e11d48',
                     }}
+                    className='w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-2xs'
                   >
-                    <Box
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 1.5,
-                        bgcolor: metric.iconBgColor || 'primary.light',
-                        color: metric.iconColor || 'primary.dark',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <IconComp size={24} />
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant='caption'
-                        sx={{ color: 'text.secondary', fontWeight: 500 }}
-                      >
-                        {metric.label}
-                      </Typography>
-                      <Typography
-                        variant='h6'
-                        sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}
-                      >
-                        {metric.value}
-                      </Typography>
-                      {metric.subtitle && (
-                        <Typography
-                          variant='caption'
-                          sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}
-                        >
-                          {metric.subtitle}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Card>
-                </Grid>
+                    <IconComp size={22} />
+                  </div>
+                  <div>
+                    <span className='text-xs text-[#64748b] font-medium block'>{metric.label}</span>
+                    <span className='text-lg sm:text-xl font-black text-[#1e293b] leading-tight block'>
+                      {metric.value}
+                    </span>
+                    {metric.subtitle && (
+                      <span className='text-[10px] text-[#94a3b8] block mt-0.5'>
+                        {metric.subtitle}
+                      </span>
+                    )}
+                  </div>
+                </div>
               );
             })}
-          </Grid>
-        </Box>
+          </div>
+        </div>
       )}
 
-      {/* 4. Slot for dialogs, extra custom sections, or snackbars */}
       {children}
-    </Box>
+    </div>
   );
 }

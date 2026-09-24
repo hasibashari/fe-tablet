@@ -1,22 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  Button,
-  TextField,
-  InputAdornment,
-  Chip,
-  Avatar,
-  FormControl,
-  Select,
-  MenuItem,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import { Search, UserPlus, BellRing, Edit, Trash2, Phone, User, Activity } from 'lucide-react';
+import { Search, UserPlus, BellRing, Edit, Trash2, Phone } from 'lucide-react';
 import AdminHeader from '../components/AdminHeader';
 import SendReminderModal from '../components/SendReminderModal';
 import UserFormModal from '../components/UserFormModal';
@@ -225,189 +210,185 @@ export default function UserManagementView() {
     }
   };
 
+  // Streamlined 5 Essential Columns
   const columns: Column<PatientUser>[] = [
     {
       id: 'patient',
       label: 'Siswi (Pengguna)',
-      width: '24%',
+      width: '28%',
       renderCell: patient => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar
-            src={patient.avatarUrl}
-            alt={patient.name}
-            sx={{ width: 38, height: 38, border: '1px solid #fce7f3' }}
-          >
-            {patient.name.charAt(0)}
-          </Avatar>
-          <Box>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+        <div className='flex items-center gap-3'>
+          <div className='w-9 h-9 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-pink-100 overflow-hidden relative shadow-2xs'>
+            {patient.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={patient.avatarUrl}
+                alt={patient.name}
+                className='w-full h-full object-cover'
+              />
+            ) : (
+              <span>{patient.name.charAt(0)}</span>
+            )}
+          </div>
+          <div className='min-w-0'>
+            <div className='font-bold text-slate-800 text-sm truncate'>
               {patient.name}
-            </Typography>
-            <Typography variant='caption' color='text.secondary'>
-              {patient.id} • {patient.age} th ({patient.gender.charAt(0)})
-            </Typography>
-          </Box>
-        </Box>
+            </div>
+            <div className='text-xs text-slate-400 truncate'>
+              {patient.id} • {patient.age} th
+            </div>
+          </div>
+        </div>
       ),
     },
     {
       id: 'school',
-      label: 'Sekolah / Kelas',
-      width: '18%',
+      label: 'Sekolah & Kontak',
+      width: '24%',
       renderCell: patient => (
-        <Box>
-          <Typography variant='body2' sx={{ fontWeight: 600 }}>
+        <div>
+          <div className='font-semibold text-slate-800 text-xs sm:text-sm truncate'>
             {patient.schoolOrOrg || 'SMA Negeri 1 Sehat'}
-          </Typography>
-          <Typography
-            variant='caption'
-            color='text.secondary'
-            sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-          >
-            <Phone size={12} /> {patient.phone}
-          </Typography>
-        </Box>
+          </div>
+          <div className='text-xs text-slate-500 flex items-center gap-1 mt-0.5'>
+            <Phone size={11} className='text-rose-500 shrink-0' />
+            <span>{patient.phone}</span>
+          </div>
+        </div>
       ),
-    },
-    {
-      id: 'riskLevel',
-      label: 'Tingkat Risiko',
-      width: '14%',
-      renderCell: patient => {
-        const style = RISK_LEVEL_COLORS[patient.riskLevel] || RISK_LEVEL_COLORS.default;
-        return (
-          <Chip
-            label={patient.riskLevel}
-            size='small'
-            sx={{
-              bgcolor: style.bg,
-              color: style.text,
-              fontWeight: 700,
-              fontSize: '0.7rem',
-              height: 22,
-              borderRadius: 1,
-            }}
-          />
-        );
-      },
     },
     {
       id: 'adherence',
       label: 'Kepatuhan TTD',
-      width: '16%',
+      width: '18%',
       renderCell: patient => {
         const rate = patient.adherenceRate ?? 100;
-        const color = rate >= 90 ? '#10b981' : rate >= 80 ? '#f59e0b' : '#e11d48';
+        const color =
+          rate >= 90
+            ? 'text-emerald-600'
+            : rate >= 80
+            ? 'text-amber-600'
+            : 'text-rose-600';
         return (
-          <Box>
-            <Typography variant='body2' sx={{ fontWeight: 700, color }}>
-              {rate}%
-            </Typography>
-            <Typography variant='caption' color='text.secondary'>
-              {patient.activeSchedulesCount || 0} Jadwal Aktif
-            </Typography>
-          </Box>
+          <div>
+            <div className='flex items-center gap-1.5'>
+              <span className={`font-bold text-sm ${color}`}>{rate}%</span>
+              <span className='text-[11px] text-slate-400'>
+                ({patient.activeSchedulesCount || 0} Jadwal)
+              </span>
+            </div>
+            <div className='w-24 bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden'>
+              <div
+                className={`h-full rounded-full ${
+                  rate >= 90 ? 'bg-emerald-500' : rate >= 80 ? 'bg-amber-500' : 'bg-rose-500'
+                }`}
+                style={{ width: `${Math.min(100, Math.max(0, rate))}%` }}
+              />
+            </div>
+          </div>
         );
       },
     },
     {
-      id: 'status',
-      label: 'Status',
-      width: '12%',
-      renderCell: patient => (
-        <Chip
-          label={patient.status === 'Aktif' ? 'Aktif' : 'Nonaktif'}
-          size='small'
-          color={patient.status === 'Aktif' ? 'success' : 'default'}
-        />
-      ),
+      id: 'riskLevel',
+      label: 'Tingkat Risiko',
+      width: '18%',
+      renderCell: patient => {
+        const style = RISK_LEVEL_COLORS[patient.riskLevel] || RISK_LEVEL_COLORS.default;
+        return (
+          <span
+            className='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold'
+            style={{ backgroundColor: style.bg, color: style.text }}
+          >
+            {patient.riskLevel}
+          </span>
+        );
+      },
     },
     {
       id: 'aksi',
       label: 'Aksi',
       align: 'right',
-      width: '16%',
+      width: '12%',
       renderCell: patient => (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-          <Tooltip title='Kirim Pengingat'>
-            <IconButton size='small' color='primary' onClick={() => handleOpenReminder(patient)}>
-              <BellRing size={16} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='Edit Siswi'>
-            <IconButton size='small' onClick={() => onOpenEdit(patient)}>
-              <Edit size={16} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='Hapus Siswi'>
-            <IconButton size='small' color='error' onClick={() => handleDeleteRequest(patient.id)}>
-              <Trash2 size={16} />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <div className='flex items-center justify-end gap-1'>
+          <button
+            type='button'
+            title='Kirim Pengingat'
+            onClick={() => handleOpenReminder(patient)}
+            className='p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer'
+          >
+            <BellRing size={16} />
+          </button>
+          <button
+            type='button'
+            title='Edit Siswi'
+            onClick={() => onOpenEdit(patient)}
+            className='p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer'
+          >
+            <Edit size={16} />
+          </button>
+          <button
+            type='button'
+            title='Hapus Siswi'
+            onClick={() => handleDeleteRequest(patient.id)}
+            className='p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer'
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
       ),
     },
   ];
 
   return (
-    <Box>
+    <div>
       <AdminHeader
         title='Manajemen Siswi (Pengguna)'
         subtitle='Pantau data kesehatan siswi, riwayat kepatuhan TTD, dan kirim pengingat langsung.'
       />
 
       {/* Filter Bar */}
-      <Card sx={{ p: 2.5, mb: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
-          }}
-        >
-          <Box
-            sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}
-          >
-            <TextField
+      <div className='p-4 sm:p-5 mb-6 rounded-2xl sm:rounded-3xl border border-pink-100 bg-white shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'>
+        <div className='flex flex-col sm:flex-row gap-3 flex-1'>
+          <div className='relative flex-1'>
+            <span className='absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400'>
+              <Search size={18} />
+            </span>
+            <input
+              type='text'
               placeholder='Cari nama, ID siswi, atau no hp...'
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              size='small'
-              fullWidth
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
+              className='w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-pink-100 bg-slate-50 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all'
             />
-            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-              <Select value={riskFilter} onChange={e => setRiskFilter(e.target.value)}>
-                <MenuItem value='Semua'>Semua Risiko</MenuItem>
-                {RISK_LEVEL_OPTIONS.map(opt => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.value}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+          </div>
 
-          <Button
-            variant='contained'
-            startIcon={<UserPlus size={18} />}
-            onClick={onOpenAdd}
-            sx={{ width: { xs: '100%', sm: 'auto' } }}
-          >
-            Tambah Siswi
-          </Button>
-        </Box>
-      </Card>
+          <div className='min-w-full sm:min-w-[180px]'>
+            <select
+              value={riskFilter}
+              onChange={e => setRiskFilter(e.target.value)}
+              className='w-full px-3.5 py-2.5 rounded-xl border border-pink-100 bg-slate-50 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all cursor-pointer'
+            >
+              <option value='Semua'>Semua Risiko</option>
+              {RISK_LEVEL_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.value}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <button
+          type='button'
+          onClick={onOpenAdd}
+          className='inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-sm transition-all cursor-pointer whitespace-nowrap'
+        >
+          <UserPlus size={18} />
+          <span>Tambah Siswi</span>
+        </button>
+      </div>
 
       {/* Patients Table & Mobile Card View */}
       <DataTable
@@ -417,178 +398,94 @@ export default function UserManagementView() {
         renderMobileCard={patient => {
           const style = RISK_LEVEL_COLORS[patient.riskLevel] || RISK_LEVEL_COLORS.default;
           return (
-            <Card
-              sx={{
-                p: 2,
-                borderRadius: '16px',
-                border: '1px solid #fce7f3',
-                bgcolor: '#ffffff',
-                boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1.5,
-              }}
-            >
+            <div className='p-4 rounded-2xl border border-pink-100 bg-white shadow-sm flex flex-col gap-3'>
               {/* Header: Avatar + Name + Risk */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 1,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                  <Avatar
-                    src={patient.avatarUrl}
-                    alt={patient.name}
-                    sx={{ width: 40, height: 40, border: '1.5px solid #fce7f3' }}
-                  >
-                    {patient.name.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}
-                    >
+              <div className='flex items-center justify-between gap-2'>
+                <div className='flex items-center gap-3 min-w-0'>
+                  <div className='w-10 h-10 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-pink-100 overflow-hidden relative shadow-2xs'>
+                    {patient.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={patient.avatarUrl}
+                        alt={patient.name}
+                        className='w-full h-full object-cover'
+                      />
+                    ) : (
+                      <span>{patient.name.charAt(0)}</span>
+                    )}
+                  </div>
+                  <div className='min-w-0'>
+                    <h4 className='font-bold text-slate-900 text-sm sm:text-base leading-tight truncate'>
                       {patient.name}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.5 }}
-                    >
-                      {patient.id} • {patient.age} th ({patient.gender.charAt(0)})
-                    </Typography>
-                  </Box>
-                </Box>
+                    </h4>
+                    <p className='text-xs text-slate-500 mt-0.5 truncate'>
+                      {patient.id} • {patient.age} th ({patient.schoolOrOrg || 'UKS Sekolah'})
+                    </p>
+                  </div>
+                </div>
 
-                <Chip
-                  label={patient.riskLevel}
-                  size='small'
-                  sx={{
-                    bgcolor: style.bg,
-                    color: style.text,
-                    fontWeight: 700,
-                    fontSize: '0.7rem',
-                    height: 22,
-                  }}
-                />
-              </Box>
+                <span
+                  className='px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase shrink-0'
+                  style={{ backgroundColor: style.bg, color: style.text }}
+                >
+                  {patient.riskLevel}
+                </span>
+              </div>
 
               {/* Info Row: Phone + Schedules + Adherence */}
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 1,
-                  p: 1.25,
-                  borderRadius: '12px',
-                  bgcolor: '#fff5f7',
-                  border: '1px solid #fce7f3',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant='caption'
-                    sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}
-                  >
-                    Kontak Telepon
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 600, color: '#1e293b', fontSize: '0.78rem' }}
-                  >
-                    {patient.phone}
-                  </Typography>
-                </Box>
+              <div className='grid grid-cols-2 gap-2 p-3 rounded-xl bg-[#fff5f7] border border-pink-100 text-xs'>
+                <div>
+                  <span className='text-slate-500 block text-[11px]'>Kontak Telepon</span>
+                  <span className='font-semibold text-slate-800'>{patient.phone}</span>
+                </div>
 
-                <Box>
-                  <Typography
-                    variant='caption'
-                    sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}
+                <div>
+                  <span className='text-slate-500 block text-[11px]'>Kepatuhan TTD</span>
+                  <span
+                    className={`font-bold ${
+                      patient.adherenceRate >= 90
+                        ? 'text-emerald-600'
+                        : patient.adherenceRate >= 80
+                        ? 'text-amber-600'
+                        : 'text-rose-600'
+                    }`}
                   >
-                    Kepatuhan Minum TTD
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      color:
-                        patient.adherenceRate >= 90
-                          ? '#10b981'
-                          : patient.adherenceRate >= 80
-                            ? '#f59e0b'
-                            : '#e11d48',
-                    }}
-                  >
-                    {patient.adherenceRate}% ({patient.activeSchedulesCount} Jadwal)
-                  </Typography>
-                </Box>
-              </Box>
+                    {patient.adherenceRate}% ({patient.activeSchedulesCount || 0} Jadwal)
+                  </span>
+                </div>
+              </div>
 
               {/* Actions Row */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 1,
-                  pt: 0.5,
-                }}
-              >
-                <Button
-                  size='small'
-                  variant='contained'
-                  startIcon={<BellRing size={14} />}
+              <div className='flex items-center justify-between gap-2 pt-1'>
+                <button
+                  type='button'
                   onClick={() => handleOpenReminder(patient)}
-                  sx={{
-                    flex: 1,
-                    py: 0.75,
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    bgcolor: '#e11d48',
-                    borderRadius: '9999px',
-                  }}
+                  className='flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 shadow-sm transition-all cursor-pointer'
                 >
-                  Kirim Pengingat
-                </Button>
+                  <BellRing size={14} />
+                  <span>Kirim Pengingat</span>
+                </button>
 
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  <IconButton
-                    size='small'
+                <div className='flex gap-1'>
+                  <button
+                    type='button'
+                    title='Edit Data Siswi'
                     onClick={() => onOpenEdit(patient)}
-                    sx={{
-                      bgcolor: '#f1f5f9',
-                      color: '#475569',
-                      width: 34,
-                      height: 34,
-                      borderRadius: '10px',
-                      '&:hover': { bgcolor: '#ffe4e6', color: '#e11d48' },
-                    }}
-                    title='Edit Data Pasien'
+                    className='p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer'
                   >
                     <Edit size={15} />
-                  </IconButton>
-                  <IconButton
-                    size='small'
-                    color='error'
+                  </button>
+                  <button
+                    type='button'
+                    title='Hapus Siswi'
                     onClick={() => handleDeleteRequest(patient.id)}
-                    sx={{
-                      bgcolor: '#fee2e2',
-                      color: '#dc2626',
-                      width: 34,
-                      height: 34,
-                      borderRadius: '10px',
-                      '&:hover': { bgcolor: '#fca5a5' },
-                    }}
-                    title='Hapus Pasien'
+                    className='p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer'
                   >
                     <Trash2 size={15} />
-                  </IconButton>
-                </Box>
-              </Box>
-            </Card>
+                  </button>
+                </div>
+              </div>
+            </div>
           );
         }}
       />
@@ -630,6 +527,6 @@ export default function UserManagementView() {
         severity={toastSeverity}
         onClose={hideToast}
       />
-    </Box>
+    </div>
   );
 }

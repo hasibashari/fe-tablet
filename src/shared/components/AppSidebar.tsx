@@ -1,42 +1,32 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import {
-  Drawer,
-  Box,
-  Typography,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-} from '@mui/material'
+import React, { useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { X } from 'lucide-react';
 
 export interface NavItem {
-  name: string
-  href: string
-  icon: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties }>
+  name: string;
+  href: string;
+  icon: React.ComponentType<{
+    size?: number;
+    color?: string;
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
 }
 
 export interface AppSidebarProps {
-  navItems: NavItem[]
-  brandTitle?: React.ReactNode
-  brandSubtitle?: string
-  brandIcon?: React.ComponentType<{ size?: number; color?: string }>
-  brandHref?: string
-  badge?: React.ReactNode
-  footerAction?: React.ReactNode
-  activeBgColor?: string
-  activeTextColor?: string
-  activeIconColor?: string
-  activeHoverBgColor?: string
-  insetShadow?: string
-  drawerWidth?: number
-  mobileOpen?: boolean
-  onMobileClose?: () => void
+  navItems: NavItem[];
+  brandTitle?: React.ReactNode;
+  brandSubtitle?: string;
+  brandIcon?: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  brandHref?: string;
+  badge?: React.ReactNode;
+  footerAction?: React.ReactNode;
+  drawerWidth?: number;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 export default function AppSidebar({
@@ -47,203 +37,121 @@ export default function AppSidebar({
   brandHref = '/admin/dashboard',
   badge,
   footerAction,
-  activeBgColor = '#ffe4e6',
-  activeTextColor = '#e11d48',
-  activeIconColor = '#e11d48',
-  activeHoverBgColor = '#fecdd3',
-  insetShadow,
   drawerWidth = 260,
   mobileOpen = false,
   onMobileClose,
 }: AppSidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
-  const sidebarContent = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#ffffff' }}>
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
+
+  const sidebarInner = (
+    <div className='flex flex-col h-full bg-white px-4 py-5'>
       {/* Header Section */}
-      <Box sx={{ mb: 2.5, pb: 2, borderBottom: '1px solid #fce7f3', px: 1 }}>
-        <Box
-          component={Link}
+      <div className='flex items-center justify-between pb-4 mb-4 border-b border-[#fce7f3]'>
+        <Link
           href={brandHref}
           onClick={onMobileClose}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            textDecoration: 'none',
-            color: 'inherit',
-          }}
+          className='flex items-center gap-3 group min-w-0'
         >
           {BrandIcon ? (
-            <Box
-              sx={{
-                display: 'flex',
-                width: 40,
-                height: 40,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #e11d48 0%, #fb7185 100%)',
-                color: '#ffffff',
-                boxShadow: '0 4px 12px rgba(225, 29, 72, 0.25)',
-                flexShrink: 0,
-              }}
-            >
+            <div className='w-10 h-10 rounded-xl bg-gradient-to-tr from-[#e11d48] to-[#fb7185] text-white flex items-center justify-center shadow-md shadow-rose-500/20 shrink-0 group-hover:scale-105 transition-transform'>
               <BrandIcon size={20} />
-            </Box>
+            </div>
           ) : (
-            <Box
-              sx={{
-                display: 'flex',
-                width: 40,
-                height: 40,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #e11d48 0%, #fb7185 100%)',
-                color: '#ffffff',
-                boxShadow: '0 4px 12px rgba(225, 29, 72, 0.25)',
-                flexShrink: 0,
-              }}
-            >
+            <div className='w-10 h-10 rounded-xl bg-gradient-to-tr from-[#e11d48] to-[#fb7185] text-white flex items-center justify-center text-lg shadow-md shadow-rose-500/20 shrink-0 group-hover:scale-105 transition-transform'>
               🌸
-            </Box>
+            </div>
           )}
-          <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h6" component="span" sx={{ fontWeight: 800, fontSize: '1.05rem', lineHeight: 1.2, color: '#1e293b' }}>
+          <div className='flex flex-col min-w-0'>
+            <div className='flex items-center gap-1.5'>
+              <span className='font-extrabold text-base text-[#1e293b] leading-tight truncate'>
                 {brandTitle}
-              </Typography>
+              </span>
               {badge}
-            </Box>
-            <Typography variant="caption" sx={{ color: '#e11d48', fontWeight: 600, fontSize: '0.72rem' }}>
+            </div>
+            <span className='text-[11px] font-bold text-[#e11d48] uppercase tracking-wider leading-tight'>
               {brandSubtitle}
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+            </span>
+          </div>
+        </Link>
+
+        {/* Mobile close button */}
+        {mobileOpen && (
+          <button
+            type='button'
+            onClick={onMobileClose}
+            className='md:hidden p-1.5 rounded-lg text-[#64748b] hover:bg-rose-50 hover:text-[#e11d48] transition-colors cursor-pointer'
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
 
       {/* Navigation List */}
-      <List sx={{ flexGrow: 1, px: 0, gap: 0.75, display: 'flex', flexDirection: 'column' }}>
-        {navItems.map((item) => {
+      <nav className='flex-1 flex flex-col gap-1.5 overflow-y-auto'>
+        {navItems.map(item => {
           const isActive =
             pathname === item.href ||
-            (item.href !== '/admin/dashboard' && pathname?.startsWith(item.href))
-          const Icon = item.icon
+            (item.href !== '/admin/dashboard' && pathname?.startsWith(item.href));
+          const Icon = item.icon;
           return (
-            <ListItem key={item.name} disablePadding>
-              <ListItemButton
-                component={Link}
-                href={item.href}
-                onClick={onMobileClose}
-                selected={isActive}
-                sx={{
-                  borderRadius: '12px',
-                  py: 1.1,
-                  px: 1.75,
-                  transition: 'all 0.15s ease',
-                  '&.Mui-selected': {
-                    bgcolor: activeBgColor,
-                    color: activeTextColor,
-                    boxShadow: insetShadow || '0 1px 4px rgba(225, 29, 72, 0.08)',
-                    '& .MuiListItemIcon-root': {
-                      color: activeIconColor,
-                    },
-                    '&:hover': {
-                      bgcolor: activeHoverBgColor,
-                    },
-                  },
-                  '&:hover': {
-                    bgcolor: '#fff5f7',
-                    color: '#e11d48',
-                    '& .MuiListItemIcon-root': {
-                      color: '#e11d48',
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 34,
-                    color: isActive ? activeIconColor : '#64748b',
-                    transition: 'color 0.15s ease',
-                  }}
-                >
-                  <Icon size={19} />
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography
-                      sx={{
-                        fontSize: '0.88rem',
-                        fontWeight: isActive ? 700 : 500,
-                        color: isActive ? activeTextColor : '#475569',
-                      }}
-                    >
-                      {item.name}
-                    </Typography>
-                  }
-                />
-              </ListItemButton>
-            </ListItem>
-          )
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={onMobileClose}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 select-none ${
+                isActive
+                  ? 'bg-[#ffe4e6] text-[#e11d48] font-bold shadow-xs'
+                  : 'text-[#64748b] hover:bg-[#fff5f7] hover:text-[#e11d48]'
+              }`}
+            >
+              <Icon
+                size={18}
+                className={isActive ? 'text-[#e11d48] shrink-0' : 'text-[#64748b] shrink-0'}
+              />
+              <span className='truncate'>{item.name}</span>
+            </Link>
+          );
         })}
-      </List>
+      </nav>
 
-      {footerAction && (
-        <>
-          <Divider sx={{ my: 1.5, borderColor: '#fce7f3' }} />
-          <Box sx={{ pt: 0.5 }}>{footerAction}</Box>
-        </>
-      )}
-    </Box>
-  )
+      {/* Footer Action */}
+      {footerAction && <div className='pt-3 mt-3 border-t border-[#fce7f3]'>{footerAction}</div>}
+    </div>
+  );
 
   return (
-    <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-      {/* Mobile Temporary Drawer (< md) */}
-      <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={onMobileClose}
-        ModalProps={{
-          keepMounted: true, // Better mobile performance
-        }}
-        sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            borderColor: '#fce7f3',
-            backgroundColor: '#ffffff',
-            px: 2,
-            py: 2.5,
-            boxShadow: '4px 0 24px rgba(225, 29, 72, 0.08)',
-          },
-        }}
-      >
-        {sidebarContent}
-      </Drawer>
+    <>
+      {/* Mobile Drawer Backdrop + Overlay */}
+      {mobileOpen && (
+        <div className='fixed inset-0 z-50 md:hidden animate-fade-in'>
+          <div className='fixed inset-0 bg-slate-950/40 backdrop-blur-xs' onClick={onMobileClose} />
+          <div
+            style={{ width: drawerWidth }}
+            className='fixed top-0 bottom-0 left-0 bg-white shadow-2xl z-10 border-r border-[#fce7f3]'
+          >
+            {sidebarInner}
+          </div>
+        </div>
+      )}
 
-      {/* Desktop Permanent Drawer (>= md) */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          display: { xs: 'none', md: 'block' },
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            borderColor: '#fce7f3',
-            backgroundColor: '#ffffff',
-            px: 2,
-            py: 2.5,
-            boxShadow: '2px 0 10px rgba(0, 0, 0, 0.02)',
-          },
-        }}
-        open
+      {/* Desktop Sticky Permanent Sidebar */}
+      <aside
+        style={{ width: drawerWidth }}
+        className='hidden md:flex flex-col sticky top-0 h-screen z-30 bg-white border-r border-[#fce7f3] shadow-2xs shrink-0 select-none'
       >
-        {sidebarContent}
-      </Drawer>
-    </Box>
-  )
+        {sidebarInner}
+      </aside>
+    </>
+  );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
 import { Lightbulb } from 'lucide-react';
 
 interface MarkdownRendererProps {
@@ -12,7 +11,6 @@ interface MarkdownRendererProps {
 export default function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
   if (!content) return null;
 
-  // Split by line blocks
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
   let inList = false;
@@ -24,26 +22,25 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
   const flushList = (key: number) => {
     if (listItems.length > 0) {
       elements.push(
-        <Box
-          component={listType === 'ul' ? 'ul' : 'ol'}
-          key={`list-${key}`}
-          sx={{
-            pl: 3,
-            my: 1.5,
-            color: '#334155',
-            fontSize: '0.95rem',
-            lineHeight: 1.7,
-            '& li': { mb: 0.5 },
-          }}
-        >
-          {listItems.map((item, idx) => (
-            <li key={idx}>
-              <Typography variant='body2' component='span' sx={{ color: '#334155', fontSize: '0.95rem' }}>
-                {renderInlineMarkdown(item)}
-              </Typography>
-            </li>
-          ))}
-        </Box>,
+        listType === 'ul' ? (
+          <ul
+            key={`list-${key}`}
+            className='pl-5 my-3 text-[#334155] text-sm sm:text-base leading-relaxed list-disc space-y-1'
+          >
+            {listItems.map((item, idx) => (
+              <li key={idx}>{renderInlineMarkdown(item)}</li>
+            ))}
+          </ul>
+        ) : (
+          <ol
+            key={`list-${key}`}
+            className='pl-5 my-3 text-[#334155] text-sm sm:text-base leading-relaxed list-decimal space-y-1'
+          >
+            {listItems.map((item, idx) => (
+              <li key={idx}>{renderInlineMarkdown(item)}</li>
+            ))}
+          </ol>
+        ),
       );
       listItems = [];
       inList = false;
@@ -54,47 +51,27 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
     if (tableRows.length > 0) {
       const [headerRow, ...bodyRows] = tableRows;
       elements.push(
-        <Box
+        <div
           key={`table-${key}`}
-          sx={{
-            overflowX: 'auto',
-            my: 2.5,
-            borderRadius: '12px',
-            border: '1px solid #fecdd3',
-            boxShadow: '0 2px 6px rgba(225, 29, 72, 0.04)',
-          }}
+          className='overflow-x-auto my-4 rounded-xl border border-rose-200 shadow-xs'
         >
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+          <table className='w-full border-collapse text-left text-xs sm:text-sm'>
             {headerRow && (
-              <thead>
-                <tr style={{ backgroundColor: '#fff1f2', borderBottom: '2px solid #fecdd3' }}>
+              <thead className='bg-rose-50/80 border-b border-rose-200 text-[#9f1239] font-bold'>
+                <tr>
                   {headerRow.map((h, i) => (
-                    <th
-                      key={i}
-                      style={{
-                        padding: '10px 14px',
-                        textAlign: 'left',
-                        fontWeight: 700,
-                        color: '#9f1239',
-                      }}
-                    >
+                    <th key={i} className='py-2.5 px-3.5'>
                       {renderInlineMarkdown(h.trim())}
                     </th>
                   ))}
                 </tr>
               </thead>
             )}
-            <tbody>
+            <tbody className='divide-y divide-slate-100 text-[#334155]'>
               {bodyRows.map((row, rIdx) => (
-                <tr
-                  key={rIdx}
-                  style={{
-                    borderBottom: '1px solid #f1f5f9',
-                    backgroundColor: rIdx % 2 === 1 ? '#fffafb' : '#ffffff',
-                  }}
-                >
+                <tr key={rIdx} className={rIdx % 2 === 1 ? 'bg-[#fffafb]' : 'bg-white'}>
                   {row.map((cell, cIdx) => (
-                    <td key={cIdx} style={{ padding: '8px 14px', color: '#334155' }}>
+                    <td key={cIdx} className='py-2 px-3.5'>
                       {renderInlineMarkdown(cell.trim())}
                     </td>
                   ))}
@@ -102,7 +79,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
               ))}
             </tbody>
           </table>
-        </Box>,
+        </div>,
       );
       tableRows = [];
       inTable = false;
@@ -114,7 +91,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
 
     // Table rows
     if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-      if (trimmed.includes('---')) return; // delimiter line
+      if (trimmed.includes('---')) return;
       flushList(idx);
       inTable = true;
       const cells = trimmed
@@ -151,45 +128,28 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
     // Headings
     if (trimmed.startsWith('### ')) {
       elements.push(
-        <Typography
-          key={idx}
-          variant='h6'
-          sx={{ fontWeight: 700, color: '#1e293b', mt: 2.5, mb: 1, fontSize: '1.05rem' }}
-        >
+        <h3 key={idx} className='font-bold text-[#1e293b] mt-5 mb-2 text-base sm:text-lg'>
           {renderInlineMarkdown(trimmed.slice(4))}
-        </Typography>,
+        </h3>,
       );
       return;
     }
     if (trimmed.startsWith('## ')) {
       elements.push(
-        <Typography
+        <h2
           key={idx}
-          variant='h5'
-          sx={{
-            fontWeight: 800,
-            color: '#0f172a',
-            mt: 3,
-            mb: 1.5,
-            fontSize: '1.25rem',
-            borderBottom: '2px solid #ffe4e6',
-            pb: 0.5,
-          }}
+          className='font-extrabold text-[#0f172a] mt-6 mb-3 text-lg sm:text-xl border-b border-rose-100 pb-1.5'
         >
           {renderInlineMarkdown(trimmed.slice(3))}
-        </Typography>,
+        </h2>,
       );
       return;
     }
     if (trimmed.startsWith('# ')) {
       elements.push(
-        <Typography
-          key={idx}
-          variant='h4'
-          sx={{ fontWeight: 900, color: '#e11d48', mt: 3, mb: 2, fontSize: '1.5rem' }}
-        >
+        <h1 key={idx} className='font-black text-[#e11d48] mt-6 mb-4 text-xl sm:text-2xl'>
           {renderInlineMarkdown(trimmed.slice(2))}
-        </Typography>,
+        </h1>,
       );
       return;
     }
@@ -197,61 +157,44 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
     // Blockquote / Tip Callout Box
     if (trimmed.startsWith('> ')) {
       elements.push(
-        <Paper
+        <div
           key={idx}
-          elevation={0}
-          sx={{
-            p: 2,
-            my: 2,
-            bgcolor: '#fff1f2',
-            borderLeft: '4px solid #e11d48',
-            borderRadius: '0 12px 12px 0',
-            display: 'flex',
-            gap: 1.5,
-            alignItems: 'flex-start',
-          }}
+          className='p-4 my-4 bg-rose-50 border-l-4 border-[#e11d48] rounded-r-xl flex items-start gap-3'
         >
-          <Lightbulb size={20} color='#e11d48' style={{ flexShrink: 0, marginTop: 2 }} />
-          <Typography variant='body2' sx={{ color: '#881337', fontWeight: 500, lineHeight: 1.6 }}>
+          <Lightbulb size={20} className='text-[#e11d48] shrink-0 mt-0.5' />
+          <div className='text-xs sm:text-sm text-[#881337] font-medium leading-relaxed'>
             {renderInlineMarkdown(trimmed.slice(2))}
-          </Typography>
-        </Paper>,
+          </div>
+        </div>,
       );
       return;
     }
 
     // Horizontal Rule
     if (trimmed === '---' || trimmed === '***') {
-      elements.push(
-        <Box key={idx} sx={{ my: 2.5, borderBottom: '1px dashed #e2e8f0' }} />,
-      );
+      elements.push(<hr key={idx} className='my-5 border-slate-200 border-dashed' />);
       return;
     }
 
-    // Empty line / paragraph break
+    // Empty line
     if (trimmed.length === 0) {
       return;
     }
 
     // Regular Paragraph
     elements.push(
-      <Typography
-        key={idx}
-        variant='body1'
-        sx={{ color: '#334155', my: 1, fontSize: '0.96rem', lineHeight: 1.75 }}
-      >
+      <p key={idx} className='text-[#334155] my-2 text-sm sm:text-base leading-relaxed'>
         {renderInlineMarkdown(trimmed)}
-      </Typography>,
+      </p>,
     );
   });
 
   flushList(lines.length);
   flushTable(lines.length);
 
-  return <Box className={`markdown-content ${className}`}>{elements}</Box>;
+  return <div className={`markdown-content ${className}`}>{elements}</div>;
 }
 
-// Inline renderer: Bold (**text**), Italic (*text*), Code (`code`), Link ([text](url))
 function renderInlineMarkdown(text: string): React.ReactNode {
   const parts: React.ReactNode[] = [];
   const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
@@ -267,7 +210,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
     const token = match[0];
     if (token.startsWith('**') && token.endsWith('**')) {
       parts.push(
-        <strong key={match.index} style={{ fontWeight: 700, color: '#0f172a' }}>
+        <strong key={match.index} className='font-bold text-[#0f172a]'>
           {token.slice(2, -2)}
         </strong>,
       );
@@ -277,13 +220,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
       parts.push(
         <code
           key={match.index}
-          style={{
-            backgroundColor: '#f1f5f9',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontSize: '0.85em',
-            color: '#e11d48',
-          }}
+          className='bg-slate-100 text-[#e11d48] px-1.5 py-0.5 rounded text-xs font-mono font-semibold'
         >
           {token.slice(1, -1)}
         </code>,
@@ -297,7 +234,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
             href={linkMatch[2]}
             target='_blank'
             rel='noopener noreferrer'
-            style={{ color: '#e11d48', textDecoration: 'underline', fontWeight: 600 }}
+            className='text-[#e11d48] underline font-semibold hover:text-[#be123c]'
           >
             {linkMatch[1]}
           </a>,

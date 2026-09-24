@@ -10,6 +10,7 @@ import { QuickAction } from '@/src/shared/components/domain/QuickAction';
 import { BuddyCard } from '@/src/shared/components/domain/BuddyCard';
 import { Card } from '@/src/shared/components/ui/Card';
 import { useAuth } from '@/src/features/auth/context/AuthContext';
+import { publishRealtimeEvent } from '@/src/shared/utils/realtimeSync';
 import {
   getUserDashboardDataAction,
   recordUserConsumptionAction,
@@ -55,6 +56,8 @@ export default function DashboardView() {
     if (!res.success) {
       // Revert if error
       setDashboardData(prev => (prev ? { ...prev, todayStatus: prevStatus } : null));
+    } else {
+      publishRealtimeEvent('MEDICATION_TAKEN', { patientId: userId });
     }
   };
 

@@ -1,40 +1,29 @@
-'use client'
+'use client';
 
-import React, { ReactNode, useState } from 'react'
-import {
-  Card,
-  Box,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Typography,
-  Divider,
-} from '@mui/material'
-import Pagination from './Pagination'
+import React, { ReactNode, useState } from 'react';
+import Pagination from './Pagination';
 
 export interface Column<T> {
-  id: string
-  label: string
-  align?: 'inherit' | 'left' | 'center' | 'right' | 'justify'
-  width?: string | number
-  renderCell: (row: T, index: number) => ReactNode
+  id: string;
+  label: string;
+  align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
+  width?: string | number;
+  renderCell: (row: T, index: number) => ReactNode;
 }
 
 export interface DataTableProps<T> {
-  columns: Column<T>[]
-  data: T[]
-  emptyMessage?: string
-  pagination?: boolean
-  defaultPageSize?: number
-  pageSizeOptions?: number[]
-  showItemCount?: boolean
-  page?: number
-  pageSize?: number
-  onPageChange?: (page: number) => void
-  onPageSizeChange?: (pageSize: number) => void
-  renderMobileCard?: (row: T, index: number) => ReactNode
+  columns: Column<T>[];
+  data: T[];
+  emptyMessage?: string;
+  pagination?: boolean;
+  defaultPageSize?: number;
+  pageSizeOptions?: number[];
+  showItemCount?: boolean;
+  page?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  renderMobileCard?: (row: T, index: number) => ReactNode;
 }
 
 export function DataTable<T extends { id: string | number }>({
@@ -51,113 +40,111 @@ export function DataTable<T extends { id: string | number }>({
   onPageSizeChange: controlledOnPageSizeChange,
   renderMobileCard,
 }: DataTableProps<T>) {
-  const [internalPage, setInternalPage] = useState(1)
-  const [internalPageSize, setInternalPageSize] = useState(defaultPageSize)
+  const [internalPage, setInternalPage] = useState(1);
+  const [internalPageSize, setInternalPageSize] = useState(defaultPageSize);
 
-  const activePageSize = controlledPageSize !== undefined ? controlledPageSize : internalPageSize
-  const totalPages = Math.max(1, Math.ceil(data.length / activePageSize))
-  
-  // Safe page clamped between 1 and totalPages during render without useEffect cascading renders
-  const rawPage = controlledPage !== undefined ? controlledPage : internalPage
-  const activePage = Math.min(Math.max(1, rawPage), totalPages)
+  const activePageSize = controlledPageSize !== undefined ? controlledPageSize : internalPageSize;
+  const totalPages = Math.max(1, Math.ceil(data.length / activePageSize));
+
+  const rawPage = controlledPage !== undefined ? controlledPage : internalPage;
+  const activePage = Math.min(Math.max(1, rawPage), totalPages);
 
   const handlePageChange = (newPage: number) => {
     if (controlledOnPageChange) {
-      controlledOnPageChange(newPage)
+      controlledOnPageChange(newPage);
     } else {
-      setInternalPage(newPage)
+      setInternalPage(newPage);
     }
-  }
+  };
 
   const handlePageSizeChange = (newSize: number) => {
     if (controlledOnPageSizeChange) {
-      controlledOnPageSizeChange(newSize)
+      controlledOnPageSizeChange(newSize);
     } else {
-      setInternalPageSize(newSize)
-      setInternalPage(1)
+      setInternalPageSize(newSize);
+      setInternalPage(1);
     }
-  }
+  };
 
   const paginatedData = pagination
     ? data.slice((activePage - 1) * activePageSize, activePage * activePageSize)
-    : data
+    : data;
+
+  const alignClass = (align?: Column<T>['align']) => {
+    if (align === 'right') return 'text-right justify-end';
+    if (align === 'center') return 'text-center justify-center';
+    return 'text-left justify-start';
+  };
 
   return (
-    <Card sx={{ p: 0, overflow: 'hidden', border: '1px solid', borderColor: 'divider', borderRadius: '16px' }}>
+    <div className='w-full overflow-hidden bg-white border border-[#fce7f3] rounded-2xl shadow-xs'>
       {/* 1. Mobile-First Card View (< sm / mobile screens when renderMobileCard provided) */}
       {renderMobileCard && (
-        <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: 1.5, p: 1.5, bgcolor: '#fff5f7' }}>
+        <div className='flex sm:hidden flex-col gap-3 p-3 bg-[#fff5f7]'>
           {paginatedData.length === 0 ? (
-            <Box sx={{ py: 6, textAlign: 'center', bgcolor: '#ffffff', borderRadius: 2, border: '1px dashed #fce7f3' }}>
-              <Typography color="text.secondary" sx={{ fontSize: '0.88rem' }}>
-                {emptyMessage}
-              </Typography>
-            </Box>
+            <div className='py-8 text-center bg-white rounded-xl border border-dashed border-[#fce7f3]'>
+              <p className='text-xs text-[#64748b]'>{emptyMessage}</p>
+            </div>
           ) : (
             paginatedData.map((row, index) => {
-              const globalIndex = pagination
-                ? (activePage - 1) * activePageSize + index
-                : index
-              return (
-                <Box key={row.id}>
-                  {renderMobileCard(row, globalIndex)}
-                </Box>
-              )
+              const globalIndex = pagination ? (activePage - 1) * activePageSize + index : index;
+              return <div key={row.id}>{renderMobileCard(row, globalIndex)}</div>;
             })
           )}
-        </Box>
+        </div>
       )}
 
       {/* 2. Desktop/Tablet Table View (>= sm or when no renderMobileCard provided) */}
-      <Box sx={{ display: renderMobileCard ? { xs: 'none', sm: 'block' } : 'block', overflowX: 'auto' }}>
-        <Table>
-          <TableHead sx={{ bgcolor: '#fff5f7' }}>
-            <TableRow>
-              {columns.map((col) => (
-                <TableCell
+      <div className={`${renderMobileCard ? 'hidden sm:block' : 'block'} overflow-x-auto`}>
+        <table className='min-w-[640px] w-full border-collapse text-left'>
+          <thead className='bg-[#fff5f7] border-b border-[#fce7f3]'>
+            <tr>
+              {columns.map(col => (
+                <th
                   key={col.id}
-                  align={col.align || 'left'}
-                  width={col.width}
-                  sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.85rem' }}
+                  style={col.width ? { width: col.width } : undefined}
+                  className={`py-3.5 px-4 text-xs font-bold text-[#1e293b] tracking-tight ${alignClass(
+                    col.align,
+                  )}`}
                 >
                   {col.label}
-                </TableCell>
+                </th>
               ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
+            </tr>
+          </thead>
+          <tbody className='divide-y divide-[#fce7f3]'>
             {paginatedData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
-                  <Typography color="text.secondary" sx={{ fontSize: '0.9rem' }}>
-                    {emptyMessage}
-                  </Typography>
-                </TableCell>
-              </TableRow>
+              <tr>
+                <td colSpan={columns.length} className='py-12 text-center text-sm text-[#64748b]'>
+                  {emptyMessage}
+                </td>
+              </tr>
             ) : (
               paginatedData.map((row, index) => {
-                const globalIndex = pagination
-                  ? (activePage - 1) * activePageSize + index
-                  : index
+                const globalIndex = pagination ? (activePage - 1) * activePageSize + index : index;
                 return (
-                  <TableRow key={row.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    {columns.map((col) => (
-                      <TableCell key={col.id} align={col.align || 'left'}>
+                  <tr key={row.id} className='hover:bg-[#fff5f7]/50 transition-colors'>
+                    {columns.map(col => (
+                      <td
+                        key={col.id}
+                        className={`py-3 px-4 text-xs sm:text-sm text-[#1e293b] align-middle ${alignClass(
+                          col.align,
+                        )}`}
+                      >
                         {col.renderCell(row, globalIndex)}
-                      </TableCell>
+                      </td>
                     ))}
-                  </TableRow>
-                )
+                  </tr>
+                );
               })
             )}
-          </TableBody>
-        </Table>
-      </Box>
+          </tbody>
+        </table>
+      </div>
 
       {/* Integrated Pagination Footer */}
       {pagination && data.length > 0 && (
-        <>
-          <Divider sx={{ borderColor: '#fce7f3' }} />
+        <div className='border-t border-[#fce7f3]'>
           <Pagination
             currentPage={activePage}
             totalPages={totalPages}
@@ -168,10 +155,10 @@ export function DataTable<T extends { id: string | number }>({
             pageSizeOptions={pageSizeOptions}
             showItemCount={showItemCount}
           />
-        </>
+        </div>
       )}
-    </Card>
-  )
+    </div>
+  );
 }
 
-export default DataTable
+export default DataTable;

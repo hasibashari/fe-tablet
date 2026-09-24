@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Box, Chip } from '@mui/material';
 import { AdminSidebar, AdminMobileBottomNav } from '@/src/features/admin';
 import { AuthGuard } from '@/src/features/auth';
 import MobileTopBar from '@/src/shared/components/MobileTopBar';
@@ -14,58 +13,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const adminBadge = (
-    <Chip
-      label='ADMIN'
-      size='small'
-      sx={{
-        bgcolor: '#e11d48',
-        color: '#ffffff',
-        fontSize: '0.62rem',
-        height: 18,
-        fontWeight: 800,
-        borderRadius: '9999px',
-        boxShadow: '0 2px 6px rgba(225, 29, 72, 0.25)',
-      }}
-    />
+    <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-extrabold shadow-sm shadow-rose-200 uppercase tracking-wide">
+      ADMIN
+    </span>
   );
 
   return (
     <AuthGuard requiredRole='admin'>
-      <Box
-        sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#fff5f7' }}
-      >
+      <div className="flex flex-col min-h-screen bg-[#fff5f7]">
         {/* Mobile Top App Bar (< md) */}
-        <div className='block md:hidden'>
+        <div className="block md:hidden">
           <MobileTopBar
             onOpenSidebar={handleDrawerToggle}
-            brandTitle='Fe-Tablet 🌸'
-            brandSubtitle='Pusat Kontrol Admin'
-            brandHref='/admin/dashboard'
+            brandTitle="Fe-Tablet 🌸"
+            brandSubtitle="Pusat Kontrol Admin"
+            brandHref="/admin/dashboard"
             badge={adminBadge}
           />
         </div>
 
-        <Box sx={{ display: 'flex', flexGrow: 1, minHeight: { md: '100vh' } }}>
+        {/* Main Workspace Layout (Sidebar + Content) */}
+        <div className="flex flex-col md:flex-row flex-1 min-h-screen">
           <AdminSidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
-          <Box
-            component='main'
-            sx={{
-              flexGrow: 1,
-              minWidth: 0,
-              width: { xs: '100%', md: 'calc(100% - 260px)' },
-              p: { xs: 2, sm: 2.5, md: 3, lg: 3.5, xl: 4 },
-              pb: { xs: 12, md: 4 },
-              minHeight: '100%',
-              boxSizing: 'border-box',
-            }}
-          >
-            <Box sx={{ maxWidth: '1400px', width: '100%', mx: 'auto' }}>{children}</Box>
-          </Box>
-        </Box>
+          <main className="flex-1 min-w-0 w-full p-4 sm:p-6 md:p-8 pb-28 md:pb-12 min-h-screen box-border">
+            <div className="max-w-7xl w-full mx-auto">
+              {children}
+            </div>
+          </main>
+        </div>
 
         {/* Fixed Mobile Bottom Navigation Bar (< md) */}
         <AdminMobileBottomNav />
-      </Box>
+      </div>
     </AuthGuard>
   );
 }

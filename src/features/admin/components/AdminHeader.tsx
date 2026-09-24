@@ -1,76 +1,35 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { Box, Typography } from '@mui/material'
+import React from 'react';
 
 interface AdminHeaderProps {
-  title: string
-  subtitle?: string
-  action?: React.ReactNode
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
 }
 
 export default function AdminHeader({ title, subtitle, action }: AdminHeaderProps) {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        justifyContent: 'space-between',
-        flexDirection: { xs: 'column', sm: 'row' },
-        gap: 2,
-        pb: 2,
-        mb: 3,
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-6 border-b border-pink-100">
       {/* Title & Subtitle Section */}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          variant="h5"
-          component="h1"
-          sx={{
-            fontWeight: 700,
-            color: 'text.primary',
-            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.625rem' },
-            letterSpacing: '-0.4px',
-            lineHeight: 1.25,
-          }}
-        >
+      <div className="flex-1 min-w-0">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight leading-tight">
           {title}
-        </Typography>
+        </h1>
         {subtitle && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'text.secondary',
-              mt: 0.5,
-              fontWeight: 400,
-              fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-              lineHeight: 1.5,
-            }}
-          >
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
             {subtitle}
-          </Typography>
+          </p>
         )}
-      </Box>
+      </div>
 
       {/* Optional Action Controls Slot */}
       {action && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            flexShrink: 0,
-            width: { xs: '100%', sm: 'auto' },
-            justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="flex items-center gap-3 flex-shrink-0 w-full sm:w-auto justify-start sm:justify-end flex-wrap">
           {action}
-        </Box>
+        </div>
       )}
-    </Box>
-  )
+    </div>
+  );
 }
+

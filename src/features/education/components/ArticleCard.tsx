@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { Article } from '../types';
-import { Card, CardContent, Typography, Box, Chip, Divider } from '@mui/material';
 import { Clock, Tag, ArrowRight } from 'lucide-react';
 
 interface ArticleCardProps {
@@ -12,152 +11,55 @@ export default function ArticleCard({ article }: ArticleCardProps) {
   return (
     <Link
       href={`/user/education/${article.id}`}
-      style={{
-        textDecoration: 'none',
-        color: 'inherit',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-      }}
+      className='group flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:border-rose-300 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer'
     >
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 3,
-          border: '1px solid',
-          borderColor: 'var(--color-hairline, #e2e8f0)',
-          bgcolor: '#ffffff',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          cursor: 'pointer',
-          '&:hover': {
-            transform: 'translateY(-6px)',
-            boxShadow:
-              '0 16px 32px -4px rgba(14, 165, 233, 0.12), 0 6px 12px -2px rgba(0, 0, 0, 0.04)',
-            borderColor: 'primary.light',
-            '& .card-img': {
-              transform: 'scale(1.06)',
-            },
-            '& .article-title': {
-              color: 'primary.dark',
-            },
-            '& .read-more-icon': {
-              transform: 'translateX(4px)',
-              color: 'primary.dark',
-            },
-          },
-        }}
-      >
-        {/* Top Image Banner */}
-        <Box
-          sx={{ position: 'relative', height: 210, overflow: 'hidden', bgcolor: 'action.hover' }}
-        >
-          <Chip
-            icon={<Tag size={12} style={{ color: '#0284c7' }} />}
-            label={article.category}
-            size='small'
-            sx={{
-              position: 'absolute',
-              top: 14,
-              left: 14,
-              zIndex: 2,
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(8px)',
-              color: 'primary.dark',
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            }}
-          />
-          <Box
-            className='card-img'
-            component='img'
+      {/* Top Image Banner */}
+      <div className='relative h-[210px] w-full overflow-hidden bg-slate-100'>
+        <span className='absolute top-3.5 left-3.5 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-rose-600 text-xs font-bold shadow-sm'>
+          <Tag size={12} className='text-rose-500' />
+          {article.category}
+        </span>
+        {article.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={article.imageUrl}
             alt={article.title}
-            sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
+            className='w-full h-full object-cover transition-transform duration-500 group-hover:scale-105'
           />
-        </Box>
+        ) : (
+          <div className='w-full h-full flex items-center justify-center bg-rose-50 text-rose-300'>
+            <Tag size={36} />
+          </div>
+        )}
+      </div>
 
-        {/* Card Content Body */}
-        <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-          <Typography
-            className='article-title'
-            variant='h6'
-            sx={{
-              fontWeight: 700,
-              fontSize: '1.125rem',
-              lineHeight: 1.4,
-              color: 'text.primary',
-              mb: 1.25,
-              transition: 'color 0.2s ease',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {article.title}
-          </Typography>
+      {/* Card Content Body */}
+      <div className='p-5 flex flex-col flex-1'>
+        <h3 className='font-bold text-base md:text-lg text-slate-800 line-clamp-2 leading-snug mb-2 group-hover:text-rose-600 transition-colors'>
+          {article.title}
+        </h3>
 
-          <Typography
-            variant='body2'
-            sx={{
-              color: 'text.secondary',
-              fontSize: '0.875rem',
-              lineHeight: 1.6,
-              mb: 2,
-              flexGrow: 1,
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {article.summary}
-          </Typography>
+        <p className='text-sm text-slate-500 line-clamp-3 leading-relaxed mb-4 flex-1'>
+          {article.summary}
+        </p>
 
-          <Divider sx={{ my: 1.5, borderColor: 'divider' }} />
+        <div className='h-px bg-slate-100 my-3 w-full' />
 
-          {/* Footer info: Read time & Date */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.75rem',
-              color: 'text.secondary',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Clock size={14} style={{ color: '#0284c7' }} />
-              <Typography variant='caption' sx={{ color: 'inherit', fontWeight: 600 }}>
-                {article.readTime}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant='caption' sx={{ color: 'inherit', fontWeight: 500 }}>
-                {article.publishedAt}
-              </Typography>
-              <ArrowRight
-                className='read-more-icon'
-                size={14}
-                style={{
-                  marginLeft: 4,
-                  transition: 'transform 0.2s ease, color 0.2s ease',
-                }}
-              />
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+        {/* Footer info: Read time & Date */}
+        <div className='flex items-center justify-between text-xs text-slate-400 font-medium pt-0.5'>
+          <div className='flex items-center gap-1.5 text-slate-600 font-semibold'>
+            <Clock size={14} className='text-rose-500' />
+            <span>{article.readTime}</span>
+          </div>
+          <div className='flex items-center gap-1 text-slate-500'>
+            <span>{article.publishedAt}</span>
+            <ArrowRight
+              size={14}
+              className='ml-1 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-1 transition-all duration-200'
+            />
+          </div>
+        </div>
+      </div>
     </Link>
   );
 }

@@ -24,8 +24,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           <UserSidebar />
         </div>
 
-        {/* Main Content Area: Mobile-First fluid -> Tablet/Desktop max-w-6xl */}
-        <main className='flex-1 w-full max-w-full md:max-w-6xl mx-auto px-4 py-4 pb-28 md:p-8 md:pb-12 min-h-screen box-sizing'>
+        {/* Main Content Area: Mobile-First fluid -> Tablet/Desktop max-w-7xl */}
+        <main className='flex-1 min-w-0 w-full max-w-full md:max-w-7xl mx-auto px-4 py-4 pb-28 md:p-8 md:pb-12 min-h-screen box-border'>
           {children}
         </main>
 

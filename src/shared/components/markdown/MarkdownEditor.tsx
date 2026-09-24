@@ -2,18 +2,6 @@
 
 import React, { useState, useRef, useMemo } from 'react';
 import {
-  Box,
-  Typography,
-  IconButton,
-  Tooltip,
-  ButtonGroup,
-  Button,
-  Menu,
-  MenuItem,
-  Divider,
-  Paper,
-} from '@mui/material';
-import {
   Bold,
   Italic,
   Heading2,
@@ -101,10 +89,9 @@ export default function MarkdownEditor({
   readOnly = false,
 }: MarkdownEditorProps) {
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit');
-  const [templateAnchor, setTemplateAnchor] = useState<null | HTMLElement>(null);
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Statistics calculation
   const stats = useMemo(() => {
     const text = value || '';
     const charCount = text.length;
@@ -117,7 +104,6 @@ export default function MarkdownEditor({
     };
   }, [value]);
 
-  // Insert markdown tag helper
   const insertToken = (before: string, after: string = '', defaultText: string = '') => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -142,363 +128,248 @@ export default function MarkdownEditor({
 
   const handleApplyTemplate = (templateContent: string) => {
     onChange(templateContent);
-    setTemplateAnchor(null);
+    setShowTemplateDropdown(false);
   };
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: '16px',
-        border: '1px solid #fce7f3',
-        overflow: 'hidden',
-        bgcolor: '#ffffff',
-        boxShadow: '0 2px 10px rgba(225, 29, 72, 0.03)',
-      }}
-    >
-      {/* 1. Header Toolbar */}
-      <Box
-        sx={{
-          p: 1,
-          px: 1.5,
-          bgcolor: '#fff1f2',
-          borderBottom: '1px solid #fce7f3',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 1,
-        }}
-      >
-        {/* Formatting Actions */}
-        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
-          <Tooltip title='Tebal (Ctrl+B)'>
-            <IconButton
-              size='small'
+    <div className='w-full rounded-2xl border border-[#fce7f3] bg-white overflow-hidden shadow-xs flex flex-col'>
+      {/* Top Toolbar */}
+      <div className='flex items-center justify-between flex-wrap gap-2 p-2 border-b border-[#fce7f3] bg-[#fff5f7]/60'>
+        {/* Formatting Tools */}
+        <div className='flex items-center gap-1 flex-wrap'>
+          <button
+            type='button'
+            title='Tebal (Ctrl+B)'
+            onClick={() => insertToken('**', '**', 'teks tebal')}
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <Bold size={15} />
+          </button>
+          <button
+            type='button'
+            title='Miring (Ctrl+I)'
+            onClick={() => insertToken('*', '*', 'teks miring')}
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <Italic size={15} />
+          </button>
+
+          <div className='w-px h-5 bg-rose-200/80 mx-1' />
+
+          <button
+            type='button'
+            title='Heading 2'
+            onClick={() => insertToken('## ', '\n', 'Judul Bagian')}
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <Heading2 size={15} />
+          </button>
+          <button
+            type='button'
+            title='Heading 3'
+            onClick={() => insertToken('### ', '\n', 'Subjudul')}
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <Heading3 size={15} />
+          </button>
+
+          <div className='w-px h-5 bg-rose-200/80 mx-1' />
+
+          <button
+            type='button'
+            title='Daftar Poin (Bullet List)'
+            onClick={() => insertToken('- ', '\n', 'Poin informasi')}
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <List size={15} />
+          </button>
+          <button
+            type='button'
+            title='Daftar Bernomor'
+            onClick={() => insertToken('1. ', '\n', 'Langkah')}
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <ListOrdered size={15} />
+          </button>
+
+          <div className='w-px h-5 bg-rose-200/80 mx-1' />
+
+          <button
+            type='button'
+            title='Kotak Tips / Quote (> )'
+            onClick={() => insertToken('> Tips UKS: ', '\n', 'Informasi penting pencegahan anemia')}
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <Quote size={15} />
+          </button>
+          <button
+            type='button'
+            title='Tabel Markdown'
+            onClick={() =>
+              insertToken('\n| Kolom 1 | Kolom 2 |\n|---|---|\n| Data 1 | Data 2 |\n', '', '')
+            }
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <TableIcon size={15} />
+          </button>
+          <button
+            type='button'
+            title='Tautan / Link'
+            onClick={() => insertToken('[Teks Tautan](', ')', 'https://example.com')}
+            disabled={readOnly}
+            className='p-1.5 rounded-lg text-[#475569] hover:bg-rose-100/70 hover:text-[#e11d48] transition-colors cursor-pointer disabled:opacity-40'
+          >
+            <LinkIcon size={15} />
+          </button>
+
+          {/* Template Dropdown */}
+          <div className='relative ml-1'>
+            <button
+              type='button'
+              onClick={() => setShowTemplateDropdown(prev => !prev)}
               disabled={readOnly}
-              onClick={() => insertToken('**', '**', 'teks tebal')}
-              sx={{ color: '#881337', '&:hover': { bgcolor: '#ffe4e6' } }}
+              className='inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[#fce7f3] text-[#e11d48] rounded-lg text-xs font-bold hover:bg-rose-50 transition-colors cursor-pointer'
             >
-              <Bold size={16} />
-            </IconButton>
-          </Tooltip>
+              <Sparkles size={13} />
+              <span>Gunakan Template</span>
+            </button>
 
-          <Tooltip title='Miring (Ctrl+I)'>
-            <IconButton
-              size='small'
-              disabled={readOnly}
-              onClick={() => insertToken('*', '*', 'teks miring')}
-              sx={{ color: '#881337', '&:hover': { bgcolor: '#ffe4e6' } }}
-            >
-              <Italic size={16} />
-            </IconButton>
-          </Tooltip>
-
-          <Divider orientation='vertical' flexItem sx={{ mx: 0.5, my: 0.5 }} />
-
-          <Tooltip title='Judul Utama (H2)'>
-            <IconButton
-              size='small'
-              disabled={readOnly}
-              onClick={() => insertToken('\n## ', '\n', 'Judul Bagian')}
-              sx={{ color: '#881337', '&:hover': { bgcolor: '#ffe4e6' } }}
-            >
-              <Heading2 size={16} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title='Sub Judul (H3)'>
-            <IconButton
-              size='small'
-              disabled={readOnly}
-              onClick={() => insertToken('\n### ', '\n', 'Sub Judul')}
-              sx={{ color: '#881337', '&:hover': { bgcolor: '#ffe4e6' } }}
-            >
-              <Heading3 size={16} />
-            </IconButton>
-          </Tooltip>
-
-          <Divider orientation='vertical' flexItem sx={{ mx: 0.5, my: 0.5 }} />
-
-          <Tooltip title='Daftar Poin (Bullet List)'>
-            <IconButton
-              size='small'
-              disabled={readOnly}
-              onClick={() => insertToken('\n- ', '\n', 'Poin artikel')}
-              sx={{ color: '#881337', '&:hover': { bgcolor: '#ffe4e6' } }}
-            >
-              <List size={16} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title='Daftar Nomor (Numbered List)'>
-            <IconButton
-              size='small'
-              disabled={readOnly}
-              onClick={() => insertToken('\n1. ', '\n', 'Langkah pertama')}
-              sx={{ color: '#881337', '&:hover': { bgcolor: '#ffe4e6' } }}
-            >
-              <ListOrdered size={16} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title='Kotak Tips UKS / Catatan Penting'>
-            <IconButton
-              size='small'
-              disabled={readOnly}
-              onClick={() =>
-                insertToken('\n> Tips UKS: ', '\n', 'Tulis pesan tips kesehatan di sini')
-              }
-              sx={{ color: '#e11d48', '&:hover': { bgcolor: '#ffe4e6' } }}
-            >
-              <Quote size={16} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title='Tabel Perbandingan'>
-            <IconButton
-              size='small'
-              disabled={readOnly}
-              onClick={() =>
-                insertToken(
-                  '\n| Topik | Keterangan |\n|---|---|\n| Data 1 | Penjelasan 1 |\n| Data 2 | Penjelasan 2 |\n',
-                )
-              }
-              sx={{ color: '#881337', '&:hover': { bgcolor: '#ffe4e6' } }}
-            >
-              <TableIcon size={16} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title='Sisipkan Tautan (Link)'>
-            <IconButton
-              size='small'
-              disabled={readOnly}
-              onClick={() => insertToken('[', '](https://kemkes.go.id)', 'Tautan Kemenkes')}
-              sx={{ color: '#881337', '&:hover': { bgcolor: '#ffe4e6' } }}
-            >
-              <LinkIcon size={16} />
-            </IconButton>
-          </Tooltip>
-
-          {/* Quick Template Picker */}
-          {!readOnly && (
-            <>
-              <Divider orientation='vertical' flexItem sx={{ mx: 0.5, my: 0.5 }} />
-              <Button
-                size='small'
-                startIcon={<FileText size={14} />}
-                onClick={e => setTemplateAnchor(e.currentTarget)}
-                sx={{
-                  color: '#be123c',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  bgcolor: '#ffe4e6',
-                  borderRadius: '8px',
-                  px: 1.2,
-                  '&:hover': { bgcolor: '#fecdd3' },
-                }}
-              >
-                Template
-              </Button>
-              <Menu
-                anchorEl={templateAnchor}
-                open={Boolean(templateAnchor)}
-                onClose={() => setTemplateAnchor(null)}
-                slotProps={{
-                  paper: {
-                    sx: {
-                      borderRadius: '12px',
-                      border: '1px solid #fce7f3',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                      minWidth: 260,
-                    },
-                  },
-                }}
-              >
-                <Typography
-                  variant='caption'
-                  sx={{ px: 2, py: 0.5, fontWeight: 700, color: '#9f1239', display: 'block' }}
-                >
-                  Pilih Template Artikel
-                </Typography>
-                <Divider sx={{ my: 0.5 }} />
+            {showTemplateDropdown && (
+              <div className='absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-[#fce7f3] z-50 p-1.5 flex flex-col gap-1'>
+                <span className='text-[10px] font-bold text-[#94a3b8] px-2.5 py-1 uppercase tracking-wider'>
+                  Template Edukasi TTD
+                </span>
                 {TEMPLATES.map((tmpl, idx) => (
-                  <MenuItem
+                  <button
                     key={idx}
+                    type='button'
                     onClick={() => handleApplyTemplate(tmpl.content)}
-                    sx={{ fontSize: '0.85rem', color: '#1e293b' }}
+                    className='text-left px-2.5 py-1.5 text-xs font-semibold text-[#1e293b] hover:bg-rose-50 hover:text-[#e11d48] rounded-lg transition-colors cursor-pointer'
                   >
-                    <Sparkles size={14} style={{ marginRight: 8, color: '#e11d48' }} />
                     {tmpl.title}
-                  </MenuItem>
+                  </button>
                 ))}
-              </Menu>
-            </>
-          )}
-        </Box>
+              </div>
+            )}
+          </div>
+        </div>
 
-        {/* View Switcher: Edit, Preview, Split */}
-        <ButtonGroup
-          size='small'
-          sx={{
-            bgcolor: '#ffffff',
-            borderRadius: '10px',
-            p: 0.25,
-            border: '1px solid #fecdd3',
-          }}
-        >
-          <Button
+        {/* View Mode Switcher */}
+        <div className='flex items-center bg-white border border-[#fce7f3] rounded-lg p-0.5 gap-0.5'>
+          <button
+            type='button'
+            title='Tulis Markdown'
             onClick={() => setViewMode('edit')}
-            variant={viewMode === 'edit' ? 'contained' : 'text'}
-            startIcon={<Edit3 size={13} />}
-            sx={{
-              textTransform: 'none',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              py: 0.3,
-              px: 1,
-              bgcolor: viewMode === 'edit' ? '#e11d48' : 'transparent',
-              color: viewMode === 'edit' ? '#ffffff' : '#64748b',
-              '&:hover': { bgcolor: viewMode === 'edit' ? '#be123c' : '#fff1f2' },
-            }}
+            className={`px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+              viewMode === 'edit'
+                ? 'bg-[#e11d48] text-white shadow-xs'
+                : 'text-[#64748b] hover:text-[#1e293b]'
+            }`}
           >
-            Tulis
-          </Button>
-          <Button
-            onClick={() => setViewMode('preview')}
-            variant={viewMode === 'preview' ? 'contained' : 'text'}
-            startIcon={<Eye size={13} />}
-            sx={{
-              textTransform: 'none',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              py: 0.3,
-              px: 1,
-              bgcolor: viewMode === 'preview' ? '#e11d48' : 'transparent',
-              color: viewMode === 'preview' ? '#ffffff' : '#64748b',
-              '&:hover': { bgcolor: viewMode === 'preview' ? '#be123c' : '#fff1f2' },
-            }}
-          >
-            Pratinjau
-          </Button>
-          <Button
+            <Edit3 size={13} />
+            <span className='hidden sm:inline'>Tulis</span>
+          </button>
+          <button
+            type='button'
+            title='Tampilan Split'
             onClick={() => setViewMode('split')}
-            variant={viewMode === 'split' ? 'contained' : 'text'}
-            startIcon={<Columns2 size={13} />}
-            sx={{
-              display: { xs: 'none', md: 'inline-flex' },
-              textTransform: 'none',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              py: 0.3,
-              px: 1,
-              bgcolor: viewMode === 'split' ? '#e11d48' : 'transparent',
-              color: viewMode === 'split' ? '#ffffff' : '#64748b',
-              '&:hover': { bgcolor: viewMode === 'split' ? '#be123c' : '#fff1f2' },
-            }}
+            className={`hidden md:flex px-2 py-1 rounded-md text-xs font-bold items-center gap-1 transition-all cursor-pointer ${
+              viewMode === 'split'
+                ? 'bg-[#e11d48] text-white shadow-xs'
+                : 'text-[#64748b] hover:text-[#1e293b]'
+            }`}
           >
-            Berdampingan
-          </Button>
-        </ButtonGroup>
-      </Box>
+            <Columns2 size={13} />
+            <span>Split</span>
+          </button>
+          <button
+            type='button'
+            title='Pratinjau'
+            onClick={() => setViewMode('preview')}
+            className={`px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+              viewMode === 'preview'
+                ? 'bg-[#e11d48] text-white shadow-xs'
+                : 'text-[#64748b] hover:text-[#1e293b]'
+            }`}
+          >
+            <Eye size={13} />
+            <span className='hidden sm:inline'>Pratinjau</span>
+          </button>
+        </div>
+      </div>
 
-      {/* 2. Editor Body */}
-      <Box sx={{ minHeight, display: 'flex', position: 'relative' }}>
-        {/* Write Pane */}
+      {/* Editor & Preview Area */}
+      <div
+        style={{ minHeight }}
+        className='grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#fce7f3] flex-1'
+      >
+        {/* Write View */}
         {(viewMode === 'edit' || viewMode === 'split') && (
-          <Box
-            sx={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              borderRight: viewMode === 'split' ? '1px solid #fce7f3' : 'none',
-            }}
-          >
+          <div className={`p-4 flex flex-col ${viewMode === 'edit' ? 'col-span-2' : ''}`}>
             <textarea
               ref={textareaRef}
               value={value}
-              disabled={readOnly}
               onChange={e => onChange(e.target.value)}
               placeholder={placeholder}
-              style={{
-                width: '100%',
-                flex: 1,
-                minHeight: typeof minHeight === 'number' ? `${minHeight}px` : minHeight,
-                padding: '16px',
-                border: 'none',
-                outline: 'none',
-                resize: 'vertical',
-                fontFamily: 'inherit',
-                fontSize: '0.94rem',
-                lineHeight: 1.7,
-                color: '#1e293b',
-                backgroundColor: '#ffffff',
-              }}
+              readOnly={readOnly}
+              className='w-full h-full min-h-[260px] bg-transparent text-sm text-[#1e293b] font-mono leading-relaxed outline-none resize-none'
             />
-          </Box>
+          </div>
         )}
 
-        {/* Preview Pane */}
+        {/* Preview View */}
         {(viewMode === 'preview' || viewMode === 'split') && (
-          <Box
-            sx={{
-              flex: 1,
-              p: 2.5,
-              minHeight: typeof minHeight === 'number' ? `${minHeight}px` : minHeight,
-              overflowY: 'auto',
-              bgcolor: '#fffbfb',
-            }}
+          <div
+            className={`p-5 bg-white overflow-y-auto max-h-[460px] ${
+              viewMode === 'preview' ? 'col-span-2' : ''
+            }`}
           >
             {value.trim() ? (
               <MarkdownRenderer content={value} />
             ) : (
-              <Typography
-                variant='body2'
-                color='text.disabled'
-                sx={{ fontStyle: 'italic', textAlign: 'center', mt: 4 }}
-              >
-                Pratinjau artikel akan muncul di sini saat Anda mulai menulis...
-              </Typography>
+              <div className='text-xs text-[#94a3b8] italic py-8 text-center'>
+                Pratinjau artikel akan tampil di sini saat kamu menulis markdown.
+              </div>
             )}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
 
-      {/* 3. Footer Stats Bar */}
-      <Box
-        sx={{
-          p: 0.75,
-          px: 2,
-          bgcolor: '#fafafa',
-          borderTop: '1px solid #f1f5f9',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '0.75rem',
-          color: '#64748b',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <span>{stats.words} kata</span>
+      {/* Footer Stats Bar */}
+      <div className='flex items-center justify-between flex-wrap gap-2 px-4 py-2 border-t border-[#fce7f3] bg-[#fff5f7]/40 text-xs text-[#64748b]'>
+        <div className='flex items-center gap-3'>
+          <span className='flex items-center gap-1'>
+            <FileText size={13} />
+            <span>{stats.words} kata</span>
+          </span>
           <span>•</span>
           <span>{stats.charCount} karakter</span>
-        </Box>
+          <span>•</span>
+          <span className='flex items-center gap-1 text-[#e11d48] font-bold'>
+            <Clock size={13} />
+            <span>{stats.readTime}</span>
+          </span>
+        </div>
 
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.75,
-            color: '#e11d48',
-            fontWeight: 600,
-          }}
-        >
-          <Clock size={13} />
-          <span>{stats.readTime}</span>
-        </Box>
-      </Box>
-    </Paper>
+        {value.trim().length > 0 && !readOnly && (
+          <button
+            type='button'
+            onClick={() => onChange('')}
+            className='text-xs text-[#94a3b8] hover:text-[#e11d48] font-semibold flex items-center gap-1 cursor-pointer'
+          >
+            <RotateCcw size={12} />
+            <span>Reset Konten</span>
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

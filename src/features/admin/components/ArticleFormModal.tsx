@@ -1,25 +1,12 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  IconButton,
-  Paper,
-} from '@mui/material';
 import { UploadCloud, Image as ImageIcon, X, Sparkles } from 'lucide-react';
 import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog';
 import { MarkdownEditor } from '@/src/shared/components/markdown';
 import { generateAiArticleDraftAction } from '@/src/lib/gemini';
 import { ArticleCategory } from '../types/admin.types';
+import { ARTICLE_CATEGORIES } from '@/src/features/education/constants/education.constants';
 
 export interface ArticleFormData {
   title: string;
@@ -118,291 +105,197 @@ export default function ArticleFormModal({
       maxWidth='md'
     >
       {/* Cover Image Upload Section */}
-      <Box sx={{ mb: 1.5 }}>
-        <Typography
-          variant='caption'
-          sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 1 }}
-        >
+      <div>
+        <label className='block text-xs font-bold text-slate-700 mb-1.5'>
           Gambar Cover Artikel
-        </Typography>
+        </label>
 
         <input
           type='file'
           accept='image/*'
           ref={fileInputRef}
-          style={{ display: 'none' }}
+          className='hidden'
           onChange={handleImageFileChange}
         />
 
         {formData.imageUrl ? (
-          <Paper
-            variant='outlined'
-            sx={{
-              position: 'relative',
-              borderRadius: 2,
-              overflow: 'hidden',
-              bgcolor: 'background.paper',
-              border: '1px solid #fce7f3',
-            }}
-          >
-            <Box
-              component='img'
+          <div className='relative rounded-2xl overflow-hidden border border-pink-100 bg-slate-50'>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={formData.imageUrl}
               alt='Cover Preview'
-              sx={{
-                width: '100%',
-                height: { xs: 140, sm: 180 },
-                objectFit: 'cover',
-                display: 'block',
-              }}
+              className='w-full h-36 sm:h-48 object-cover block'
             />
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                display: 'flex',
-                gap: 1,
-                bgcolor: 'rgba(0, 0, 0, 0.65)',
-                borderRadius: 2,
-                p: 0.5,
-              }}
-            >
-              <Button
-                size='small'
-                variant='text'
-                sx={{ color: '#fff', fontSize: '0.75rem', py: 0.25, px: 1, minWidth: 'auto' }}
+            <div className='absolute top-2 right-2 flex items-center gap-1.5 bg-slate-900/70 backdrop-blur-sm rounded-xl p-1 text-white'>
+              <button
+                type='button'
+                className='text-xs px-2.5 py-1 rounded-lg hover:bg-white/20 font-medium transition-colors cursor-pointer'
                 onClick={() => fileInputRef.current?.click()}
               >
                 Ganti
-              </Button>
-              <IconButton size='small' onClick={handleRemoveImage} sx={{ color: '#fff', p: 0.25 }}>
-                <X size={16} />
-              </IconButton>
-            </Box>
-          </Paper>
+              </button>
+              <button
+                type='button'
+                onClick={handleRemoveImage}
+                className='p-1 rounded-lg hover:bg-white/20 transition-colors cursor-pointer'
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </div>
         ) : (
-          <Paper
-            variant='outlined'
+          <div
             onClick={() => fileInputRef.current?.click()}
-            sx={{
-              p: { xs: 2, sm: 3 },
-              textAlign: 'center',
-              border: '2px dashed #fecdd3',
-              borderRadius: 2,
-              bgcolor: '#fff1f2',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: '#ffe4e6',
-              },
-            }}
+            className='p-6 text-center border-2 border-dashed border-pink-200 rounded-2xl bg-rose-50/50 hover:bg-rose-50 hover:border-rose-400 transition-all cursor-pointer'
           >
-            <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                bgcolor: '#ffe4e6',
-                color: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 1,
-              }}
-            >
+            <div className='w-11 h-11 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-2'>
               <UploadCloud size={24} />
-            </Box>
-            <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>
-              Klik untuk upload gambar cover
-            </Typography>
-            <Typography variant='caption' color='text.secondary'>
+            </div>
+            <p className='text-sm font-bold text-slate-800'>Klik untuk upload gambar cover</p>
+            <p className='text-xs text-slate-400 mt-0.5'>
               Format didukung: PNG, JPG, WebP (Maksimal 3MB)
-            </Typography>
-          </Paper>
+            </p>
+          </div>
         )}
 
-        <TextField
-          placeholder='Atau tempelkan tautan URL gambar cover di sini...'
-          fullWidth
-          size='small'
-          value={formData.imageUrl}
-          onChange={e => updateFormData({ imageUrl: e.target.value })}
-          sx={{ mt: 1.5 }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position='start'>
-                  <ImageIcon size={16} />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-      </Box>
+        <div className='relative mt-2.5'>
+          <span className='absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400'>
+            <ImageIcon size={16} />
+          </span>
+          <input
+            type='text'
+            placeholder='Atau tempelkan tautan URL gambar cover di sini...'
+            value={formData.imageUrl}
+            onChange={e => updateFormData({ imageUrl: e.target.value })}
+            className='w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
+          />
+        </div>
+      </div>
 
       {/* AI Assistant Generator Banner */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 1.75,
-          mb: 2,
-          borderRadius: 2,
-          border: '1px solid #fecdd3',
-          bgcolor: '#fff1f2',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 1.5,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-          <Box
-            sx={{
-              p: 0.75,
-              borderRadius: 1.5,
-              bgcolor: '#ffe4e6',
-              color: 'primary.main',
-              display: 'flex',
-            }}
-          >
+      <div className='p-4 rounded-2xl border border-rose-200 bg-rose-50/70 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'>
+        <div className='flex items-center gap-3'>
+          <div className='w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0'>
             <Sparkles size={18} />
-          </Box>
-          <Box>
-            <Typography
-              variant='subtitle2'
-              sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.85rem' }}
-            >
+          </div>
+          <div>
+            <div className='font-bold text-slate-900 text-xs sm:text-sm'>
               Asisten Penulis Medis AI
-            </Typography>
-            <Typography variant='caption' color='text.secondary'>
+            </div>
+            <div className='text-[11px] text-slate-500'>
               Buat judul, ringkasan, dan materi edukasi otomatis dengan Gemini AI
-            </Typography>
-          </Box>
-        </Box>
+            </div>
+          </div>
+        </div>
 
-        <Button
-          size='small'
-          variant='contained'
+        <button
+          type='button'
           disabled={isGeneratingAi}
           onClick={handleGenerateAiArticle}
-          startIcon={<Sparkles size={15} />}
-          sx={{
-            borderRadius: 1.5,
-            fontWeight: 700,
-            fontSize: '0.78rem',
-            textTransform: 'none',
-            boxShadow: 'none',
-            bgcolor: 'primary.main',
-            '&:hover': { bgcolor: 'primary.dark' },
-            width: { xs: '100%', sm: 'auto' },
-            whiteSpace: 'nowrap',
-          }}
+          className='inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 shadow-sm transition-all cursor-pointer disabled:opacity-50 shrink-0'
         >
-          {isGeneratingAi ? 'Menulis Artikel...' : 'Tulis dengan AI ✨'}
-        </Button>
-      </Paper>
+          <Sparkles size={14} />
+          <span>{isGeneratingAi ? 'Menulis Artikel...' : 'Tulis dengan AI ✨'}</span>
+        </button>
+      </div>
 
-      <TextField
-        label='Judul Artikel'
-        fullWidth
-        size='small'
-        value={formData.title}
-        onChange={e => updateFormData({ title: e.target.value })}
-        sx={{ mb: 2 }}
-      />
+      <div>
+        <label className='block text-xs font-bold text-slate-700 mb-1'>
+          Judul Artikel <span className='text-rose-500'>*</span>
+        </label>
+        <input
+          type='text'
+          value={formData.title}
+          onChange={e => updateFormData({ title: e.target.value })}
+          className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
+        />
+      </div>
 
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl fullWidth size='small'>
-            <InputLabel>Kategori</InputLabel>
-            <Select
-              value={formData.category}
-              label='Kategori'
-              onChange={e =>
-                updateFormData({
-                  category: e.target.value as ArticleFormData['category'],
-                })
-              }
-            >
-              <MenuItem value='Anemia & TTD'>Anemia & TTD</MenuItem>
-              <MenuItem value='Nutrisi & Gizi'>Nutrisi & Gizi</MenuItem>
-              <MenuItem value='Kesehatan Remaja'>Kesehatan Remaja</MenuItem>
-              <MenuItem value='Tips Menstruasi'>Tips Menstruasi</MenuItem>
-              <MenuItem value='Mitos & Fakta'>Mitos & Fakta</MenuItem>
-              <MenuItem value='Gaya Hidup'>Gaya Hidup</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            label='Penulis / Ahli Gizi UKS'
-            fullWidth
-            size='small'
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+        <div>
+          <label className='block text-xs font-bold text-slate-700 mb-1'>Kategori</label>
+          <select
+            value={formData.category}
+            onChange={e =>
+              updateFormData({
+                category: e.target.value as ArticleFormData['category'],
+              })
+            }
+            className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
+          >
+            {ARTICLE_CATEGORIES.filter(c => c !== 'Semua').map(cat => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className='block text-xs font-bold text-slate-700 mb-1'>
+            Penulis / Ahli Gizi UKS
+          </label>
+          <input
+            type='text'
             value={formData.author}
             onChange={e => updateFormData({ author: e.target.value })}
+            className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
           />
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            label='Waktu Baca (misal: 3 min read)'
-            fullWidth
-            size='small'
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+        <div>
+          <label className='block text-xs font-bold text-slate-700 mb-1'>
+            Waktu Baca (misal: 3 min read)
+          </label>
+          <input
+            type='text'
             value={formData.readTime}
             onChange={e => updateFormData({ readTime: e.target.value })}
+            className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
           />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl fullWidth size='small'>
-            <InputLabel>Status Publikasi</InputLabel>
-            <Select
-              value={formData.status}
-              label='Status Publikasi'
-              onChange={e =>
-                updateFormData({
-                  status: e.target.value as ArticleFormData['status'],
-                })
-              }
-            >
-              <MenuItem value='Terbit'>Terbit Langsung</MenuItem>
-              <MenuItem value='Draf'>Simpan Sebagai Draf</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
+        </div>
+        <div>
+          <label className='block text-xs font-bold text-slate-700 mb-1'>Status Publikasi</label>
+          <select
+            value={formData.status}
+            onChange={e =>
+              updateFormData({
+                status: e.target.value as ArticleFormData['status'],
+              })
+            }
+            className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
+          >
+            <option value='Terbit'>Terbit Langsung</option>
+            <option value='Draf'>Simpan Sebagai Draf</option>
+          </select>
+        </div>
+      </div>
 
-      <TextField
-        label='Ringkasan Singkat (Summary)'
-        multiline
-        rows={2}
-        fullWidth
-        size='small'
-        placeholder='Ringkasan 1-2 kalimat untuk kartu artikel...'
-        value={formData.summary}
-        onChange={e => updateFormData({ summary: e.target.value })}
-        sx={{ mb: 2 }}
-      />
+      <div>
+        <label className='block text-xs font-bold text-slate-700 mb-1'>
+          Ringkasan Singkat (Summary)
+        </label>
+        <textarea
+          rows={2}
+          placeholder='Ringkasan 1-2 kalimat untuk kartu artikel...'
+          value={formData.summary}
+          onChange={e => updateFormData({ summary: e.target.value })}
+          className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all resize-none'
+        />
+      </div>
 
-      <Box sx={{ mt: 1 }}>
-        <Typography
-          variant='caption'
-          sx={{ fontWeight: 700, color: '#334155', mb: 0.75, display: 'block' }}
-        >
+      <div className='pt-1'>
+        <label className='block text-xs font-bold text-slate-700 mb-1.5'>
           Isi Konten Artikel (Markdown Format)
-        </Typography>
+        </label>
         <MarkdownEditor
           value={formData.content}
           onChange={(content: string) => updateFormData({ content })}
           placeholder='Tuliskan materi edukasi kesehatan secara lengkap di sini menggunakan format Markdown...'
           minHeight={320}
         />
-      </Box>
+      </div>
     </CrudModalDialog>
   );
 }

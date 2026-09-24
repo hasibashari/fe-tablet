@@ -1,25 +1,17 @@
-'use client'
+'use client';
 
-import React from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogActions,
-  Typography,
-  Button,
-  Box,
-} from '@mui/material'
-import { AlertTriangle } from 'lucide-react'
+import React, { useEffect } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 export interface ConfirmDeleteDialogProps {
-  open: boolean
-  title?: string
-  message?: string
-  confirmText?: string
-  cancelText?: string
-  onClose: () => void
-  onConfirm: () => void
-  loading?: boolean
+  open: boolean;
+  title?: string;
+  message?: string;
+  confirmText?: string;
+  cancelText?: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading?: boolean;
 }
 
 export function ConfirmDeleteDialog({
@@ -32,88 +24,62 @@ export function ConfirmDeleteDialog({
   onConfirm,
   loading = false,
 }: ConfirmDeleteDialogProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open && !loading) {
+        onClose();
+      }
+    };
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, loading, onClose]);
+
+  if (!open) return null;
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            m: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            p: { xs: 1, sm: 1.5 },
-          },
-        },
-      }}
-    >
-      <DialogContent sx={{ textAlign: 'center', pt: 3, pb: 2 }}>
-        <Box
-          sx={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            bgcolor: '#fff1f2',
-            color: '#e11d48',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mx: 'auto',
-            mb: 2,
-          }}
-        >
-          <AlertTriangle size={28} />
-        </Box>
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}>
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5 }}>
-          {message}
-        </Typography>
-      </DialogContent>
-      <DialogActions
-        sx={{
-          p: { xs: 1.5, sm: 2 },
-          pt: 0,
-          flexDirection: { xs: 'column-reverse', sm: 'row' },
-          gap: { xs: 1, sm: 1.5 },
+    <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
+      <div
+        className='absolute inset-0'
+        onClick={() => {
+          if (!loading) onClose();
         }}
-      >
-        <Button
-          onClick={onClose}
-          color="inherit"
-          disabled={loading}
-          sx={{
-            width: { xs: '100%', sm: 'auto' },
-            minHeight: 44,
-            borderRadius: 2,
-            fontWeight: 600,
-          }}
-        >
-          {cancelText}
-        </Button>
-        <Button
-          onClick={onConfirm}
-          color="error"
-          variant="contained"
-          disabled={loading}
-          sx={{
-            width: { xs: '100%', sm: 'auto' },
-            minHeight: 44,
-            borderRadius: 2,
-            fontWeight: 600,
-            boxShadow: 'none',
-            bgcolor: '#e11d48',
-            '&:hover': { bgcolor: '#be123c' },
-          }}
-        >
-          {loading ? 'Menghapus...' : confirmText}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  )
+      />
+      <div className='relative z-10 w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl border border-[#fce7f3] text-center flex flex-col items-center'>
+        <div className='w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-3 shadow-inner'>
+          <AlertTriangle size={26} />
+        </div>
+
+        <h3 className='text-base sm:text-lg font-bold text-[#1e293b] leading-snug'>{title}</h3>
+
+        <p className='text-xs sm:text-sm text-[#64748b] mt-2 mb-6 leading-relaxed'>{message}</p>
+
+        <div className='flex flex-col-reverse sm:flex-row items-center gap-2.5 w-full'>
+          <button
+            type='button'
+            onClick={onClose}
+            disabled={loading}
+            className='w-full sm:flex-1 py-2.5 px-4 text-xs sm:text-sm font-bold text-[#64748b] hover:text-[#1e293b] hover:bg-slate-100 rounded-xl transition-colors cursor-pointer disabled:opacity-50'
+          >
+            {cancelText}
+          </button>
+          <button
+            type='button'
+            onClick={onConfirm}
+            disabled={loading}
+            className='w-full sm:flex-1 py-2.5 px-4 text-xs sm:text-sm font-bold text-white bg-[#e11d48] hover:bg-[#be123c] rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50'
+          >
+            {loading ? 'Menghapus...' : confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export default ConfirmDeleteDialog
-
+export default ConfirmDeleteDialog;

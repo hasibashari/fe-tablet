@@ -3,18 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  IconButton,
-  InputAdornment,
-  Alert,
-  CircularProgress,
-  Fade,
-} from '@mui/material';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export interface RegisterFormProps {
@@ -70,243 +59,119 @@ export function RegisterForm({ onSwitchTab, hideHeader = false }: RegisterFormPr
   };
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <div className='w-full'>
       {/* Optional Header Form if not in tabbed container */}
       {!hideHeader && (
-        <Box sx={{ mb: 3.5, textAlign: 'left' }}>
-          <Typography
-            variant='h4'
-            sx={{
-              fontWeight: 800,
-              color: 'text.primary',
-              letterSpacing: '-0.025em',
-              fontSize: { xs: '1.65rem', sm: '1.85rem' },
-              mb: 1,
-            }}
-          >
-            Daftar Akun
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ fontSize: '0.92rem', lineHeight: 1.5 }}
-          >
+        <div className='mb-6 text-left'>
+          <h2 className='text-2xl font-extrabold text-[#1e293b] tracking-tight mb-1'>Daftar Akun</h2>
+          <p className='text-xs sm:text-sm text-[#64748b]'>
             Mulai pantau jadwal obat & rekam kesehatan harian Anda.
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
 
       {/* Error & Success Feedback */}
       {errorMessage && (
-        <Fade in>
-          <Alert
-            severity='error'
-            sx={{ mb: 2.5, borderRadius: '16px', fontSize: '0.85rem' }}
-            onClose={() => setErrorMessage(null)}
-          >
-            {errorMessage}
-          </Alert>
-        </Fade>
+        <div className='mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-2 animate-fade-in'>
+          <AlertCircle size={16} className='text-rose-600 shrink-0' />
+          <span>{errorMessage}</span>
+        </div>
       )}
 
       {success && (
-        <Fade in>
-          <Alert
-            icon={<CheckCircle2 size={18} />}
-            severity='success'
-            sx={{ mb: 2.5, borderRadius: '16px', fontSize: '0.85rem' }}
-          >
-            Pendaftaran berhasil! Mengalihkan ke Dashboard...
-          </Alert>
-        </Fade>
+        <div className='mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-2 animate-fade-in'>
+          <CheckCircle2 size={16} className='text-emerald-600 shrink-0' />
+          <span>Pendaftaran berhasil! Mengalihkan ke Dashboard...</span>
+        </div>
       )}
 
       {/* Registration Form */}
-      <form onSubmit={handleSubmit}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>
-          {/* Email Field */}
-          <TextField
-            placeholder='Alamat Email Aktif'
-            type='email'
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            fullWidth
-            size='medium'
-            autoComplete='email'
-            slotProps={{
-              input: {
-                sx: {
-                  borderRadius: '9999px',
-                  bgcolor: '#ffffff',
-                  pl: 1.5,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                  '& fieldset': {
-                    borderColor: '#e2e8f0',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#cbd5e1',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#cc785c',
-                    borderWidth: '1.5px',
-                  },
-                },
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        bgcolor: 'rgba(204, 120, 92, 0.08)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mr: 0.5,
-                      }}
-                    >
-                      <Mail size={16} color='#cc785c' />
-                    </Box>
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
+      <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
+        {/* Email Field */}
+        <div>
+          <label className='text-xs font-bold text-[#1e293b] mb-1.5 block'>
+            Alamat Email Aktif
+          </label>
+          <div className='relative flex items-center'>
+            <div className='absolute left-3.5 w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-[#e11d48]'>
+              <Mail size={15} />
+            </div>
+            <input
+              type='email'
+              placeholder='nama@sekolah.sch.id'
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              autoComplete='email'
+              className='w-full bg-white text-sm text-[#1e293b] rounded-full border border-slate-200 pl-13 pr-4 py-3 outline-none focus:border-[#e11d48] transition-colors shadow-2xs'
+            />
+          </div>
+        </div>
 
-          {/* Password Field */}
-          <TextField
-            placeholder='Kata Sandi (Minimal 6 karakter)'
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            fullWidth
-            size='medium'
-            autoComplete='new-password'
-            slotProps={{
-              input: {
-                sx: {
-                  borderRadius: '9999px',
-                  bgcolor: '#ffffff',
-                  pl: 1.5,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                  '& fieldset': {
-                    borderColor: '#e2e8f0',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#cbd5e1',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#cc785c',
-                    borderWidth: '1.5px',
-                  },
-                },
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        bgcolor: 'rgba(204, 120, 92, 0.08)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mr: 0.5,
-                      }}
-                    >
-                      <Lock size={16} color='#cc785c' />
-                    </Box>
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position='end' sx={{ pr: 1 }}>
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge='end'
-                      size='small'
-                      aria-label='toggle password visibility'
-                    >
-                      {showPassword ? (
-                        <EyeOff size={18} color='#94a3b8' />
-                      ) : (
-                        <Eye size={18} color='#94a3b8' />
-                      )}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-
-          {/* Balanced Action Row: Switch to Login & Pill Submit Button */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mt: 1,
-              flexWrap: 'wrap',
-              gap: 1.5,
-            }}
-          >
-            {onSwitchTab ? (
-              <button
-                type='button'
-                onClick={onSwitchTab}
-                className='text-xs text-slate-500 hover:text-[#cc785c] font-medium transition-colors cursor-pointer bg-transparent border-none p-0 inline-flex items-center gap-1'
-              >
-                Sudah punya akun? <span className='font-semibold text-[#cc785c]'>Masuk</span>
-              </button>
-            ) : (
-              <Link
-                href='/auth?tab=login'
-                className='text-xs text-slate-500 hover:text-[#cc785c] font-medium transition-colors inline-flex items-center gap-1'
-              >
-                Sudah punya akun? <span className='font-semibold text-[#cc785c]'>Masuk</span>
-              </Link>
-            )}
-
-            <Button
-              type='submit'
-              variant='contained'
-              disabled={loading || success}
-              sx={{
-                py: 1.25,
-                px: 3.5,
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                borderRadius: '9999px',
-                bgcolor: '#cc785c',
-                color: '#ffffff',
-                textTransform: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                boxShadow: '0 4px 14px rgba(204, 120, 92, 0.35)',
-                '&:hover': {
-                  bgcolor: '#a9583e',
-                  boxShadow: '0 6px 20px rgba(204, 120, 92, 0.45)',
-                },
-              }}
+        {/* Password Field */}
+        <div>
+          <label className='text-xs font-bold text-[#1e293b] mb-1.5 block'>
+            Kata Sandi (Minimal 6 karakter)
+          </label>
+          <div className='relative flex items-center'>
+            <div className='absolute left-3.5 w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-[#e11d48]'>
+              <Lock size={15} />
+            </div>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder='••••••••'
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              autoComplete='new-password'
+              className='w-full bg-white text-sm text-[#1e293b] rounded-full border border-slate-200 pl-13 pr-11 py-3 outline-none focus:border-[#e11d48] transition-colors shadow-2xs'
+            />
+            <button
+              type='button'
+              onClick={() => setShowPassword(!showPassword)}
+              className='absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer p-1'
             >
-              {loading ? (
-                <>
-                  <CircularProgress size={18} color='inherit' />
-                  <span>Mendaftarkan...</span>
-                </>
-              ) : (
-                <>
-                  <span>Daftar Sekarang</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </Button>
-          </Box>
-        </Box>
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Balanced Action Row: Switch to Login & Pill Submit Button */}
+        <div className='flex items-center justify-between flex-wrap gap-2 mt-2 pt-1'>
+          {onSwitchTab ? (
+            <button
+              type='button'
+              onClick={onSwitchTab}
+              className='text-xs text-[#64748b] hover:text-[#e11d48] font-medium transition-colors cursor-pointer bg-transparent border-none p-0 inline-flex items-center gap-1'
+            >
+              Sudah punya akun? <span className='font-bold text-[#e11d48]'>Masuk</span>
+            </button>
+          ) : (
+            <Link
+              href='/auth?tab=login'
+              className='text-xs text-[#64748b] hover:text-[#e11d48] font-medium transition-colors inline-flex items-center gap-1'
+            >
+              Sudah punya akun? <span className='font-bold text-[#e11d48]'>Masuk</span>
+            </Link>
+          )}
+
+          <button
+            type='submit'
+            disabled={loading || success}
+            className='px-6 py-2.5 bg-[#e11d48] hover:bg-[#be123c] text-white rounded-full text-sm font-bold shadow-md shadow-rose-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50'
+          >
+            {loading ? (
+              <span>Mendaftarkan...</span>
+            ) : (
+              <>
+                <span>Daftar Sekarang</span>
+                <ArrowRight size={15} />
+              </>
+            )}
+          </button>
+        </div>
       </form>
-    </Box>
+    </div>
   );
 }
 

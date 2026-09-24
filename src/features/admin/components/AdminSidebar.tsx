@@ -2,19 +2,9 @@
 
 import React from 'react';
 import {
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  Chip,
-  Box,
-  Avatar,
-} from '@mui/material';
-import {
   LayoutDashboard,
   Users,
   CalendarCheck,
-  Pill,
   FileText,
   BarChart3,
   LogOut,
@@ -42,86 +32,40 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
   const { user, logout } = useAuth();
 
   const adminBadge = (
-    <Chip
-      label='ADMIN'
-      size='small'
-      sx={{
-        bgcolor: '#e11d48',
-        color: '#ffffff',
-        fontSize: '0.62rem',
-        height: 18,
-        fontWeight: 800,
-        borderRadius: '9999px',
-        boxShadow: '0 2px 6px rgba(225, 29, 72, 0.25)',
-      }}
-    />
+    <span className='px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-extrabold shadow-sm shadow-rose-200 uppercase tracking-wide'>
+      ADMIN
+    </span>
   );
 
   const signOutFooter = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <div className='flex flex-col gap-2'>
       {user && (
-        <Box
-          sx={{
-            p: 1.25,
-            borderRadius: '12px',
-            bgcolor: '#fff5f7',
-            border: '1px solid #fce7f3',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.25,
-          }}
-        >
-          <Avatar
-            src={user.avatarUrl}
-            alt={user.name}
-            sx={{ width: 34, height: 34, border: '2px solid #f43f5e' }}
-          />
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography
-              variant='subtitle2'
-              noWrap
-              sx={{ fontWeight: 700, fontSize: '0.82rem', color: '#1e293b', lineHeight: 1.2 }}
-            >
+        <div className='p-2.5 rounded-2xl bg-[#fff5f7] border border-pink-100 flex items-center gap-2.5'>
+          <div className='w-8 h-8 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border-2 border-rose-400 overflow-hidden'>
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user.name} className='w-full h-full object-cover' />
+            ) : (
+              <span>{user.name.charAt(0)}</span>
+            )}
+          </div>
+          <div className='min-w-0 flex-1'>
+            <div className='font-bold text-xs text-slate-800 truncate leading-tight'>
               {user.name}
-            </Typography>
-            <Typography
-              variant='caption'
-              noWrap
-              sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}
-            >
-              {user.email}
-            </Typography>
-          </Box>
-        </Box>
+            </div>
+            <div className='text-[11px] text-slate-500 truncate'>{user.email}</div>
+          </div>
+        </div>
       )}
 
-      <ListItemButton
+      <button
+        type='button'
         onClick={logout}
-        sx={{
-          borderRadius: '12px',
-          py: 1,
-          px: 1.5,
-          color: '#e11d48',
-          transition: 'all 0.15s ease',
-          '&:hover': {
-            bgcolor: '#fff1f2',
-            color: '#be123c',
-            '& .MuiListItemIcon-root': {
-              color: '#be123c',
-            },
-          },
-        }}
+        className='w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 font-semibold text-xs hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer'
       >
-        <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
-          <LogOut size={18} />
-        </ListItemIcon>
-        <ListItemText
-          primary={
-            <Typography sx={{ fontSize: '0.88rem', fontWeight: 600 }}>Keluar (Sign Out)</Typography>
-          }
-        />
-      </ListItemButton>
-    </Box>
+        <LogOut size={16} />
+        <span>Keluar (Sign Out)</span>
+      </button>
+    </div>
   );
 
   return (
@@ -132,10 +76,6 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
       brandIcon={Heart}
       brandHref='/admin/dashboard'
       badge={adminBadge}
-      activeBgColor='#ffe4e6'
-      activeTextColor='#e11d48'
-      activeIconColor='#e11d48'
-      activeHoverBgColor='#fecdd3'
       footerAction={signOutFooter}
       mobileOpen={mobileOpen}
       onMobileClose={onMobileClose}

@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
+import { useEffect } from 'react';
 
 export default function ServiceWorkerRegister() {
   useEffect(() => {
@@ -8,24 +8,24 @@ export default function ServiceWorkerRegister() {
       const registerSW = () => {
         navigator.serviceWorker
           .register('/sw.js')
-          .then((registration) => {
+          .then(registration => {
             if (process.env.NODE_ENV !== 'production') {
-              console.log('MediCore ServiceWorker registered:', registration.scope)
+              console.log('MediCore ServiceWorker registered:', registration.scope);
             }
           })
-          .catch((err) => {
-            console.error('MediCore ServiceWorker registration failed:', err)
-          })
-      }
+          .catch(err => {
+            console.error('MediCore ServiceWorker registration failed:', err);
+          });
+      };
 
       if (document.readyState === 'complete') {
-        registerSW()
+        registerSW();
       } else {
-        window.addEventListener('load', registerSW)
-        return () => window.removeEventListener('load', registerSW)
+        window.addEventListener('load', registerSW);
+        return () => window.removeEventListener('load', registerSW);
       }
     }
-  }, [])
+  }, []);
 
-  return null
+  return null;
 }

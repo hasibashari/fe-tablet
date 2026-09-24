@@ -44,7 +44,7 @@ export interface MedicationSchedule {
   category: ScheduleCategory;
   instructions: string;
   lastReminderSent?: string;
-  todayStatus?: 'COMPLETED' | 'PENDING' | 'NO_REMINDER';
+  todayStatus?: 'COMPLETED' | 'PENDING' | 'NOT_YET_TIME' | 'OFF_SCHEDULE' | 'MISSED';
 }
 
 export type ArticleCategory =

@@ -1,20 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  Button,
-  TextField,
-  InputAdornment,
-  Chip,
-  FormControl,
-  Select,
-  MenuItem,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, Plus, BellRing, Edit, Trash2 } from 'lucide-react';
 import AdminHeader from '../components/AdminHeader';
 import SendReminderModal from '../components/SendReminderModal';
@@ -37,8 +23,6 @@ import { MedicationSchedule, PatientUser } from '../types/admin.types';
 import {
   INITIAL_SCHEDULE_FORM_DATA,
   ScheduleFormData,
-  SCHEDULE_CATEGORIES,
-  SCHEDULE_CATEGORY_COLORS,
   ScheduleCategory,
 } from '../constants/schedule.constants';
 import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync';
@@ -47,7 +31,7 @@ export default function ScheduleManagementView() {
   const [schedules, setSchedules] = useState<MedicationSchedule[]>([]);
   const [patients, setPatients] = useState<PatientUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('Semua');
+  const [frequencyFilter, setFrequencyFilter] = useState('Semua');
   const [submitting, setSubmitting] = useState(false);
 
   // 1. Hook Form Modal Add/Edit
@@ -141,12 +125,23 @@ export default function ScheduleManagementView() {
     };
   }, []);
 
+  // Quick lookup patient details for avatar & school
+  const patientMap = useMemo(() => {
+    const map = new Map<string, PatientUser>();
+    patients.forEach(p => map.set(p.id, p));
+    return map;
+  }, [patients]);
+
   const filteredSchedules = schedules.filter(s => {
     const matchesSearch =
       s.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.medicationName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'Semua' || s.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+      s.medicationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.patientId.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFrequency =
+      frequencyFilter === 'Semua' ||
+      (frequencyFilter === 'Harian' && s.frequency === 'Harian') ||
+      (frequencyFilter === 'Mingguan' && s.frequency !== 'Harian');
+    return matchesSearch && matchesFrequency;
   });
 
   const onOpenAdd = () => {
@@ -183,6 +178,9 @@ export default function ScheduleManagementView() {
     const today = new Date().toISOString().split('T')[0];
 
     setSubmitting(true);
+    const isDaily = formData.frequency === 'Harian';
+    const cleanDayOfWeek = isDaily ? 'Setiap Hari' : formData.dayOfWeek || 'Sabtu';
+
     try {
       if (editingId) {
         const res = await updateScheduleAction(editingId, {
@@ -190,7 +188,7 @@ export default function ScheduleManagementView() {
           medicationName: formData.medicationName,
           dosage: formData.dosage,
           frequency: formData.frequency,
-          dayOfWeek: formData.dayOfWeek,
+          dayOfWeek: cleanDayOfWeek,
           timeSlots: timeSlotsArray,
           category: formData.category,
           instructions: formData.instructions,
@@ -213,7 +211,7 @@ export default function ScheduleManagementView() {
           medicationName: formData.medicationName,
           dosage: formData.dosage,
           frequency: formData.frequency,
-          dayOfWeek: formData.dayOfWeek,
+          dayOfWeek: cleanDayOfWeek,
           timeSlots: timeSlotsArray,
           startDate: today,
           endDate: '2026-12-31',
@@ -285,150 +283,101 @@ export default function ScheduleManagementView() {
     }
   };
 
+  // Streamlined 5 Essential Columns (Direct to the point)
   const columns: Column<MedicationSchedule>[] = [
     {
-      id: 'patientName',
-      label: 'Pasien (Siswi)',
-      width: '18%',
-      renderCell: schedule => (
-        <Box>
-          <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
-            {schedule.patientName}
-          </Typography>
-          <Typography variant='caption' color='text.secondary'>
-            ID: {schedule.patientId}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      id: 'medicationName',
-      label: 'Nama Obat / Suplemen',
-      width: '20%',
-      renderCell: schedule => (
-        <Box>
-          <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
-            {schedule.medicationName}
-          </Typography>
-          <Typography variant='caption' color='text.secondary'>
-            {schedule.dosage} • {schedule.frequency}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      id: 'category',
-      label: 'Program',
-      width: '15%',
+      id: 'patient',
+      label: 'Siswi (Pasien)',
+      width: '30%',
       renderCell: schedule => {
-        const style =
-          SCHEDULE_CATEGORY_COLORS[schedule.category || ''] || SCHEDULE_CATEGORY_COLORS.default;
+        const patient = patientMap.get(schedule.patientId);
         return (
-          <Chip
-            label={schedule.category || 'TTD Rutin'}
-            size='small'
-            sx={{
-              bgcolor: style.bg,
-              color: style.text,
-              fontWeight: 700,
-              fontSize: '0.7rem',
-              height: 22,
-              borderRadius: 1,
-            }}
-          />
+          <div className='flex items-center gap-3'>
+            <div className='w-9 h-9 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-pink-100 overflow-hidden relative shadow-2xs'>
+              {patient?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={patient.avatarUrl}
+                  alt={schedule.patientName}
+                  className='w-full h-full object-cover'
+                />
+              ) : (
+                <span>{schedule.patientName.charAt(0)}</span>
+              )}
+            </div>
+            <div className='min-w-0'>
+              <div className='font-bold text-slate-800 text-sm truncate'>
+                {schedule.patientName}
+              </div>
+              <div className='text-xs text-slate-400 truncate'>
+                {schedule.patientId} • {patient?.schoolOrOrg || 'UKS Sekolah'}
+              </div>
+            </div>
+          </div>
         );
       },
     },
     {
-      id: 'dayOfWeek',
-      label: 'Jadwal Minum',
-      width: '16%',
+      id: 'medication',
+      label: 'Obat & Dosis',
+      width: '28%',
       renderCell: schedule => (
-        <Box>
-          <Typography variant='body2' sx={{ fontWeight: 600 }}>
-            {schedule.dayOfWeek || 'Sabtu'}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.25 }}>
+        <div>
+          <div className='font-bold text-slate-900 text-sm'>{schedule.medicationName}</div>
+          <div className='text-xs text-slate-500 mt-0.5'>
+            {schedule.dosage} • {schedule.frequency}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'scheduleTime',
+      label: 'Waktu Minum',
+      width: '18%',
+      renderCell: schedule => (
+        <div>
+          <div className='font-semibold text-slate-800 text-xs sm:text-sm'>
+            {schedule.frequency === 'Harian' || schedule.frequency === 'daily'
+              ? 'Setiap Hari'
+              : schedule.dayOfWeek || 'Sabtu'}
+          </div>
+          <div className='flex gap-1 flex-wrap mt-0.5'>
             {schedule.timeSlots?.length > 0 ? (
               schedule.timeSlots.map((time, idx) => (
-                <Chip
+                <span
                   key={idx}
-                  label={`${time} WIB`}
-                  size='small'
-                  variant='outlined'
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: '0.72rem',
-                    borderColor: 'divider',
-                    bgcolor: 'action.hover',
-                    height: 20,
-                  }}
-                />
+                  className='px-2 py-0.5 rounded-full border border-pink-100 bg-rose-50/50 text-[11px] font-bold text-rose-700'
+                >
+                  {time} WIB
+                </span>
               ))
             ) : (
-              <Typography variant='caption' color='text.secondary'>
-                08:00 WIB
-              </Typography>
+              <span className='text-xs text-slate-400'>08:00 WIB</span>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
       ),
     },
     {
       id: 'todayStatus',
-      label: 'Status Hari Ini',
-      width: '13%',
+      label: 'Status Minum',
+      width: '14%',
       renderCell: schedule => {
         if (schedule.todayStatus === 'COMPLETED') {
           return (
-            <Chip
-              label='Sudah Diminum'
-              size='small'
-              sx={{
-                bgcolor: 'rgba(22, 163, 74, 0.12)',
-                color: '#15803d',
-                fontWeight: 700,
-                fontSize: '0.7rem',
-                height: 22,
-                borderRadius: 1,
-              }}
-            />
-          );
-        }
-        if (schedule.todayStatus === 'PENDING') {
-          return (
-            <Chip
-              label='Belum Diminum'
-              size='small'
-              sx={{
-                bgcolor: 'rgba(245, 158, 11, 0.12)',
-                color: '#b45309',
-                fontWeight: 700,
-                fontSize: '0.7rem',
-                height: 22,
-                borderRadius: 1,
-              }}
-            />
+            <span className='inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold'>
+              <span className='w-1.5 h-1.5 rounded-full bg-emerald-500'></span>
+              Sudah
+            </span>
           );
         }
         return (
-          <Typography variant='caption' color='text.secondary'>
-            -
-          </Typography>
+          <span className='inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold'>
+            <span className='w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse'></span>
+            Belum
+          </span>
         );
       },
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      width: '8%',
-      renderCell: schedule => (
-        <Chip
-          label={schedule.status}
-          size='small'
-          color={schedule.status === 'Aktif' ? 'success' : 'default'}
-        />
-      ),
     },
     {
       id: 'aksi',
@@ -436,86 +385,81 @@ export default function ScheduleManagementView() {
       align: 'right',
       width: '10%',
       renderCell: schedule => (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-          <Tooltip title='Ingatkan Pasien'>
-            <IconButton size='small' color='primary' onClick={() => handleOpenReminder(schedule)}>
-              <BellRing size={16} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='Edit Jadwal'>
-            <IconButton size='small' onClick={() => onOpenEdit(schedule)}>
-              <Edit size={16} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='Hapus Jadwal'>
-            <IconButton size='small' color='error' onClick={() => handleDeleteRequest(schedule.id)}>
-              <Trash2 size={16} />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <div className='flex items-center justify-end gap-1'>
+          <button
+            type='button'
+            title='Ingatkan Pasien'
+            onClick={() => handleOpenReminder(schedule)}
+            className='p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer'
+          >
+            <BellRing size={16} />
+          </button>
+          <button
+            type='button'
+            title='Edit Jadwal'
+            onClick={() => onOpenEdit(schedule)}
+            className='p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer'
+          >
+            <Edit size={16} />
+          </button>
+          <button
+            type='button'
+            title='Hapus Jadwal'
+            onClick={() => handleDeleteRequest(schedule.id)}
+            className='p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer'
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
       ),
     },
   ];
 
   return (
-    <Box>
+    <div>
       <AdminHeader
         title='Manajemen Jadwal Obat'
         subtitle='Tetapkan instruksi dosis, frekuensi, serta jadwal pengingat otomatis untuk setiap pasien.'
       />
 
       {/* Filter Bar */}
-      <Card sx={{ p: 2.5, mb: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
-          }}
-        >
-          <Box
-            sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}
-          >
-            <TextField
-              placeholder='Cari nama obat atau pasien...'
+      <div className='p-4 sm:p-5 mb-6 rounded-2xl sm:rounded-3xl border border-pink-100 bg-white shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'>
+        <div className='flex flex-col sm:flex-row gap-3 flex-1'>
+          <div className='relative flex-1'>
+            <span className='absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400'>
+              <Search size={18} />
+            </span>
+            <input
+              type='text'
+              placeholder='Cari nama obat atau siswi...'
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              size='small'
-              fullWidth
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
+              className='w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-pink-100 bg-slate-50 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all'
             />
-            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 220 } }}>
-              <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-                <MenuItem value='Semua'>Semua Kategori Program</MenuItem>
-                {SCHEDULE_CATEGORIES.map(cat => (
-                  <MenuItem key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+          </div>
 
-          <Button
-            variant='contained'
-            startIcon={<Plus size={18} />}
-            onClick={onOpenAdd}
-            sx={{ width: { xs: '100%', sm: 'auto' } }}
-          >
-            Buat Jadwal Baru
-          </Button>
-        </Box>
-      </Card>
+          <div className='min-w-full sm:min-w-[180px]'>
+            <select
+              value={frequencyFilter}
+              onChange={e => setFrequencyFilter(e.target.value)}
+              className='w-full px-3.5 py-2.5 rounded-xl border border-pink-100 bg-slate-50 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all cursor-pointer'
+            >
+              <option value='Semua'>Semua Frekuensi</option>
+              <option value='Mingguan'>1x Seminggu</option>
+              <option value='Harian'>Harian</option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          type='button'
+          onClick={onOpenAdd}
+          className='inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-sm transition-all cursor-pointer whitespace-nowrap'
+        >
+          <Plus size={18} />
+          <span>Buat Jadwal Baru</span>
+        </button>
+      </div>
 
       {/* Schedule Table & Mobile Card View */}
       <DataTable
@@ -523,201 +467,103 @@ export default function ScheduleManagementView() {
         data={filteredSchedules}
         emptyMessage='Tidak ada jadwal yang ditemukan.'
         renderMobileCard={schedule => {
-          const style =
-            SCHEDULE_CATEGORY_COLORS[schedule.category || ''] || SCHEDULE_CATEGORY_COLORS.default;
+          const patient = patientMap.get(schedule.patientId);
           return (
-            <Card
-              sx={{
-                p: 2,
-                borderRadius: '16px',
-                border: '1px solid #fce7f3',
-                bgcolor: '#ffffff',
-                boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1.5,
-              }}
-            >
-              {/* Header: Medication + Category Chip */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: 1,
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}
-                  >
-                    {schedule.medicationName}
-                  </Typography>
-                  <Typography variant='caption' sx={{ color: '#64748b' }}>
-                    Pasien: <strong>{schedule.patientName}</strong> ({schedule.patientId})
-                  </Typography>
-                </Box>
+            <div className='p-4 rounded-2xl border border-pink-100 bg-white shadow-sm flex flex-col gap-3'>
+              {/* Header: Patient Avatar + Name + Status */}
+              <div className='flex items-center justify-between gap-2'>
+                <div className='flex items-center gap-3 min-w-0'>
+                  <div className='w-10 h-10 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-pink-100 overflow-hidden relative shadow-2xs'>
+                    {patient?.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={patient.avatarUrl}
+                        alt={schedule.patientName}
+                        className='w-full h-full object-cover'
+                      />
+                    ) : (
+                      <span>{schedule.patientName.charAt(0)}</span>
+                    )}
+                  </div>
+                  <div className='min-w-0'>
+                    <h4 className='font-bold text-slate-900 text-sm sm:text-base leading-tight truncate'>
+                      {schedule.patientName}
+                    </h4>
+                    <p className='text-xs text-slate-500 mt-0.5 truncate'>
+                      {schedule.patientId} • {patient?.schoolOrOrg || 'UKS Sekolah'}
+                    </p>
+                  </div>
+                </div>
 
-                <Chip
-                  label={schedule.category}
-                  size='small'
-                  sx={{
-                    bgcolor: style.bg,
-                    color: style.text,
-                    fontWeight: 700,
-                    fontSize: '0.68rem',
-                    height: 22,
-                  }}
-                />
-              </Box>
+                {schedule.todayStatus === 'COMPLETED' ? (
+                  <span className='inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs shrink-0'>
+                    <span className='w-1.5 h-1.5 rounded-full bg-emerald-500'></span>
+                    Sudah
+                  </span>
+                ) : (
+                  <span className='inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-xs shrink-0'>
+                    <span className='w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse'></span>
+                    Belum
+                  </span>
+                )}
+              </div>
 
-              {/* Middle Details Grid */}
-              <Box
-                sx={{
-                  p: 1.25,
-                  borderRadius: '12px',
-                  bgcolor: '#fff5f7',
-                  border: '1px solid #fce7f3',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1,
-                }}
-              >
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <Typography variant='caption' sx={{ color: '#64748b' }}>
-                    Dosis & Frekuensi:
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.8rem' }}
-                  >
+              {/* Middle Details Box */}
+              <div className='p-3 rounded-xl bg-[#fff5f7] border border-pink-100 space-y-1.5 text-xs'>
+                <div className='flex justify-between items-center'>
+                  <span className='text-slate-500'>Nama Obat:</span>
+                  <span className='font-bold text-slate-900'>{schedule.medicationName}</span>
+                </div>
+
+                <div className='flex justify-between items-center'>
+                  <span className='text-slate-500'>Dosis & Aturan:</span>
+                  <span className='font-semibold text-slate-800'>
                     {schedule.dosage} • {schedule.frequency}
-                  </Typography>
-                </Box>
+                  </span>
+                </div>
 
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <Typography variant='caption' sx={{ color: '#64748b' }}>
-                    Hari & Jam Minum:
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.8rem' }}
-                  >
-                    {schedule.dayOfWeek || 'Sabtu'}, {schedule.timeSlots.join(', ')} WIB
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    pt: 0.5,
-                    borderTop: '1px dashed #fce7f3',
-                  }}
-                >
-                  <Typography variant='caption' sx={{ color: '#64748b' }}>
-                    Status Hari Ini:
-                  </Typography>
-                  {schedule.todayStatus === 'COMPLETED' ? (
-                    <Chip
-                      label='Sudah Diminum'
-                      size='small'
-                      sx={{
-                        bgcolor: 'rgba(22, 163, 74, 0.12)',
-                        color: '#15803d',
-                        fontWeight: 700,
-                        fontSize: '0.68rem',
-                        height: 20,
-                      }}
-                    />
-                  ) : schedule.todayStatus === 'PENDING' ? (
-                    <Chip
-                      label='Belum Diminum'
-                      size='small'
-                      sx={{
-                        bgcolor: 'rgba(245, 158, 11, 0.12)',
-                        color: '#b45309',
-                        fontWeight: 700,
-                        fontSize: '0.68rem',
-                        height: 20,
-                      }}
-                    />
-                  ) : (
-                    <Typography variant='caption' color='text.secondary'>
-                      -
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
+                <div className='flex justify-between items-center'>
+                  <span className='text-slate-500'>Waktu Minum:</span>
+                  <span className='font-semibold text-slate-800'>
+                    {schedule.frequency === 'Harian' || schedule.frequency === 'daily'
+                      ? 'Setiap Hari'
+                      : schedule.dayOfWeek || 'Sabtu'}
+                    , {schedule.timeSlots.join(', ')} WIB
+                  </span>
+                </div>
+              </div>
 
               {/* Actions Row */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 1,
-                  pt: 0.5,
-                }}
-              >
-                <Button
-                  size='small'
-                  variant='contained'
-                  startIcon={<BellRing size={14} />}
+              <div className='flex items-center justify-between gap-2 pt-1'>
+                <button
+                  type='button'
                   onClick={() => handleOpenReminder(schedule)}
-                  sx={{
-                    flex: 1,
-                    py: 0.75,
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    bgcolor: '#e11d48',
-                    borderRadius: '9999px',
-                  }}
+                  className='flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 shadow-sm transition-all cursor-pointer'
                 >
-                  Ingatkan Pasien
-                </Button>
+                  <BellRing size={14} />
+                  <span>Ingatkan Pasien</span>
+                </button>
 
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  <IconButton
-                    size='small'
-                    onClick={() => onOpenEdit(schedule)}
-                    sx={{
-                      bgcolor: '#f1f5f9',
-                      color: '#475569',
-                      width: 34,
-                      height: 34,
-                      borderRadius: '10px',
-                      '&:hover': { bgcolor: '#ffe4e6', color: '#e11d48' },
-                    }}
+                <div className='flex gap-1'>
+                  <button
+                    type='button'
                     title='Edit Jadwal'
+                    onClick={() => onOpenEdit(schedule)}
+                    className='p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer'
                   >
                     <Edit size={15} />
-                  </IconButton>
-                  <IconButton
-                    size='small'
-                    color='error'
-                    onClick={() => handleDeleteRequest(schedule.id)}
-                    sx={{
-                      bgcolor: '#fee2e2',
-                      color: '#dc2626',
-                      width: 34,
-                      height: 34,
-                      borderRadius: '10px',
-                      '&:hover': { bgcolor: '#fca5a5' },
-                    }}
+                  </button>
+                  <button
+                    type='button'
                     title='Hapus Jadwal'
+                    onClick={() => handleDeleteRequest(schedule.id)}
+                    className='p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer'
                   >
                     <Trash2 size={15} />
-                  </IconButton>
-                </Box>
-              </Box>
-            </Card>
+                  </button>
+                </div>
+              </div>
+            </div>
           );
         }}
       />
@@ -763,6 +609,6 @@ export default function ScheduleManagementView() {
         severity={toastSeverity}
         onClose={hideToast}
       />
-    </Box>
+    </div>
   );
 }

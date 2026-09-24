@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Menu, X, Heart, LogOut, LayoutDashboard, Sparkles } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useAuth } from '@/src/features/auth';
-import { Avatar, Chip } from '@mui/material';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -74,28 +74,30 @@ export default function Navbar() {
         <div className='hidden lg:flex items-center gap-3'>
           {isAuthenticated && user ? (
             <div className='flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 rounded-full py-1.5 pl-2 pr-3'>
-              <Avatar
-                src={user.avatarUrl}
-                alt={user.name}
-                sx={{ width: 28, height: 28, border: '1.5px solid #e11d48' }}
-              />
+              <div className='relative w-7 h-7 rounded-full overflow-hidden ring-1.5 ring-[#e11d48] shrink-0'>
+                <Image
+                  src={
+                    user.avatarUrl ||
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`
+                  }
+                  alt={user.name}
+                  fill
+                  className='object-cover'
+                  sizes='28px'
+                />
+              </div>
               <div className='flex flex-col text-left'>
                 <div className='flex items-center gap-1.5'>
                   <span className='text-xs font-bold text-slate-800 leading-none truncate max-w-28'>
                     {user.name.split(',')[0]}
                   </span>
-                  <Chip
-                    label={roleLabel}
-                    size='small'
-                    sx={{
-                      height: 16,
-                      fontSize: '0.58rem',
-                      fontWeight: 700,
-                      bgcolor: user.role === 'admin' ? '#e11d48' : '#10b981',
-                      color: 'white',
-                      px: '2px',
-                    }}
-                  />
+                  <span
+                    className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full text-white ${
+                      user.role === 'admin' ? 'bg-[#e11d48]' : 'bg-[#10b981]'
+                    }`}
+                  >
+                    {roleLabel}
+                  </span>
                 </div>
               </div>
 
@@ -173,23 +175,30 @@ export default function Navbar() {
               <div className='flex flex-col gap-2 bg-rose-50/50 p-3.5 rounded-2xl border border-rose-100'>
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
-                    <Avatar src={user.avatarUrl} alt={user.name} sx={{ width: 32, height: 32 }} />
+                    <div className='relative w-8 h-8 rounded-full overflow-hidden ring-1.5 ring-[#e11d48]'>
+                      <Image
+                        src={
+                          user.avatarUrl ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`
+                        }
+                        alt={user.name}
+                        fill
+                        className='object-cover'
+                        sizes='32px'
+                      />
+                    </div>
                     <div>
                       <div className='text-sm font-bold text-slate-800'>{user.name}</div>
                       <div className='text-xs text-slate-500'>{user.email}</div>
                     </div>
                   </div>
-                  <Chip
-                    label={roleLabel}
-                    size='small'
-                    sx={{
-                      height: 18,
-                      fontSize: '0.62rem',
-                      fontWeight: 700,
-                      bgcolor: user.role === 'admin' ? '#e11d48' : '#10b981',
-                      color: 'white',
-                    }}
-                  />
+                  <span
+                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white ${
+                      user.role === 'admin' ? 'bg-[#e11d48]' : 'bg-[#10b981]'
+                    }`}
+                  >
+                    {roleLabel}
+                  </span>
                 </div>
                 <Link
                   href={dashboardHref}

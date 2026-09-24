@@ -1,362 +1,192 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
-import { Box, Typography, Button, Paper, IconButton, Slide, Fade } from '@mui/material'
-import { Smartphone, Download, X, Sparkles } from 'lucide-react'
-import { usePWA } from '@/src/shared/hooks/usePWA'
+import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+import { Smartphone, Download, X, Sparkles } from 'lucide-react';
+import { usePWA } from '@/src/shared/hooks/usePWA';
 import {
   isNotificationSupported,
   getNotificationPermission,
   requestNotificationPermission,
-} from '@/src/shared/utils/notifications'
+} from '@/src/shared/utils/notifications';
 
-const STORAGE_KEY = 'medicore_pwa_banner_dismissed'
+const STORAGE_KEY = 'medicore_pwa_banner_dismissed';
 
 function subscribeDismissed(callback: () => void) {
-  if (typeof window === 'undefined') return () => {}
-  window.addEventListener('storage', callback)
-  return () => window.removeEventListener('storage', callback)
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
 }
 
 function getDismissedSnapshot() {
-  if (typeof window === 'undefined') return true
-  return sessionStorage.getItem(STORAGE_KEY) === 'true'
+  if (typeof window === 'undefined') return true;
+  return sessionStorage.getItem(STORAGE_KEY) === 'true';
 }
 
 function getDismissedServerSnapshot() {
-  return true
+  return true;
 }
 
 export interface PWAInstallBannerProps {
   /**
    * Position placement for the floating toast. Default is 'bottom-right'
    */
-  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'bottom-center'
+  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'bottom-center';
   /**
    * Delay in ms before the toast animates in after mount. Default is 1200ms
    */
-  delayMs?: number
+  delayMs?: number;
   /**
-   * Variant compatibility prop (both inline and floating now render as a refined Toast)
+   * Variant compatibility prop
    */
-  variant?: 'inline' | 'floating'
+  variant?: 'inline' | 'floating';
 }
 
 function subscribeMount() {
-  return () => {}
+  return () => {};
 }
 
 function getMountSnapshot() {
-  return true
+  return true;
 }
 
 function getMountServerSnapshot() {
-  return false
+  return false;
 }
 
 export function PWAInstallBanner({
   position = 'bottom-right',
   delayMs = 1200,
 }: PWAInstallBannerProps = {}) {
-  const { isPWA, isInstallable, promptInstall } = usePWA()
+  const { isPWA, isInstallable, promptInstall } = usePWA();
   const isDismissed = useSyncExternalStore(
     subscribeDismissed,
     getDismissedSnapshot,
-    getDismissedServerSnapshot
-  )
-  const mounted = useSyncExternalStore(
-    subscribeMount,
-    getMountSnapshot,
-    getMountServerSnapshot
-  )
-  const [visible, setVisible] = useState(false)
-  const [localDismissed, setLocalDismissed] = useState(false)
-  const [installing, setInstalling] = useState(false)
+    getDismissedServerSnapshot,
+  );
+  const mounted = useSyncExternalStore(subscribeMount, getMountSnapshot, getMountServerSnapshot);
+  const [visible, setVisible] = useState(false);
+  const [localDismissed, setLocalDismissed] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setVisible(true)
-    }, delayMs)
-    return () => clearTimeout(timer)
-  }, [delayMs])
+      setVisible(true);
+    }, delayMs);
+    return () => clearTimeout(timer);
+  }, [delayMs]);
 
   const handleDismiss = useCallback(() => {
-    setVisible(false)
+    setVisible(false);
     setTimeout(() => {
-      setLocalDismissed(true)
+      setLocalDismissed(true);
       try {
-        sessionStorage.setItem(STORAGE_KEY, 'true')
-        window.dispatchEvent(new Event('storage'))
+        sessionStorage.setItem(STORAGE_KEY, 'true');
+        window.dispatchEvent(new Event('storage'));
       } catch {
         // ignore
       }
-    }, 300)
-  }, [])
+    }, 300);
+  }, []);
 
   const handleInstallClick = async () => {
-    setInstalling(true)
+    setInstalling(true);
     try {
-      const installed = await promptInstall()
+      const installed = await promptInstall();
       if (installed && isNotificationSupported() && getNotificationPermission() === 'default') {
-        await requestNotificationPermission()
+        await requestNotificationPermission();
       }
     } finally {
-      setInstalling(false)
-      handleDismiss()
+      setInstalling(false);
+      handleDismiss();
     }
-  }
+  };
 
   // Do not render if in standalone PWA, dismissed, or not yet mounted
   if (!mounted || isPWA || isDismissed || localDismissed) {
-    return null
+    return null;
   }
 
-  // Positioning style based on prop
-  const getPositionStyles = () => {
+  const getPositionClasses = () => {
     switch (position) {
       case 'bottom-left':
-        return {
-          bottom: { xs: 20, sm: 28 },
-          left: { xs: 16, sm: 28 },
-          right: { xs: 16, sm: 'auto' },
-        }
+        return 'bottom-5 left-4 sm:bottom-7 sm:left-7 right-4 sm:right-auto';
       case 'top-right':
-        return {
-          top: { xs: 20, sm: 28 },
-          right: { xs: 16, sm: 28 },
-          left: { xs: 16, sm: 'auto' },
-        }
+        return 'top-5 right-4 sm:top-7 sm:right-7 left-4 sm:left-auto';
       case 'bottom-center':
-        return {
-          bottom: { xs: 20, sm: 28 },
-          left: { xs: 16, sm: '50%' },
-          right: { xs: 16, sm: 'auto' },
-          transform: { sm: 'translateX(-50%)' },
-        }
+        return 'bottom-5 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto';
       case 'bottom-right':
       default:
-        return {
-          bottom: { xs: 20, sm: 28 },
-          right: { xs: 16, sm: 28 },
-          left: { xs: 16, sm: 'auto' },
-        }
+        return 'bottom-5 right-4 sm:bottom-7 sm:right-7 left-4 sm:left-auto';
     }
-  }
+  };
 
   return (
-    <Slide direction="up" in={visible} mountOnEnter unmountOnExit timeout={400}>
-      <Box
-        sx={{
-          position: 'fixed',
-          ...getPositionStyles(),
-          zIndex: 1400,
-          width: { xs: 'calc(100% - 32px)', sm: 400 },
-          maxWidth: { xs: '100%', sm: 420 },
-        }}
-      >
-        <Fade in={visible} timeout={400}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 2.25 },
-              borderRadius: 2,
-              background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.95) 0%, rgba(14, 165, 233, 0.98) 50%, rgba(56, 189, 248, 0.95) 100%)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255, 255, 255, 0.28)',
-              color: 'white',
-              boxShadow: '0 20px 38px -8px rgba(14, 165, 233, 0.45), 0 8px 18px rgba(0, 0, 0, 0.15)',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              '&:hover': {
-                boxShadow: '0 24px 44px -6px rgba(14, 165, 233, 0.55), 0 10px 22px rgba(0, 0, 0, 0.18)',
-              },
-            }}
+    <div
+      className={`fixed z-[1400] w-[calc(100%-32px)] sm:w-[400px] max-w-full transition-all duration-300 ${getPositionClasses()} ${
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+      }`}
+    >
+      <div className='relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-rose-500 via-rose-600 to-rose-700 text-white shadow-2xl border border-white/20 backdrop-blur-lg'>
+        {/* Subtle background ambient shine */}
+        <div className='absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none blur-xl' />
+
+        <div className='flex items-start justify-between gap-3 relative z-10'>
+          {/* Left: Icon & Text content */}
+          <div className='flex items-start gap-3.5 flex-1 min-w-0'>
+            <div className='w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shrink-0 shadow-sm mt-0.5'>
+              <Smartphone size={20} className='text-white' />
+            </div>
+
+            <div className='flex-1 min-w-0'>
+              <div className='flex items-center gap-2 mb-0.5'>
+                <h4 className='font-extrabold text-sm sm:text-base text-white leading-tight'>
+                  Pasang Fe-Tablet
+                </h4>
+                <span className='inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold uppercase tracking-wider'>
+                  <Sparkles size={10} /> App
+                </span>
+              </div>
+
+              <p className='text-xs text-rose-100 line-clamp-2 leading-relaxed'>
+                Akses cepat jadwal minum TTD & pengingat langsung dari layar utama.
+              </p>
+            </div>
+          </div>
+
+          {/* Close Button Top Right */}
+          <button
+            onClick={handleDismiss}
+            aria-label='Tutup notifikasi instalasi'
+            className='p-1 -mr-1 -mt-1 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors cursor-pointer'
           >
-            {/* Subtle background ambient shine */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: -30,
-                right: -30,
-                width: 110,
-                height: 110,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 70%)',
-                pointerEvents: 'none',
-              }}
-            />
+            <X size={16} />
+          </button>
+        </div>
 
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                gap: 1.5,
-                position: 'relative',
-                zIndex: 1,
-              }}
+        {/* Bottom Actions Row */}
+        <div className='flex items-center justify-end gap-2 mt-4 pt-3 border-t border-white/20 relative z-10'>
+          <button
+            onClick={handleDismiss}
+            className='px-3 py-1.5 rounded-lg text-xs font-semibold text-white/85 hover:text-white hover:bg-white/10 transition-colors cursor-pointer'
+          >
+            Nanti Saja
+          </button>
+
+          {isInstallable && (
+            <button
+              disabled={installing}
+              onClick={handleInstallClick}
+              className='inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-rose-600 hover:bg-rose-50 shadow-md transition-all cursor-pointer disabled:opacity-50'
             >
-              {/* Left: Icon & Text content */}
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.75, flex: 1 }}>
-                <Box
-                  sx={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 2,
-                    bgcolor: 'rgba(255, 255, 255, 0.22)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.08)',
-                    mt: 0.25,
-                  }}
-                >
-                  <Smartphone size={22} className="text-white" />
-                </Box>
-
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: { xs: '0.88rem', sm: '0.94rem' },
-                        letterSpacing: '-0.01em',
-                        color: 'white',
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      Pasang MediCore
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 0.25,
-                        px: 0.75,
-                        py: 0.15,
-                        borderRadius: 1,
-                        bgcolor: 'rgba(255, 255, 255, 0.22)',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.02em',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      <Sparkles size={10} /> App
-                    </Box>
-                  </Box>
-
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'rgba(255, 255, 255, 0.92)',
-                      fontSize: { xs: '0.74rem', sm: '0.78rem' },
-                      lineHeight: 1.35,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    Akses cepat jadwal & pengingat minum obat langsung dari layar utama.
-                  </Typography>
-                </Box>
-              </Box>
-
-              {/* Close Button Top Right */}
-              <IconButton
-                size="small"
-                onClick={handleDismiss}
-                aria-label="Tutup notifikasi instalasi"
-                sx={{
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  p: 0.5,
-                  mt: -0.5,
-                  mr: -0.5,
-                  flexShrink: 0,
-                  '&:hover': {
-                    color: 'white',
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                  },
-                }}
-              >
-                <X size={17} />
-              </IconButton>
-            </Box>
-
-            {/* Bottom Actions Row */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                gap: 1,
-                mt: 1.75,
-                pt: 1.25,
-                borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-              }}
-            >
-              <Button
-                variant="text"
-                size="small"
-                onClick={handleDismiss}
-                sx={{
-                  color: 'rgba(255, 255, 255, 0.85)',
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                  textTransform: 'none',
-                  px: 1.25,
-                  py: 0.4,
-                  minWidth: 'auto',
-                  borderRadius: 1.5,
-                  '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.12)',
-                    color: 'white',
-                  },
-                }}
-              >
-                Nanti Saja
-              </Button>
-
-              {isInstallable ? (
-                <Button
-                  variant="contained"
-                  size="small"
-                  disabled={installing}
-                  onClick={handleInstallClick}
-                  startIcon={<Download size={14} />}
-                  sx={{
-                    bgcolor: 'white',
-                    color: '#0284c7',
-                    fontWeight: 700,
-                    fontSize: '0.78rem',
-                    textTransform: 'none',
-                    px: 1.8,
-                    py: 0.6,
-                    borderRadius: 1.5,
-                    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.14)',
-                    '&:hover': {
-                      bgcolor: '#f8fafc',
-                      color: '#0369a1',
-                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)',
-                    },
-                  }}
-                >
-                  {installing ? 'Memasang...' : 'Pasang Sekarang'}
-                </Button>
-              ) : null}
-            </Box>
-          </Paper>
-        </Fade>
-      </Box>
-    </Slide>
-  )
+              <Download size={13} />
+              <span>{installing ? 'Memasang...' : 'Pasang Sekarang'}</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export const PWAInstallToast = PWAInstallBanner
-export default PWAInstallBanner
+export const PWAInstallToast = PWAInstallBanner;
+export default PWAInstallBanner;
