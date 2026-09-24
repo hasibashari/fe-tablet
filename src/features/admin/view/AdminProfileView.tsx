@@ -22,12 +22,12 @@ export default function AdminProfileView() {
 
   // Profile State
   const [profileData, setProfileData] = useState({
-    name: user?.name || 'Administrator MediCore',
+    name: user?.name || 'dr. Sarah Jenkins, Sp.GK',
     email: user?.email || 'admin@medicore.com',
     phone: user?.phone || '+62 811-2233-4455',
-    title: user?.title || 'Administrator Sistem & Operasional',
-    department: 'Manajemen Sistem & Farmakoterapi',
-    clinicName: 'MediCore Central System',
+    title: user?.schoolOrOrg || 'Fasilitator Kesehatan UKS',
+    department: 'Manajemen Program TTD & Anemia Remaja',
+    clinicName: 'Fe-Tablet Puskesmas / UKS Sekolah',
     roleLabel: 'Administrator',
   });
 

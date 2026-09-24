@@ -8,7 +8,7 @@ interface ArticleDbRow {
   title: string;
   category: string;
   author_name: string | null;
-  published_at: string;
+  published_at: string | Date;
   status: 'Terbit' | 'Draf';
   views: number;
   summary: string;
@@ -52,12 +52,27 @@ export async function getAdminArticlesAction(): Promise<HealthArticle[]> {
         // fallback to lead_paragraph
       }
 
+      let publishDateStr = '2026-09-01';
+      if (typeof r.published_at === 'string') {
+        const d = new Date(r.published_at);
+        publishDateStr =
+          !isNaN(d.getTime()) && r.published_at.includes('-')
+            ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+            : r.published_at;
+      } else if (r.published_at && typeof r.published_at === 'object') {
+        const d =
+          r.published_at instanceof Date ? r.published_at : new Date(String(r.published_at));
+        publishDateStr = !isNaN(d.getTime())
+          ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '2026-09-01';
+      }
+
       result.push({
         id: r.id,
         title: r.title,
         category: r.category as HealthArticle['category'],
         author: r.author_name || 'dr. Sarah Jenkins',
-        publishDate: r.published_at,
+        publishDate: publishDateStr,
         status: r.status as HealthArticle['status'],
         views: Number(r.views) || 0,
         summary: r.summary,
@@ -88,22 +103,23 @@ export async function createAdminArticleAction(data: {
     const newId = `art_${Date.now().toString().slice(-4)}`;
     const today = new Date().toISOString().split('T')[0];
     const defaultImageByCategory: Record<string, string> = {
-      Hipertensi:
+      'Anemia & TTD':
         'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop',
-      Diabetes:
-        'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=1200&auto=format&fit=crop',
-      Nutrisi:
+      'Nutrisi & Gizi':
         'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=1200&auto=format&fit=crop',
+      'Kesehatan Remaja':
+        'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1200&auto=format&fit=crop',
+      'Tips Menstruasi':
+        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1200&auto=format&fit=crop',
+      'Mitos & Fakta':
+        'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?q=80&w=1200&auto=format&fit=crop',
       'Gaya Hidup':
         'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1200&auto=format&fit=crop',
-      Kardiovaskular:
-        'https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?q=80&w=1200&auto=format&fit=crop',
     };
     const finalImageUrl =
       data.imageUrl?.trim() ||
       defaultImageByCategory[data.category] ||
       'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop';
-    const finalLead = data.summary;
     const finalContent = data.content?.trim() || data.summary;
 
     await db.transaction(async client => {
@@ -115,13 +131,13 @@ export async function createAdminArticleAction(data: {
           newId,
           data.title,
           data.summary,
-          finalLead,
+          finalContent,
           finalImageUrl,
           data.readTime,
           data.category,
           data.status || 'Terbit',
           today,
-          data.author || 'dr. Sarah Jenkins, Sp.GK',
+          data.author || 'Tim Ahli Gizi UKS',
         ],
       );
 
@@ -142,7 +158,7 @@ export async function createAdminArticleAction(data: {
       id: newId,
       title: data.title,
       category: data.category as HealthArticle['category'],
-      author: data.author || 'dr. Sarah Jenkins, Sp.GK',
+      author: data.author || 'Tim Ahli Gizi UKS',
       publishDate: today,
       status: (data.status || 'Terbit') as HealthArticle['status'],
       views: 0,
@@ -176,8 +192,9 @@ export async function updateAdminArticleAction(
            status = COALESCE($5, status),
            author_name = COALESCE($6, author_name),
            image_url = COALESCE($7, image_url),
+           lead_paragraph = COALESCE($8, lead_paragraph),
            updated_at = CURRENT_TIMESTAMP
-         WHERE id = $8`,
+         WHERE id = $9`,
         [
           data.title ?? null,
           data.category ?? null,
@@ -186,6 +203,7 @@ export async function updateAdminArticleAction(
           data.status ?? null,
           data.author ?? null,
           data.imageUrl ?? null,
+          data.content ?? null,
           articleId,
         ],
       );

@@ -6,19 +6,18 @@ import { Search, BookOpen, Sparkles, Clock, User, ArrowRight, X } from 'lucide-r
 import { Card } from '@/src/shared/components/ui/Card';
 import { Chip } from '@/src/shared/components/ui/Chip';
 import { Button } from '@/src/shared/components/ui/Button';
+import { MarkdownRenderer } from '@/src/shared/components/markdown';
 import { getArticlesAction } from '../api/educationRepository';
 import { Article } from '../types';
 
 const CATEGORIES = [
   'Semua',
-  'Hipertensi',
-  'Diabetes',
-  'Nutrisi',
-  'Gaya Hidup',
-  'Kardiovaskular',
-  'Anemia',
-  'TTD',
+  'Anemia & TTD',
+  'Nutrisi & Gizi',
+  'Kesehatan Remaja',
+  'Tips Menstruasi',
   'Mitos & Fakta',
+  'Gaya Hidup',
 ];
 
 export default function EducationView() {
@@ -277,21 +276,19 @@ export default function EducationView() {
               <span>{selectedArticle.publishedAt}</span>
             </div>
 
-            <div className='text-xs sm:text-sm text-[#475569] space-y-4 leading-relaxed'>
-              <p className='text-sm sm:text-base font-semibold text-[#1e293b]'>
-                {selectedArticle.summary}
-              </p>
-              <p>
-                Tablet Tambah Darah (TTD) mengandung zat besi fero dan asam folat yang sangat
-                esensial untuk regenerasi sel darah merah baru. Mengonsumsinya secara teratur 1 kali
-                seminggu memastikan cadangan hemoglobin tubuh tetap prima, khususnya saat pubertas
-                dan siklus haid.
-              </p>
-              <p className='p-4 bg-[#fff5f7] rounded-2xl border border-[#fce7f3] text-[#be123c] font-medium leading-relaxed'>
-                💡 <strong>Anjuran Dokter:</strong> Utamakan selalu meminum TTD bersama air putih
-                atau buah bervitamin C tinggi seperti jeruk, jambu biji, atau tomat, dan hindari
-                minum bersama kopi atau teh manis.
-              </p>
+            <div className='text-xs sm:text-sm text-[#475569] leading-relaxed'>
+              {selectedArticle.summary && (
+                <p className='text-sm sm:text-base font-semibold text-[#1e293b] mb-4 pb-3 border-b border-[#fce7f3] leading-relaxed'>
+                  {selectedArticle.summary}
+                </p>
+              )}
+              <MarkdownRenderer
+                content={
+                  selectedArticle.content ||
+                  selectedArticle.leadParagraph ||
+                  selectedArticle.summary
+                }
+              />
             </div>
 
             <div className='mt-6 pt-4 border-t border-[#fce7f3]'>

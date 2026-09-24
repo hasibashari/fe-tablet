@@ -10,43 +10,73 @@ import {
   AdherenceTrendPoint,
 } from '../types';
 
-interface ReminderRow {
+interface ConsumptionLogRow {
   id: string;
-  patient_id?: string;
-  schedule_id?: string | null;
+  user_id: string;
+  schedule_id: string | null;
   title: string;
-  description: string | null;
-  date: string;
-  time: string;
+  category: string;
+  dosage: string | null;
+  scheduled_date: string;
+  scheduled_time: string;
+  taken_at: string | null;
   status: string;
-  type: string;
+  notes: string | null;
 }
 
-interface DailyStatsRow {
-  total: string | number;
-  completed: string | number;
-  pending: string | number;
-  missed: string | number;
-}
-
-export async function getRemindersAction(patientId: string = 'usr_1'): Promise<Reminder[]> {
+export async function getRemindersAction(userId: string = 'usr_1'): Promise<Reminder[]> {
   try {
-    const res = await db.query<ReminderRow>(
-      `SELECT id, title, description, date, time, status, type 
-       FROM reminders 
-       WHERE patient_id = $1 
-       ORDER BY date ASC, time ASC`,
-      [patientId],
+    const res = await db.query<ConsumptionLogRow>(
+      `SELECT id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, notes
+       FROM consumption_logs 
+       WHERE user_id = $1 
+       ORDER BY scheduled_date DESC, scheduled_time ASC`,
+      [userId],
     );
+
+    if (res.rows.length === 0) {
+      // If no logs, generate default schedule reminder
+      const schRes = await db.query<{
+        id: string;
+        tablet_name: string;
+        day_of_week: string;
+        time_slot: string;
+        instructions: string | null;
+      }>(
+        `SELECT id, tablet_name, day_of_week, time_slot, instructions FROM reminder_schedules WHERE user_id = $1 AND status = 'Aktif' LIMIT 1`,
+        [userId],
+      );
+      const sch = schRes.rows[0];
+      const today = new Date().toISOString().split('T')[0];
+
+      return [
+        {
+          id: sch?.id || 'sch_fe_1',
+          title: sch?.tablet_name || 'Tablet Tambah Darah (TTD)',
+          description: sch?.instructions || 'Minum setelah makan malam atau sebelum tidur.',
+          date: today,
+          time: sch?.time_slot || '08:00',
+          status: 'PENDING' as ReminderStatus,
+          type: 'MEDICATION' as ReminderType,
+        },
+      ];
+    }
 
     return res.rows.map(r => ({
       id: r.id,
       title: r.title,
-      description: r.description || undefined,
-      date: r.date,
-      time: r.time,
-      status: r.status as ReminderStatus,
-      type: r.type as ReminderType,
+      description: r.notes || 'Tablet Tambah Darah (1x seminggu)',
+      date:
+        typeof r.scheduled_date === 'string'
+          ? r.scheduled_date
+          : new Date(r.scheduled_date).toISOString().split('T')[0],
+      time: r.scheduled_time,
+      status: (r.status === 'ON_TIME' || r.status === 'LATE'
+        ? 'COMPLETED'
+        : r.status === 'MISSED'
+          ? 'MISSED'
+          : 'PENDING') as ReminderStatus,
+      type: 'MEDICATION' as ReminderType,
     }));
   } catch (error) {
     console.error('Error in getRemindersAction:', error);
@@ -56,25 +86,46 @@ export async function getRemindersAction(patientId: string = 'usr_1'): Promise<R
 
 export async function getRemindersByDateAction(
   dateStr: string,
-  patientId: string = 'usr_1',
+  userId: string = 'usr_1',
 ): Promise<Reminder[]> {
   try {
-    const res = await db.query<ReminderRow>(
-      `SELECT id, title, description, date, time, status, type 
-       FROM reminders 
-       WHERE patient_id = $1 AND date = $2
-       ORDER BY time ASC`,
-      [patientId, dateStr],
+    const res = await db.query<ConsumptionLogRow>(
+      `SELECT id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, notes
+       FROM consumption_logs 
+       WHERE user_id = $1 AND scheduled_date = $2
+       ORDER BY scheduled_time ASC`,
+      [userId, dateStr],
     );
+
+    if (res.rows.length === 0) {
+      return [
+        {
+          id: `rem_${dateStr}`,
+          title: 'Tablet Tambah Darah (TTD)',
+          description: 'Minum setelah makan malam bersama air jeruk atau air putih.',
+          date: dateStr,
+          time: '08:00',
+          status: 'PENDING' as ReminderStatus,
+          type: 'MEDICATION' as ReminderType,
+        },
+      ];
+    }
 
     return res.rows.map(r => ({
       id: r.id,
       title: r.title,
-      description: r.description || undefined,
-      date: r.date,
-      time: r.time,
-      status: r.status as ReminderStatus,
-      type: r.type as ReminderType,
+      description: r.notes || 'Tablet Tambah Darah (1x seminggu)',
+      date:
+        typeof r.scheduled_date === 'string'
+          ? r.scheduled_date
+          : new Date(r.scheduled_date).toISOString().split('T')[0],
+      time: r.scheduled_time,
+      status: (r.status === 'ON_TIME' || r.status === 'LATE'
+        ? 'COMPLETED'
+        : r.status === 'MISSED'
+          ? 'MISSED'
+          : 'PENDING') as ReminderStatus,
+      type: 'MEDICATION' as ReminderType,
     }));
   } catch (error) {
     console.error('Error in getRemindersByDateAction:', error);
@@ -85,71 +136,25 @@ export async function getRemindersByDateAction(
 export async function toggleReminderStatusAction(
   reminderId: string,
   currentStatus: string,
-  patientId: string = 'usr_1',
+  userId: string = 'usr_1',
 ): Promise<{ success: boolean; newStatus: ReminderStatus; error?: string }> {
   try {
     const newStatus: ReminderStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+    const nowTime =
+      new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    const reminderRes = await db.query<ReminderRow>(`SELECT * FROM reminders WHERE id = $1`, [
-      reminderId,
-    ]);
-    const reminder = reminderRes.rows[0];
+    const dbStatus = newStatus === 'COMPLETED' ? 'ON_TIME' : 'PENDING';
 
-    if (!reminder) {
-      return {
-        success: false,
-        newStatus: currentStatus as ReminderStatus,
-        error: 'Reminder tidak ditemukan',
-      };
-    }
-
-    await db.transaction(async client => {
-      // 1. Update reminder status
-      await client.query(`UPDATE reminders SET status = $1 WHERE id = $2`, [newStatus, reminderId]);
-
-      // 2. Sync to consumption_logs
-      const nowTime = new Date().toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      const logId = `log-rem-${reminderId}`;
-
-      if (newStatus === 'COMPLETED') {
-        await client.query(
-          `INSERT INTO consumption_logs (
-            id, patient_id, reminder_id, schedule_id, title, category, scheduled_date, scheduled_time, taken_at, status, taken_by
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'ON_TIME', 'Pasien Mandiri')
-          ON CONFLICT (id) DO UPDATE SET
-            patient_id = EXCLUDED.patient_id,
-            reminder_id = EXCLUDED.reminder_id,
-            schedule_id = EXCLUDED.schedule_id,
-            title = EXCLUDED.title,
-            category = EXCLUDED.category,
-            scheduled_date = EXCLUDED.scheduled_date,
-            scheduled_time = EXCLUDED.scheduled_time,
-            taken_at = EXCLUDED.taken_at,
-            status = EXCLUDED.status,
-            taken_by = EXCLUDED.taken_by`,
-          [
-            logId,
-            patientId,
-            reminderId,
-            reminder.schedule_id || null,
-            reminder.title,
-            reminder.type,
-            reminder.date,
-            reminder.time,
-            nowTime,
-          ],
-        );
-      } else {
-        // Remove or mark pending in consumption log
-        await client.query(`DELETE FROM consumption_logs WHERE id = $1 OR reminder_id = $2`, [
-          logId,
-          reminderId,
-        ]);
-      }
-    });
+    await db.query(
+      `INSERT INTO consumption_logs (
+        id, user_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
+      ) VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', 'TTD', '1 Tablet', $3, '08:00', $4, $5, 'Self')
+      ON CONFLICT (id) DO UPDATE SET
+        status = EXCLUDED.status,
+        taken_at = EXCLUDED.taken_at`,
+      [reminderId, userId, todayStr, newStatus === 'COMPLETED' ? nowTime : null, dbStatus],
+    );
 
     return { success: true, newStatus };
   } catch (error: unknown) {
@@ -160,28 +165,39 @@ export async function toggleReminderStatusAction(
 }
 
 export async function getDailyProgressStatsAction(
-  patientId: string = 'usr_1',
+  userId: string = 'usr_1',
   dateStr?: string,
 ): Promise<DailyProgressStats> {
   try {
     const targetDate = dateStr || new Date().toISOString().split('T')[0];
 
-    const res = await db.query<DailyStatsRow>(
+    const res = await db.query<{
+      total: string | number;
+      completed: string | number;
+      pending: string | number;
+      missed: string | number;
+    }>(
       `SELECT 
          COUNT(*) as total,
-         SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+         SUM(CASE WHEN status IN ('ON_TIME', 'LATE') THEN 1 ELSE 0 END) as completed,
          SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending,
          SUM(CASE WHEN status = 'MISSED' THEN 1 ELSE 0 END) as missed
-       FROM reminders 
-       WHERE patient_id = $1 AND date = $2`,
-      [patientId, targetDate],
+       FROM consumption_logs 
+       WHERE user_id = $1 AND scheduled_date = $2`,
+      [userId, targetDate],
     );
     const stats = res.rows[0];
 
-    const total = Number(stats?.total) || 0;
-    const completed = Number(stats?.completed) || 0;
-    const pending = Number(stats?.pending) || 0;
-    const missed = Number(stats?.missed) || 0;
+    let total = Number(stats?.total) || 0;
+    let completed = Number(stats?.completed) || 0;
+    let pending = Number(stats?.pending) || 0;
+    let missed = Number(stats?.missed) || 0;
+
+    if (total === 0) {
+      total = 1;
+      pending = 1;
+    }
+
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     return {
@@ -193,42 +209,39 @@ export async function getDailyProgressStatsAction(
     };
   } catch (error) {
     console.error('Error in getDailyProgressStatsAction:', error);
-    return { total: 0, completed: 0, pending: 0, missed: 0, percentage: 0 };
+    return { total: 1, completed: 0, pending: 1, missed: 0, percentage: 0 };
   }
 }
 
 interface NudgeRow {
   id: string;
-  patient_id: string;
+  user_id: string;
   sender_id: string | null;
-  sender_name: string;
-  sender_role: string;
+  sender_name?: string;
   schedule_id: string | null;
-  medication_name: string | null;
-  dosage: string | null;
-  time_slot: string | null;
+  title: string;
   message: string;
   channel: string;
   status: string;
   created_at: string;
 }
 
-export async function getActiveNudgeAction(
-  patientId: string = 'usr_1',
-): Promise<AdminNudge | null> {
+export async function getActiveNudgeAction(userId: string = 'usr_1'): Promise<AdminNudge | null> {
   try {
     const res = await db.query<NudgeRow>(
-      `SELECT * FROM admin_nudges 
-       WHERE patient_id = $1 AND status = 'UNREAD' 
-       ORDER BY created_at DESC 
+      `SELECT n.id, n.user_id, n.sender_id, n.schedule_id, n.title, n.message, n.channel, n.status, n.created_at,
+              u.name as sender_name
+       FROM admin_nudges n
+       LEFT JOIN users u ON n.sender_id = u.id
+       WHERE n.user_id = $1 AND n.status = 'UNREAD' 
+       ORDER BY n.created_at DESC 
        LIMIT 1`,
-      [patientId],
+      [userId],
     );
     const row = res.rows[0];
 
     if (!row) return null;
 
-    // Format time, e.g. 14:30 WIB
     const d = new Date(row.created_at);
     const timeStr = !isNaN(d.getTime())
       ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
@@ -236,13 +249,13 @@ export async function getActiveNudgeAction(
 
     return {
       id: row.id,
-      patientId: row.patient_id,
-      senderName: row.sender_name,
-      senderRole: row.sender_role,
+      patientId: row.user_id,
+      senderName: row.sender_name || 'Fasilitator Medis Fe-Tablet',
+      senderRole: 'Fasilitator Kesehatan UKS',
       scheduleId: row.schedule_id || undefined,
-      medicationName: row.medication_name || undefined,
-      dosage: row.dosage || undefined,
-      timeSlot: row.time_slot || undefined,
+      medicationName: 'Tablet Tambah Darah (TTD)',
+      dosage: '1 tablet',
+      timeSlot: '08:00',
       message: row.message,
       channel: (row.channel as 'app' | 'whatsapp') || 'app',
       status: row.status as 'UNREAD' | 'READ' | 'DISMISSED',
@@ -268,7 +281,7 @@ export async function dismissNudgeAction(
 }
 
 export async function getAdherenceTrendAction(
-  patientId: string = 'usr_1',
+  userId: string = 'usr_1',
   days: number = 7,
 ): Promise<AdherenceTrendPoint[]> {
   try {
@@ -283,19 +296,6 @@ export async function getAdherenceTrendAction(
       const dayLabel = d.toLocaleDateString('id-ID', { weekday: 'short' });
       const dateLabel = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 
-      const reminderRes = await db.query<{
-        total: string | number;
-        completed: string | number | null;
-      }>(
-        `SELECT 
-           COUNT(*) as total,
-           SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
-         FROM reminders 
-         WHERE patient_id = $1 AND date = $2`,
-        [patientId, dateStr],
-      );
-      const reminderStats = reminderRes.rows[0];
-
       const logRes = await db.query<{
         total_logs: string | number;
         completed_logs: string | number | null;
@@ -304,29 +304,20 @@ export async function getAdherenceTrendAction(
            COUNT(*) as total_logs,
            SUM(CASE WHEN status IN ('ON_TIME', 'LATE') THEN 1 ELSE 0 END) as completed_logs
          FROM consumption_logs 
-         WHERE patient_id = $1 AND scheduled_date = $2`,
-        [patientId, dateStr],
+         WHERE user_id = $1 AND scheduled_date = $2`,
+        [userId, dateStr],
       );
       const logStats = logRes.rows[0];
 
-      let total = Number(reminderStats?.total) || 0;
-      let completed = Number(reminderStats?.completed) || 0;
-
-      const totalLogs = Number(logStats?.total_logs) || 0;
-      const completedLogs = Number(logStats?.completed_logs) || 0;
-
-      if (total === 0 && totalLogs > 0) {
-        total = totalLogs;
-        completed = completedLogs;
-      }
-
+      const total = Number(logStats?.total_logs) || 0;
+      const completed = Number(logStats?.completed_logs) || 0;
       const adherence = total > 0 ? Math.round((completed / total) * 100) : 100;
 
       result.push({
         day: dayLabel,
         date: dateLabel,
         adherence,
-        totalReminders: total,
+        totalReminders: total || 1,
         completedReminders: completed,
       });
     }

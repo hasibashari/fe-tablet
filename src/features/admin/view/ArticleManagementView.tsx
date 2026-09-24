@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -11,13 +11,10 @@ import {
   InputAdornment,
   Chip,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
-  Grid,
   IconButton,
   Tooltip,
-  Paper,
 } from '@mui/material';
 import {
   Search,
@@ -26,14 +23,11 @@ import {
   Edit,
   Trash2,
   Clock,
-  UploadCloud,
   Image as ImageIcon,
-  X,
-  Sparkles,
 } from 'lucide-react';
 import AdminHeader from '../components/AdminHeader';
+import ArticleFormModal, { ArticleFormData } from '../components/ArticleFormModal';
 import { DataTable, Column } from '@/src/shared/components/DataTable';
-import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog';
 import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog';
 import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
 import { useCrudModal } from '@/src/shared/hooks/useCrudModal';
@@ -45,27 +39,15 @@ import {
   updateAdminArticleAction,
   deleteAdminArticleAction,
 } from '../api/articleRepository';
-import { generateAiArticleDraftAction } from '@/src/lib/gemini';
-import { HealthArticle } from '../types/admin.types';
-
-interface ArticleFormData {
-  title: string;
-  category: 'Hipertensi' | 'Diabetes' | 'Nutrisi' | 'Gaya Hidup' | 'Kardiovaskular';
-  author: string;
-  summary: string;
-  content: string;
-  readTime: string;
-  status: 'Terbit' | 'Draf';
-  imageUrl: string;
-}
+import { HealthArticle, ArticleCategory } from '../types/admin.types';
 
 const initialArticleFormData: ArticleFormData = {
   title: '',
-  category: 'Hipertensi',
-  author: 'dr. Siti Rahma, Sp.PD',
+  category: 'Anemia & TTD',
+  author: 'Tim Ahli Gizi & UKS',
   summary: '',
   content: '',
-  readTime: '5 min read',
+  readTime: '3 min read',
   status: 'Terbit',
   imageUrl: '',
 };
@@ -76,9 +58,8 @@ export default function ArticleManagementView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Semua');
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 1. Hook Form Modal Add/Edit
+  // Hook Form Modal Add/Edit
   const {
     openModal,
     editingId,
@@ -89,7 +70,7 @@ export default function ArticleManagementView() {
     updateFormData,
   } = useCrudModal<ArticleFormData>(initialArticleFormData);
 
-  // 2. Hook Konfirmasi Hapus
+  // Hook Konfirmasi Hapus
   const {
     open: deleteConfirmOpen,
     itemToDelete: articleToDelete,
@@ -97,7 +78,7 @@ export default function ArticleManagementView() {
     closeDelete: handleCloseDelete,
   } = useDeleteConfirm<string>();
 
-  // 3. Hook Feedback Notifikasi
+  // Hook Feedback Notifikasi
   const {
     open: toastOpen,
     message: toastMsg,
@@ -132,7 +113,7 @@ export default function ArticleManagementView() {
   const onOpenEdit = (article: HealthArticle) => {
     handleOpenEdit(article.id, {
       title: article.title,
-      category: article.category,
+      category: (article.category as ArticleCategory) || 'Anemia & TTD',
       author: article.author,
       summary: article.summary || '',
       content: article.content || article.summary || '',
@@ -142,61 +123,8 @@ export default function ArticleManagementView() {
     });
   };
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        showToast('Ukuran gambar maksimal 3MB', 'error');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = uploadEvent => {
-        const base64Url = uploadEvent.target?.result as string;
-        updateFormData({ imageUrl: base64Url });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    updateFormData({ imageUrl: '' });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
   const handlePreviewArticle = (articleId: string) => {
     router.push(`/admin/articles/${articleId}`);
-  };
-
-  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
-
-  const handleGenerateAiArticle = async () => {
-    const topic = formData.title.trim() || formData.category;
-    if (!topic) {
-      showToast('Ketik judul atau pilih kategori artikel terlebih dahulu', 'error');
-      return;
-    }
-
-    setIsGeneratingAi(true);
-    try {
-      const res = await generateAiArticleDraftAction(topic, formData.category);
-      if (res.success && res.data) {
-        updateFormData({
-          title: res.data.title || formData.title,
-          summary: res.data.summary,
-          content: res.data.content,
-          readTime: res.data.readTime,
-        });
-        showToast('Draf artikel berhasil dibuat oleh Gemini AI!', 'success');
-      } else {
-        showToast(res.error || 'Gagal membuat artikel dengan AI', 'error');
-      }
-    } catch {
-      showToast('Terjadi kesalahan saat memanggil AI', 'error');
-    } finally {
-      setIsGeneratingAi(false);
-    }
   };
 
   const handleSaveArticle = async () => {
@@ -231,7 +159,7 @@ export default function ArticleManagementView() {
           title: formData.title,
           category: formData.category,
           author: formData.author,
-          summary: formData.summary || 'Ringkasan artikel edukasi kesehatan untuk pasien.',
+          summary: formData.summary || 'Ringkasan materi edukasi kesehatan remaja putri.',
           content: formData.content,
           readTime: formData.readTime,
           status: formData.status,
@@ -281,7 +209,7 @@ export default function ArticleManagementView() {
       width: '35%',
       renderCell: article => (
         <Box>
-          <Typography variant='subtitle2' color='text.primary'>
+          <Typography variant='subtitle2' color='text.primary' sx={{ fontWeight: 600 }}>
             {article.title}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
@@ -294,8 +222,9 @@ export default function ArticleManagementView() {
               sx={{
                 height: 20,
                 fontSize: '0.7rem',
-                bgcolor: 'primary.light',
-                color: 'primary.dark',
+                bgcolor: '#ffe4e6',
+                color: '#e11d48',
+                fontWeight: 700,
               }}
             />
           </Box>
@@ -381,20 +310,14 @@ export default function ArticleManagementView() {
       sx={{
         p: 2,
         borderRadius: 2.5,
-        border: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
+        border: '1px solid #fce7f3',
+        bgcolor: '#ffffff',
         display: 'flex',
         flexDirection: 'column',
         gap: 1.5,
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: '0 4px 12px rgba(225, 29, 72, 0.08)',
-        },
+        boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
       }}
     >
-      {/* Top row: Image (if any) & Title & Category */}
       <Box sx={{ display: 'flex', gap: 1.5 }}>
         {article.imageUrl ? (
           <Box
@@ -407,7 +330,6 @@ export default function ArticleManagementView() {
               borderRadius: 2,
               objectFit: 'cover',
               flexShrink: 0,
-              bgcolor: 'grey.100',
             }}
           />
         ) : (
@@ -465,13 +387,12 @@ export default function ArticleManagementView() {
         </Box>
       </Box>
 
-      {/* Author & Read Time */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          bgcolor: 'action.hover',
+          bgcolor: '#fafafa',
           borderRadius: 1.5,
           p: 1,
           fontSize: '0.75rem',
@@ -489,15 +410,13 @@ export default function ArticleManagementView() {
         </Typography>
       </Box>
 
-      {/* Action Buttons */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           pt: 1,
-          borderTop: '1px solid',
-          borderColor: 'divider',
+          borderTop: '1px solid #f1f5f9',
         }}
       >
         <Button
@@ -521,11 +440,7 @@ export default function ArticleManagementView() {
           <IconButton
             size='small'
             onClick={() => onOpenEdit(article)}
-            sx={{
-              bgcolor: 'action.hover',
-              color: 'text.primary',
-              '&:hover': { bgcolor: 'action.selected' },
-            }}
+            sx={{ bgcolor: '#f1f5f9', color: '#334155', '&:hover': { bgcolor: '#e2e8f0' } }}
           >
             <Edit size={16} />
           </IconButton>
@@ -533,11 +448,7 @@ export default function ArticleManagementView() {
             size='small'
             color='error'
             onClick={() => handleDeleteRequest(article.id)}
-            sx={{
-              bgcolor: '#fff1f2',
-              color: '#e11d48',
-              '&:hover': { bgcolor: '#ffe4e6' },
-            }}
+            sx={{ bgcolor: '#fff1f2', color: '#e11d48', '&:hover': { bgcolor: '#ffe4e6' } }}
           >
             <Trash2 size={16} />
           </IconButton>
@@ -550,7 +461,7 @@ export default function ArticleManagementView() {
     <Box>
       <AdminHeader
         title='Manajemen Artikel Edukasi'
-        subtitle='Publikasikan konten medis interaktif untuk meningkatkan pengetahuan pasien.'
+        subtitle='Publikasikan konten medis interaktif untuk meningkatkan kepatuhan dan pemahaman siswi.'
       />
 
       {/* Filter Bar */}
@@ -560,8 +471,8 @@ export default function ArticleManagementView() {
           p: { xs: 1.75, sm: 2.5 },
           mb: 3,
           borderRadius: { xs: 2.5, sm: 3 },
-          border: '1px solid',
-          borderColor: 'divider',
+          border: '1px solid #fce7f3',
+          boxShadow: '0 2px 8px rgba(225, 29, 72, 0.03)',
         }}
       >
         <Box
@@ -595,11 +506,12 @@ export default function ArticleManagementView() {
             <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
               <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
                 <MenuItem value='Semua'>Semua Kategori</MenuItem>
-                <MenuItem value='Hipertensi'>Hipertensi</MenuItem>
-                <MenuItem value='Diabetes'>Diabetes</MenuItem>
-                <MenuItem value='Nutrisi'>Nutrisi</MenuItem>
+                <MenuItem value='Anemia & TTD'>Anemia & TTD</MenuItem>
+                <MenuItem value='Nutrisi & Gizi'>Nutrisi & Gizi</MenuItem>
+                <MenuItem value='Kesehatan Remaja'>Kesehatan Remaja</MenuItem>
+                <MenuItem value='Tips Menstruasi'>Tips Menstruasi</MenuItem>
+                <MenuItem value='Mitos & Fakta'>Mitos & Fakta</MenuItem>
                 <MenuItem value='Gaya Hidup'>Gaya Hidup</MenuItem>
-                <MenuItem value='Kardiovaskular'>Kardiovaskular</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -630,301 +542,17 @@ export default function ArticleManagementView() {
         emptyMessage='Tidak ada artikel yang ditemukan.'
       />
 
-      {/* Add/Edit Article Modal */}
-      <CrudModalDialog
+      {/* Add/Edit Article Modal Component */}
+      <ArticleFormModal
         open={openModal}
-        onClose={handleCloseModal}
-        title={editingId ? 'Edit Artikel Edukasi' : 'Tulis Artikel Edukasi Baru'}
-        onSubmit={handleSaveArticle}
-        submitText={editingId ? 'Simpan Perubahan' : 'Publikasikan Artikel'}
+        editingId={editingId}
+        formData={formData}
         submitting={submitting}
-        maxWidth='md'
-      >
-        {/* Cover Image Upload Section */}
-        <Box sx={{ mb: 1 }}>
-          <Typography
-            variant='caption'
-            sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 1 }}
-          >
-            Gambar Cover Artikel
-          </Typography>
-
-          <input
-            type='file'
-            accept='image/*'
-            ref={fileInputRef}
-            style={{ display: 'none' }}
-            onChange={handleImageFileChange}
-          />
-
-          {formData.imageUrl ? (
-            <Paper
-              variant='outlined'
-              sx={{
-                position: 'relative',
-                borderRadius: 2,
-                overflow: 'hidden',
-                bgcolor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <Box
-                component='img'
-                src={formData.imageUrl}
-                alt='Cover Preview'
-                sx={{
-                  width: '100%',
-                  height: { xs: 140, sm: 180 },
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  display: 'flex',
-                  gap: 1,
-                  bgcolor: 'rgba(0, 0, 0, 0.65)',
-                  borderRadius: 2,
-                  p: 0.5,
-                }}
-              >
-                <Button
-                  size='small'
-                  variant='text'
-                  sx={{ color: '#fff', fontSize: '0.75rem', py: 0.25, px: 1, minWidth: 'auto' }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Ganti
-                </Button>
-                <IconButton
-                  size='small'
-                  onClick={handleRemoveImage}
-                  sx={{ color: '#fff', p: 0.25 }}
-                >
-                  <X size={16} />
-                </IconButton>
-              </Box>
-            </Paper>
-          ) : (
-            <Paper
-              variant='outlined'
-              onClick={() => fileInputRef.current?.click()}
-              sx={{
-                p: { xs: 2, sm: 3 },
-                textAlign: 'center',
-                border: '2px dashed',
-                borderColor: '#fecdd3',
-                borderRadius: 2,
-                bgcolor: '#fff1f2',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  bgcolor: '#ffe4e6',
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  bgcolor: '#ffe4e6',
-                  color: 'primary.main',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mx: 'auto',
-                  mb: 1,
-                }}
-              >
-                <UploadCloud size={24} />
-              </Box>
-              <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>
-                Klik untuk upload gambar cover
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                Format didukung: PNG, JPG, WebP (Maksimal 3MB)
-              </Typography>
-            </Paper>
-          )}
-
-          {/* Opsi input URL langsung */}
-          <TextField
-            placeholder='Atau tempelkan tautan URL gambar cover di sini...'
-            fullWidth
-            size='small'
-            value={formData.imageUrl}
-            onChange={e => updateFormData({ imageUrl: e.target.value })}
-            sx={{ mt: 1.5 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <ImageIcon size={16} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        </Box>
-
-        {/* AI Assistant Generator Banner */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 1.75,
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: '#fecdd3',
-            bgcolor: '#fff1f2',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 1.5,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-            <Box
-              sx={{
-                p: 0.75,
-                borderRadius: 1.5,
-                bgcolor: '#ffe4e6',
-                color: 'primary.main',
-                display: 'flex',
-              }}
-            >
-              <Sparkles size={18} />
-            </Box>
-            <Box>
-              <Typography variant='subtitle2' sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.85rem' }}>
-                Asisten Penulis Medis AI
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                Buat judul, ringkasan, dan materi edukasi otomatis dengan Gemini AI
-              </Typography>
-            </Box>
-          </Box>
-
-          <Button
-            size='small'
-            variant='contained'
-            disabled={isGeneratingAi}
-            onClick={handleGenerateAiArticle}
-            startIcon={<Sparkles size={15} />}
-            sx={{
-              borderRadius: 1.5,
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              textTransform: 'none',
-              boxShadow: 'none',
-              bgcolor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.dark' },
-              width: { xs: '100%', sm: 'auto' },
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {isGeneratingAi ? 'Menulis Artikel...' : 'Tulis dengan AI ✨'}
-          </Button>
-        </Paper>
-
-        <TextField
-          label='Judul Artikel'
-          fullWidth
-          size='small'
-          value={formData.title}
-          onChange={e => updateFormData({ title: e.target.value })}
-        />
-
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth size='small'>
-              <InputLabel>Kategori</InputLabel>
-              <Select
-                value={formData.category}
-                label='Kategori'
-                onChange={e =>
-                  updateFormData({
-                    category: e.target.value as ArticleFormData['category'],
-                  })
-                }
-              >
-                <MenuItem value='Hipertensi'>Hipertensi</MenuItem>
-                <MenuItem value='Diabetes'>Diabetes</MenuItem>
-                <MenuItem value='Nutrisi'>Nutrisi</MenuItem>
-                <MenuItem value='Gaya Hidup'>Gaya Hidup</MenuItem>
-                <MenuItem value='Kardiovaskular'>Kardiovaskular</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label='Penulis / Ahli Medis'
-              fullWidth
-              size='small'
-              value={formData.author}
-              onChange={e => updateFormData({ author: e.target.value })}
-            />
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label='Waktu Baca (misal: 5 min read)'
-              fullWidth
-              size='small'
-              value={formData.readTime}
-              onChange={e => updateFormData({ readTime: e.target.value })}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth size='small'>
-              <InputLabel>Status Publikasi</InputLabel>
-              <Select
-                value={formData.status}
-                label='Status Publikasi'
-                onChange={e =>
-                  updateFormData({
-                    status: e.target.value as ArticleFormData['status'],
-                  })
-                }
-              >
-                <MenuItem value='Terbit'>Terbit Langsung</MenuItem>
-                <MenuItem value='Draf'>Simpan Sebagai Draf</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        <TextField
-          label='Ringkasan Singkat (Summary)'
-          multiline
-          rows={2}
-          fullWidth
-          size='small'
-          placeholder='Ringkasan 1-2 kalimat untuk kartu artikel...'
-          value={formData.summary}
-          onChange={e => updateFormData({ summary: e.target.value })}
-        />
-
-        <TextField
-          label='Isi Konten Artikel (Paragraf Edukasi)'
-          multiline
-          rows={6}
-          fullWidth
-          size='small'
-          placeholder='Tuliskan materi edukasi kesehatan secara lengkap di sini. Gunakan baris baru (enter dua kali) untuk memisahkan paragraf baru...'
-          value={formData.content}
-          onChange={e => updateFormData({ content: e.target.value })}
-          helperText='Pisahkan paragraf dengan baris baru (enter 2x) agar tersusun rapi di tampilan user.'
-        />
-      </CrudModalDialog>
+        onClose={handleCloseModal}
+        onSubmit={handleSaveArticle}
+        updateFormData={updateFormData}
+        showToast={showToast}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteDialog

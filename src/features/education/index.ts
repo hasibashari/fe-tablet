@@ -1,5 +1,7 @@
-export { default as EducationView } from './view/EducationView'
-export { default as ArticleCard } from './components/ArticleCard'
-export { default as ArticleDetailView } from './view/ArticleDetailView'
-export * from './types'
-export * from './api/getArticles'
+export { default as EducationView } from './view/EducationView';
+export { default as ArticleCard } from './components/ArticleCard';
+export { default as ArticleDetailView } from './view/ArticleDetailView';
+export * from './types';
+export * from './constants/education.constants';
+export * from './api/educationRepository';
+export * from './api/getArticles';

@@ -18,7 +18,7 @@ interface ArticleDbRow {
   author_id: string | null;
   author_name: string | null;
   author_role: string | null;
-  author_avatarUrl: string | null;
+  author_avatar_url: string | null;
   author_bio: string | null;
   key_takeaways: string | null;
   tags: string | null;
@@ -44,7 +44,7 @@ export async function getArticlesAction(category?: string): Promise<Article[]> {
   try {
     let sql = `
       SELECT id, title, summary, lead_paragraph, image_url, image_caption, read_time, category, status, views, published_at,
-             author_id, author_name, author_role, author_avatarUrl, author_bio, key_takeaways, tags
+             author_id, author_name, author_role, author_avatar_url, author_bio, key_takeaways, tags
       FROM articles
       WHERE status = 'Terbit'
     `;
@@ -64,8 +64,8 @@ export async function getArticlesAction(category?: string): Promise<Article[]> {
       if (r.author_name) {
         author = {
           name: r.author_name,
-          role: r.author_role || '',
-          avatarUrl: r.author_avatarUrl || '',
+          role: r.author_role || 'Tim Medis Fe-Tablet',
+          avatarUrl: r.author_avatar_url || '',
           bio: r.author_bio || undefined,
         };
       }
@@ -75,11 +75,12 @@ export async function getArticlesAction(category?: string): Promise<Article[]> {
         title: r.title,
         summary: r.summary,
         leadParagraph: r.lead_paragraph || undefined,
+        content: r.lead_paragraph || r.summary,
         imageUrl: r.image_url,
         imageCaption: r.image_caption || undefined,
         readTime: r.read_time,
         category: r.category,
-        publishedAt: r.published_at,
+        publishedAt: typeof r.published_at === 'string' ? r.published_at : new Date(r.published_at).toISOString().split('T')[0],
         author,
         keyTakeaways: r.key_takeaways ? JSON.parse(r.key_takeaways) : undefined,
         tags: r.tags ? JSON.parse(r.tags) : undefined,
@@ -98,7 +99,7 @@ export async function getArticleByIdAction(id: string): Promise<Article | null> 
 
     const res = await db.query<ArticleDbRow>(
       `SELECT id, title, summary, lead_paragraph, image_url, image_caption, read_time, category, status, views, published_at,
-              author_id, author_name, author_role, author_avatarUrl, author_bio, key_takeaways, tags
+              author_id, author_name, author_role, author_avatar_url, author_bio, key_takeaways, tags
        FROM articles 
        WHERE id = $1`,
       [id],
@@ -134,8 +135,8 @@ export async function getArticleByIdAction(id: string): Promise<Article | null> 
     if (row.author_name) {
       author = {
         name: row.author_name,
-        role: row.author_role || '',
-        avatarUrl: row.author_avatarUrl || '',
+        role: row.author_role || 'Tim Medis Fe-Tablet',
+        avatarUrl: row.author_avatar_url || '',
         bio: row.author_bio || undefined,
       };
     }
@@ -145,11 +146,12 @@ export async function getArticleByIdAction(id: string): Promise<Article | null> 
       title: row.title,
       summary: row.summary,
       leadParagraph: row.lead_paragraph || undefined,
+      content: row.lead_paragraph || row.summary,
       imageUrl: row.image_url,
       imageCaption: row.image_caption || undefined,
       readTime: row.read_time,
       category: row.category,
-      publishedAt: row.published_at,
+      publishedAt: typeof row.published_at === 'string' ? row.published_at : new Date(row.published_at).toISOString().split('T')[0],
       author,
       sections,
       keyTakeaways: row.key_takeaways ? JSON.parse(row.key_takeaways) : undefined,
@@ -174,7 +176,7 @@ export async function getRelatedArticlesAction(
     const category = current?.category || '';
 
     const res = await db.query<Partial<ArticleDbRow>>(
-      `SELECT id, title, summary, image_url, read_time, category, published_at, author_name, author_avatarUrl
+      `SELECT id, title, summary, image_url, read_time, category, published_at, author_name, author_avatar_url
        FROM articles 
        WHERE id != $1 AND status = 'Terbit'
        ORDER BY CASE WHEN category = $2 THEN 0 ELSE 1 END, published_at DESC
@@ -189,12 +191,17 @@ export async function getRelatedArticlesAction(
       imageUrl: r.image_url || '',
       readTime: r.read_time || '3 min read',
       category: r.category || 'General',
-      publishedAt: r.published_at || '',
+      publishedAt:
+        typeof r.published_at === 'string'
+          ? r.published_at
+          : r.published_at && typeof r.published_at === 'object'
+          ? new Date(String(r.published_at)).toISOString().split('T')[0]
+          : '2026-09-01',
       author: r.author_name
         ? {
             name: r.author_name,
             role: '',
-            avatarUrl: r.author_avatarUrl || '',
+            avatarUrl: r.author_avatar_url || '',
           }
         : undefined,
     }));

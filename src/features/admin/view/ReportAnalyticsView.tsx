@@ -252,47 +252,60 @@ export default function ReportAnalyticsView() {
               Rincian Kepatuhan Konsumsi Harian Pasien
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {reports.map(report => (
-                <Box
-                  key={report.date}
-                  sx={{ pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}
-                >
+              {reports.map((report, idx) => {
+                const dateLabel =
+                  typeof report.date === 'string'
+                    ? report.date
+                    : report.date && typeof report.date === 'object'
+                      ? new Date(String(report.date)).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                        })
+                      : String(report.date || '');
+
+                return (
                   <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 1,
-                      gap: 1,
-                      flexWrap: 'wrap',
-                    }}
+                    key={`${dateLabel}-${idx}`}
+                    sx={{ pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}
                   >
-                    <Typography variant='subtitle2' color='text.primary' sx={{ fontWeight: 600 }}>
-                      {report.date}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.primary'
-                      sx={{ fontWeight: 700, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 1,
+                        gap: 1,
+                        flexWrap: 'wrap',
+                      }}
                     >
-                      {report.adherencePercentage}% ({report.takenCount} diminum,{' '}
-                      {report.missedCount} terlewat)
-                    </Typography>
+                      <Typography variant='subtitle2' color='text.primary' sx={{ fontWeight: 600 }}>
+                        {dateLabel}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='text.primary'
+                        sx={{ fontWeight: 700, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+                      >
+                        {report.adherencePercentage}% ({report.takenCount} diminum,{' '}
+                        {report.missedCount} terlewat)
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant='determinate'
+                      value={report.adherencePercentage}
+                      sx={{
+                        height: 8,
+                        borderRadius: 2,
+                        bgcolor: 'grey.100',
+                        '& .MuiLinearProgress-bar': {
+                          bgcolor:
+                            report.adherencePercentage >= 90 ? 'primary.main' : 'warning.main',
+                        },
+                      }}
+                    />
                   </Box>
-                  <LinearProgress
-                    variant='determinate'
-                    value={report.adherencePercentage}
-                    sx={{
-                      height: 8,
-                      borderRadius: 2,
-                      bgcolor: 'grey.100',
-                      '& .MuiLinearProgress-bar': {
-                        bgcolor: report.adherencePercentage >= 90 ? 'primary.main' : 'warning.main',
-                      },
-                    }}
-                  />
-                </Box>
-              ))}
+                );
+              })}
             </Box>
           </Card>
         </Grid>

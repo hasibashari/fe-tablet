@@ -40,7 +40,6 @@ export default function AdminDashboardView() {
     adherenceRate: 0,
     publishedArticles: 0,
     activePrograms: 0,
-    lowStockProducts: 0,
   });
   const [patients, setPatients] = useState<PatientUser[]>([]);
   const [reports, setReports] = useState<ComplianceReport[]>([]);
@@ -93,8 +92,8 @@ export default function AdminDashboardView() {
     setReminderData({
       patientName: name,
       patientPhone: phone || '0812-3456-7890',
-      medicationName: medicationName || 'Amlodipine Besylate 10mg',
-      dosage: dosage || '1 Tablet',
+      medicationName: medicationName || 'Tablet Tambah Darah (TTD)',
+      dosage: dosage || '1 Tablet (Setelah makan)',
       timeSlot: timeSlot || '08:00 WIB',
     });
     setReminderModalOpen(true);
@@ -313,38 +312,47 @@ export default function AdminDashboardView() {
                   px: { xs: 1, sm: 2 },
                 }}
               >
-                {reports.map(report => (
-                  <Box
-                    key={report.date}
-                    sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
-                  >
-                    <Typography
-                      variant='caption'
-                      color='text.primary'
-                      sx={{ fontWeight: 700, mb: 0.75, fontSize: '0.72rem' }}
-                    >
-                      {report.adherencePercentage.toFixed(0)}%
-                    </Typography>
+                {reports.map((report, idx) => {
+                  const dateLabel =
+                    typeof report.date === 'string'
+                      ? report.date
+                      : report.date && typeof report.date === 'object'
+                      ? new Date(String(report.date)).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+                      : String(report.date || '');
+
+                  return (
                     <Box
-                      sx={{
-                        width: '50%',
-                        maxWidth: 28,
-                        height: `${report.adherencePercentage * 1.3}px`,
-                        bgcolor: report.adherencePercentage >= 90 ? 'primary.main' : 'warning.main',
-                        borderRadius: '4px 4px 0 0',
-                        transition: 'all 0.2s ease',
-                        '&:hover': { opacity: 0.85, transform: 'scaleY(1.02)' },
-                      }}
-                    />
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                      sx={{ mt: 1, fontWeight: 500, fontSize: '0.7rem' }}
+                      key={`${dateLabel}-${idx}`}
+                      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
                     >
-                      {report.date}
-                    </Typography>
-                  </Box>
-                ))}
+                      <Typography
+                        variant='caption'
+                        color='text.primary'
+                        sx={{ fontWeight: 700, mb: 0.75, fontSize: '0.72rem' }}
+                      >
+                        {report.adherencePercentage.toFixed(0)}%
+                      </Typography>
+                      <Box
+                        sx={{
+                          width: '50%',
+                          maxWidth: 28,
+                          height: `${report.adherencePercentage * 1.3}px`,
+                          bgcolor: report.adherencePercentage >= 90 ? 'primary.main' : 'warning.main',
+                          borderRadius: '4px 4px 0 0',
+                          transition: 'all 0.2s ease',
+                          '&:hover': { opacity: 0.85, transform: 'scaleY(1.02)' },
+                        }}
+                      />
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        sx={{ mt: 1, fontWeight: 500, fontSize: '0.7rem' }}
+                      >
+                        {dateLabel}
+                      </Typography>
+                    </Box>
+                  );
+                })}
               </Box>
             </Box>
 

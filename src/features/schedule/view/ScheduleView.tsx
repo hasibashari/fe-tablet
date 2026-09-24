@@ -103,7 +103,6 @@ export default function ScheduleView() {
       time: tempTime,
       frequency: updatedFrequency,
       remind15MinBefore: tempRemind15,
-      nextDate: `${tempDay}, 10 Oktober 2026`,
     }))
     setIsModalOpen(false)
     showToast('Jadwal pengingat berhasil diperbarui! ✨')
@@ -114,6 +113,11 @@ export default function ScheduleView() {
       frequency: updatedFrequency,
       remind15MinBefore: tempRemind15,
     })
+
+    const fresh = await getUserScheduleAction(user?.id)
+    if (fresh) {
+      setSchedule(fresh)
+    }
   }
 
   const showToast = (msg: string) => {
@@ -178,6 +182,11 @@ export default function ScheduleView() {
               <span className="text-xs sm:text-sm font-semibold text-[#475569] mt-2 block">
                 {schedule.tabletName}
               </span>
+              {schedule.instructions && (
+                <p className="text-xs text-[#64748b] mt-2 italic bg-white/80 px-3 py-1.5 rounded-lg border border-rose-100">
+                  💡 {schedule.instructions}
+                </p>
+              )}
             </div>
 
             <div className="mt-5 pt-4 border-t border-rose-200 flex items-center justify-between">

@@ -15,7 +15,8 @@ import {
   recordUserConsumptionAction,
   UserDashboardData,
 } from '../api/userRepository';
-import { MOCK_BUDDY, ConsumptionStatus } from '@/src/shared/mock/feTabletData';
+
+type DashboardConsumptionStatus = 'recorded' | 'missed' | 'pending';
 
 export default function DashboardView() {
   const { user: authUser } = useAuth();
@@ -42,7 +43,7 @@ export default function DashboardView() {
     };
   }, [authUser?.id]);
 
-  const handleStatusChange = async (newStatus: ConsumptionStatus) => {
+  const handleStatusChange = async (newStatus: DashboardConsumptionStatus) => {
     if (!dashboardData) return;
     const userId = authUser?.id || dashboardData.user.id;
     const prevStatus = dashboardData.todayStatus;
@@ -221,7 +222,12 @@ export default function DashboardView() {
           {/* Buddy Streak Card */}
           <section aria-label='Buddy Streak & Komunitas'>
             <BuddyCard
-              buddyData={{ ...MOCK_BUDDY, streakCount: currentUser.streakCount }}
+              buddyData={{
+                buddyName: 'Alya Rahma',
+                buddyavatarUrl:
+                  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+                streakCount: currentUser.streakCount,
+              }}
               userName={currentUser.name.split(' ')[0]}
               useravatarUrl={currentUser.avatarUrl}
             />

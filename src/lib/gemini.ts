@@ -130,16 +130,16 @@ export async function generateAiArticleDraftAction(
     }
 
     const prompt = `
-Buatkan draf artikel edukasi kesehatan lengkap dan menarik untuk aplikasi Fe-Tablet.
+Buatkan draf artikel edukasi kesehatan lengkap dan menarik untuk aplikasi Fe-Tablet (Program Tablet Tambah Darah & Pencegahan Anemia Remaja Putri).
 Topik: "${topic}"
 Kategori: "${category}"
-Target Pembaca: Remaja putri, mahasiswi, dan masyarakat umum.
+Target Pembaca: Siswi sekolah, remaja putri, dan pembina UKS.
 
 Berikan output dalam format JSON valid persis seperti ini (tanpa markdown backtick json di luar):
 {
   "title": "Judul artikel yang menarik dan edukatif",
-  "summary": "Ringkasan 1-2 kalimat pengantar",
-  "content": "Isi artikel lengkap dengan 3-4 paragraf yang dipisahkan baris baru ganda. Berisi penjelasan medis, fakta penting, dan tips praktis.",
+  "summary": "Ringkasan 1-2 kalimat pengantar untuk kartu artikel",
+  "content": "Isi artikel lengkap dalam format Markdown standar. Gunakan ## untuk Sub-Judul, - untuk Poin/List, dan > Tips UKS: untuk highlight kotak tips penting.",
   "readTime": "3 min read"
 }
 `;

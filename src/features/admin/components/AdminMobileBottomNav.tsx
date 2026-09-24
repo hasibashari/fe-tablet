@@ -3,13 +3,13 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, CalendarCheck, BarChart3, Pill } from 'lucide-react'
+import { LayoutDashboard, Users, CalendarCheck, BarChart3, FileText } from 'lucide-react'
 
 const ADMIN_BOTTOM_ITEMS = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'Pasien', href: '/admin/users', icon: Users },
+  { name: 'Siswi', href: '/admin/users', icon: Users },
   { name: 'Jadwal', href: '/admin/schedules', icon: CalendarCheck },
-  { name: 'Obat', href: '/admin/products', icon: Pill },
+  { name: 'Artikel', href: '/admin/articles', icon: FileText },
   { name: 'Laporan', href: '/admin/reports', icon: BarChart3 },
 ]
 

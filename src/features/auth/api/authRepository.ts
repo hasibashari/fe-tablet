@@ -7,19 +7,14 @@ interface UserDbRow {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: 'admin' | 'user';
   phone: string | null;
-  avatarUrl: string | null;
-  title: string | null;
-  age: number | null;
-  gender: string | null;
-  blood_type: string | null;
-  assigned_doctor_id: string | null;
-}
-
-interface DoctorDbRow {
-  id: string;
-  name: string;
+  avatar_url: string | null;
+  gender: 'Perempuan' | 'Laki-laki' | null;
+  friend_code: string | null;
+  school_or_org: string | null;
+  hb_level: number | null;
+  streak_count: number | null;
 }
 
 export async function loginUserAction(
@@ -30,31 +25,40 @@ export async function loginUserAction(
 
     // 1. Check direct email match
     const res = await db.query<UserDbRow>(
-      `SELECT id, name, email, role, phone, avatarUrl, title, age, gender, blood_type, assigned_doctor_id 
-       FROM users WHERE lower(email) = $1`,
+      `SELECT u.id, u.name, u.email, u.role, u.phone, u.avatar_url, u.gender,
+              p.friend_code, p.school_or_org, p.hb_level, p.streak_count
+       FROM users u
+       LEFT JOIN user_profiles p ON u.id = p.user_id
+       WHERE lower(u.email) = $1`,
       [normalizedEmail],
     );
     let row = res.rows[0];
 
-    // 2. If not found by exact email, support roleHint / role keyword fallback
+    // 2. If not found by exact email, support roleHint / keyword fallback
     if (!row) {
       if (normalizedEmail.includes('admin') || credentials.roleHint === 'admin') {
         const adminRes = await db.query<UserDbRow>(
-          `SELECT id, name, email, role, phone, avatarUrl, title, age, gender, blood_type, assigned_doctor_id 
-           FROM users WHERE role = 'admin' LIMIT 1`,
+          `SELECT u.id, u.name, u.email, u.role, u.phone, u.avatar_url, u.gender,
+                  p.friend_code, p.school_or_org, p.hb_level, p.streak_count
+           FROM users u
+           LEFT JOIN user_profiles p ON u.id = p.user_id
+           WHERE u.role = 'admin' LIMIT 1`,
         );
         row = adminRes.rows[0];
       } else if (
-        normalizedEmail.includes('budi') ||
-        normalizedEmail.includes('patient') ||
+        normalizedEmail.includes('sarah') ||
         normalizedEmail.includes('user') ||
-        credentials.roleHint === 'patient'
+        normalizedEmail.includes('budi') ||
+        credentials.roleHint === 'user'
       ) {
-        const patientRes = await db.query<UserDbRow>(
-          `SELECT id, name, email, role, phone, avatarUrl, title, age, gender, blood_type, assigned_doctor_id 
-           FROM users WHERE role = 'patient' LIMIT 1`,
+        const userRes = await db.query<UserDbRow>(
+          `SELECT u.id, u.name, u.email, u.role, u.phone, u.avatar_url, u.gender,
+                  p.friend_code, p.school_or_org, p.hb_level, p.streak_count
+           FROM users u
+           LEFT JOIN user_profiles p ON u.id = p.user_id
+           WHERE u.role = 'user' LIMIT 1`,
         );
-        row = patientRes.rows[0];
+        row = userRes.rows[0];
       }
     }
 
@@ -65,28 +69,18 @@ export async function loginUserAction(
       };
     }
 
-    // Resolve doctor name if patient
-    let doctorName: string | undefined;
-    if (row.assigned_doctor_id) {
-      const docRes = await db.query<DoctorDbRow>(`SELECT name FROM users WHERE id = $1`, [
-        row.assigned_doctor_id,
-      ]);
-      const doc = docRes.rows[0];
-      if (doc) doctorName = doc.name;
-    }
-
     const authUser: AuthUser = {
       id: row.id,
       name: row.name,
       email: row.email,
       role: row.role as UserRole,
       phone: row.phone || undefined,
-      avatarUrl: row.avatarUrl || undefined,
-      title: row.title || undefined,
-      age: row.age || undefined,
-      gender: (row.gender as 'Laki-laki' | 'Perempuan') || undefined,
-      bloodType: row.blood_type || undefined,
-      assignedDoctor: doctorName || row.assigned_doctor_id || undefined,
+      avatarUrl: row.avatar_url || undefined,
+      gender: row.gender || 'Perempuan',
+      friendCode: row.friend_code || undefined,
+      schoolOrOrg: row.school_or_org || undefined,
+      hbLevel: row.hb_level ? Number(row.hb_level) : undefined,
+      streakCount: row.streak_count !== null ? Number(row.streak_count) : 0,
     };
 
     const redirectTo = authUser.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
@@ -101,25 +95,20 @@ export async function quickLoginAction(
   role: UserRole,
 ): Promise<{ success: boolean; user?: AuthUser; redirectTo: string }> {
   try {
-    const targetRoles = role === 'admin' ? ['admin'] : ['user', 'patient'];
+    const targetRole = role === 'admin' ? 'admin' : 'user';
     const res = await db.query<UserDbRow>(
-      `SELECT id, name, email, role, phone, avatarUrl, title, age, gender, blood_type, assigned_doctor_id 
-       FROM users WHERE role = ANY($1) ORDER BY id ASC LIMIT 1`,
-      [targetRoles],
+      `SELECT u.id, u.name, u.email, u.role, u.phone, u.avatar_url, u.gender,
+              p.friend_code, p.school_or_org, p.hb_level, p.streak_count
+       FROM users u
+       LEFT JOIN user_profiles p ON u.id = p.user_id
+       WHERE u.role = $1 
+       ORDER BY u.id ASC LIMIT 1`,
+      [targetRole],
     );
     const row = res.rows[0];
 
     if (!row) {
       throw new Error(`No user found for role ${role}`);
-    }
-
-    let doctorName: string | undefined;
-    if (row.assigned_doctor_id) {
-      const docRes = await db.query<DoctorDbRow>(`SELECT name FROM users WHERE id = $1`, [
-        row.assigned_doctor_id,
-      ]);
-      const doc = docRes.rows[0];
-      if (doc) doctorName = doc.name;
     }
 
     const authUser: AuthUser = {
@@ -128,12 +117,12 @@ export async function quickLoginAction(
       email: row.email,
       role: row.role as UserRole,
       phone: row.phone || undefined,
-      avatarUrl: row.avatarUrl || undefined,
-      title: row.title || undefined,
-      age: row.age || undefined,
-      gender: (row.gender as 'Laki-laki' | 'Perempuan') || undefined,
-      bloodType: row.blood_type || undefined,
-      assignedDoctor: doctorName || undefined,
+      avatarUrl: row.avatar_url || undefined,
+      gender: row.gender || 'Perempuan',
+      friendCode: row.friend_code || undefined,
+      schoolOrOrg: row.school_or_org || undefined,
+      hbLevel: row.hb_level ? Number(row.hb_level) : undefined,
+      streakCount: row.streak_count !== null ? Number(row.streak_count) : 0,
     };
 
     return {
@@ -166,43 +155,52 @@ export async function registerPatientAction(
       return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain.' };
     }
 
-    // Default friendly name from email or input
+    // Default friendly name
     const defaultName =
       data.name?.trim() ||
       normalizedEmail
         .split('@')[0]
         .replace(/[._-]/g, ' ')
         .replace(/\b\w/g, l => l.toUpperCase()) ||
-      'Pengguna MediCore';
+      'Pengguna Fe-Tablet';
 
-    const newId = `PAT-${Date.now().toString().slice(-4)}`;
-    const defaultDoctorRes = await db.query<DoctorDbRow>(
-      `SELECT id, name FROM users WHERE role = 'admin' LIMIT 1`,
-    );
-    const defaultDoctor = defaultDoctorRes.rows[0];
+    const cleanTag = defaultName.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5) || 'USER';
+    const randNum = Math.floor(1000 + Math.random() * 9000);
+    const friendCode = `FE-${cleanTag}-${randNum}`;
 
+    const newId = `usr_${Date.now().toString().slice(-6)}`;
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(defaultName)}`;
 
     await db.transaction(async client => {
+      // 1. Insert into users (role 'user')
       await client.query(
-        `INSERT INTO users (id, name, email, role, phone, gender, age, assigned_doctor_id, avatarUrl)
-         VALUES ($1, $2, $3, 'patient', $4, $5, $6, $7, $8)`,
+        `INSERT INTO users (id, name, email, role, phone, gender, avatar_url)
+         VALUES ($1, $2, $3, 'user', $4, $5, $6)`,
         [
           newId,
           defaultName,
           normalizedEmail,
           data.phone || null,
-          data.gender || 'Laki-laki',
-          data.age || 30,
-          defaultDoctor?.id || null,
+          data.gender || 'Perempuan',
           avatarUrl,
         ],
       );
 
+      // 2. Insert into user_profiles
       await client.query(
-        `INSERT INTO patient_profiles (user_id, risk_level, status, medical_notes, join_date)
-         VALUES ($1, 'Rendah', 'Aktif', 'Pasien baru terdaftar secara mandiri', CURRENT_DATE::text)`,
-        [newId],
+        `INSERT INTO user_profiles (
+          user_id, friend_code, school_or_org, hb_level, hb_status, risk_level, streak_count, level_title, status
+        ) VALUES ($1, $2, $3, 12.4, 'Normal', 'Rendah', 0, 'Pemula Sehat', 'Aktif')`,
+        [newId, friendCode, data.schoolOrOrg || 'SMA Negeri 1 Sehat'],
+      );
+
+      // 3. Create default weekly TTD schedule (Sabtu 08:00)
+      const schId = `sch_${newId}`;
+      await client.query(
+        `INSERT INTO reminder_schedules (
+          id, user_id, tablet_name, dosage, frequency, day_of_week, time_slot, is_enabled, remind_15min_before, instructions, status
+        ) VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', '1 tablet', 'weekly', 'Sabtu', '08:00', true, true, 'Minum setelah sarapan atau sebelum tidur dengan air putih.', 'Aktif')`,
+        [schId, newId],
       );
     });
 
@@ -210,12 +208,14 @@ export async function registerPatientAction(
       id: newId,
       name: defaultName,
       email: normalizedEmail,
-      role: 'patient',
+      role: 'user',
       phone: data.phone || undefined,
-      gender: data.gender || 'Laki-laki',
-      age: data.age || 30,
-      assignedDoctor: defaultDoctor?.name || undefined,
+      gender: data.gender || 'Perempuan',
       avatarUrl: avatarUrl,
+      friendCode: friendCode,
+      schoolOrOrg: data.schoolOrOrg || 'SMA Negeri 1 Sehat',
+      hbLevel: 12.4,
+      streakCount: 0,
     };
 
     return { success: true, user: authUser, redirectTo: '/user/dashboard' };

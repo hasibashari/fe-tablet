@@ -38,8 +38,8 @@ export default function SendReminderModal({
   onClose,
   patientName,
   patientPhone = '0812-3456-7890',
-  medicationName = 'Amlodipine Besylate 10mg',
-  dosage = '1 Tablet',
+  medicationName = 'Tablet Tambah Darah (TTD)',
+  dosage = '1 Tablet (Setelah makan)',
   timeSlot = '08:00 WIB',
   onSendSuccess,
 }: SendReminderModalProps) {
@@ -51,13 +51,13 @@ export default function SendReminderModal({
   const getTemplateContent = (templateKey: string) => {
     switch (templateKey) {
       case 'standard':
-        return `Halo Bpk/Ibu ${patientName}, ini pengingat medis dari Klinik Fe-Tablet untuk mengonsumsi obat ${medicationName} (${dosage}) pada jam ${timeSlot}. Mohon diminum tepat waktu ya! 🌸`
+        return `Halo ${patientName}, ini pengingat dari Pembina UKS / Fe-Tablet untuk minum ${medicationName} (${dosage}) pada jam ${timeSlot}. Jangan lupa diminum setelah makan dengan air putih/jeruk ya! 🌸`
       case 'friendly':
-        return `Halo Bpk/Ibu ${patientName}, menjaga kesehatan adalah investasi terbaik Anda. Jangan lupa minum obat ${medicationName} (${dosage}) hari ini ya! Tetap semangat! 🌸`
+        return `Halo ${patientName}, cegah anemia biar tetap fit dan konsentrasi belajar! Jangan lupa minum ${medicationName} (${dosage}) hari ini ya! Semangat selalu! 🌸`
       case 'urgent':
-        return `PERHATIAN MEDIS: Halo Bpk/Ibu ${patientName}, tim kesehatan mencatat jadwal obat ${medicationName} Anda terlewat. Segera konsumsi obat Anda dan hubungi klinik jika ada kendala.`
+        return `PENGINGAT PENTING: Halo ${patientName}, jadwal minum ${medicationName} kamu minggu ini belum tercatat. Yuk segera minum suplemen TTD kamu dan catat di aplikasi ya!`
       default:
-        return `Halo Bpk/Ibu ${patientName}, mohon konsumsi obat ${medicationName} (${dosage}) sesuai petunjuk pengobatan Anda.`
+        return `Halo ${patientName}, jangan lupa minum ${medicationName} (${dosage}) sesuai jadwal suplementasi kamu ya!`
     }
   }
 

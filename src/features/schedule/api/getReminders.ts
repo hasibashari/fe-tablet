@@ -1,4 +1,4 @@
-import { Reminder, AdminNudge, AdherenceTrendPoint } from '../types'
+import { Reminder, AdminNudge, AdherenceTrendPoint } from '../types';
 import {
   getRemindersAction,
   getRemindersByDateAction,
@@ -7,51 +7,47 @@ import {
   getActiveNudgeAction,
   dismissNudgeAction,
   getAdherenceTrendAction,
-} from './scheduleRepository'
+} from './scheduleRepository';
 
 export const getReminders = async (patientId: string = 'usr_1'): Promise<Reminder[]> => {
-  return await getRemindersAction(patientId)
-}
+  return await getRemindersAction(patientId);
+};
 
 export const getRemindersByDate = async (
   dateStr: string,
-  patientId: string = 'usr_1'
+  patientId: string = 'usr_1',
 ): Promise<Reminder[]> => {
-  return await getRemindersByDateAction(dateStr, patientId)
-}
+  return await getRemindersByDateAction(dateStr, patientId);
+};
 
 export const getTodayReminders = async (patientId: string = 'usr_1'): Promise<Reminder[]> => {
-  const today = new Date().toISOString().split('T')[0]
-  return await getRemindersByDateAction(today, patientId)
-}
+  const today = new Date().toISOString().split('T')[0];
+  return await getRemindersByDateAction(today, patientId);
+};
 
 export const toggleReminderStatus = async (
   reminderId: string,
   currentStatus: string,
-  patientId: string = 'usr_1'
-) => {
-  return await toggleReminderStatusAction(reminderId, currentStatus, patientId)
-}
-
-export const getDailyProgressStats = async (
   patientId: string = 'usr_1',
-  dateStr?: string
 ) => {
-  return await getDailyProgressStatsAction(patientId, dateStr)
-}
+  return await toggleReminderStatusAction(reminderId, currentStatus, patientId);
+};
+
+export const getDailyProgressStats = async (patientId: string = 'usr_1', dateStr?: string) => {
+  return await getDailyProgressStatsAction(patientId, dateStr);
+};
 
 export const getActiveNudge = async (patientId: string = 'usr_1'): Promise<AdminNudge | null> => {
-  return await getActiveNudgeAction(patientId)
-}
+  return await getActiveNudgeAction(patientId);
+};
 
 export const dismissNudge = async (nudgeId: string) => {
-  return await dismissNudgeAction(nudgeId)
-}
+  return await dismissNudgeAction(nudgeId);
+};
 
 export const getAdherenceTrend = async (
   patientId: string = 'usr_1',
-  days: number = 7
+  days: number = 7,
 ): Promise<AdherenceTrendPoint[]> => {
-  return await getAdherenceTrendAction(patientId, days)
-}
-
+  return await getAdherenceTrendAction(patientId, days);
+};

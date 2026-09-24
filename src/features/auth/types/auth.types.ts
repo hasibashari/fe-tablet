@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'user' | 'patient';
+export type UserRole = 'admin' | 'user';
 
 export interface AuthUser {
   id: string;
@@ -6,12 +6,12 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   avatarUrl?: string;
-  title?: string;
   phone?: string;
-  age?: number;
-  gender?: 'Laki-laki' | 'Perempuan';
-  assignedDoctor?: string;
-  bloodType?: string;
+  gender?: 'Perempuan' | 'Laki-laki';
+  schoolOrOrg?: string;
+  friendCode?: string;
+  hbLevel?: number;
+  streakCount?: number;
 }
 
 export interface LoginCredentials {
@@ -25,8 +25,8 @@ export interface RegisterCredentials {
   password?: string;
   name?: string;
   phone?: string;
-  gender?: 'Laki-laki' | 'Perempuan';
-  age?: number;
+  gender?: 'Perempuan' | 'Laki-laki';
+  schoolOrOrg?: string;
 }
 
 export interface AuthState {

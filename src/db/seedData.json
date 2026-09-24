@@ -1,594 +1,504 @@
 {
   "users": [
     {
-      "id": "usr_admin_1",
+      "id": "adm_1",
       "name": "dr. Sarah Jenkins, Sp.GK",
-      "email": "sarah.jenkins@hospital.com",
-      "passwordHash": null,
+      "email": "admin@medicore.com",
+      "passwordHash": "$2a$10$wNqH.J6uF.r7N7ZqK2K4ZeW6h2qPqP7aW8fV7n1j3lK9mOpQrStUu",
       "role": "admin",
-      "phone": "+62 811-2233-4455",
+      "phone": "0811-2233-4455",
       "avatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
-      "title": "Clinical Nutritionist & Wellness Specialist",
-      "age": 38,
       "gender": "Perempuan",
-      "dateOfBirth": "1988-03-12",
-      "bloodType": "A+",
-      "height": 165,
-      "weight": 56,
-      "assignedDoctorId": null
+      "dateOfBirth": "1988-03-12"
     },
     {
-      "id": "usr_admin_2",
+      "id": "adm_2",
       "name": "dr. Siti Rahma, Sp.PD",
-      "email": "siti.rahma@hospital.com",
+      "email": "siti.rahma@fe-tablet.com",
       "passwordHash": null,
       "role": "admin",
-      "phone": "+62 812-9988-7766",
+      "phone": "0812-9988-7766",
       "avatarUrl": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
-      "title": "Spesialis Penyakit Dalam",
-      "age": 45,
       "gender": "Perempuan",
-      "dateOfBirth": "1981-08-20",
-      "bloodType": "B+",
-      "height": 160,
-      "weight": 58,
-      "assignedDoctorId": null
-    },
-    {
-      "id": "usr_admin_3",
-      "name": "dr. Michael Chen, Sp.JP",
-      "email": "michael.chen@hospital.com",
-      "passwordHash": null,
-      "role": "admin",
-      "phone": "+62 813-4455-6677",
-      "avatarUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop",
-      "title": "Spesialis Jantung & Pembuluh Darah",
-      "age": 42,
-      "gender": "Laki-laki",
-      "dateOfBirth": "1984-11-14",
-      "bloodType": "O+",
-      "height": 175,
-      "weight": 72,
-      "assignedDoctorId": null
+      "dateOfBirth": "1981-08-20"
     },
     {
       "id": "usr_1",
-      "name": "Budi Santoso",
-      "email": "budi.santoso@email.com",
-      "passwordHash": null,
-      "role": "patient",
+      "name": "Sarah Azzahra",
+      "email": "sarah@email.com",
+      "passwordHash": "$2a$10$wNqH.J6uF.r7N7ZqK2K4ZeW6h2qPqP7aW8fV7n1j3lK9mOpQrStUu",
+      "role": "user",
       "phone": "0812-3456-7890",
-      "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi",
-      "title": null,
-      "age": 58,
-      "gender": "Laki-laki",
-      "dateOfBirth": "1968-05-15",
-      "bloodType": "O+",
-      "height": 170,
-      "weight": 70,
-      "assignedDoctorId": "usr_admin_2"
-    },
-    {
-      "id": "PAT-002",
-      "name": "Siti Aminah",
-      "email": "siti.aminah@email.com",
-      "passwordHash": null,
-      "role": "patient",
-      "phone": "0813-9876-5432",
-      "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
-      "title": null,
-      "age": 62,
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
       "gender": "Perempuan",
-      "dateOfBirth": "1964-02-10",
-      "bloodType": "B+",
-      "height": 155,
-      "weight": 64,
-      "assignedDoctorId": "usr_admin_3"
+      "dateOfBirth": "2008-04-12"
     },
     {
-      "id": "PAT-003",
-      "name": "Hendra Gunawan",
-      "email": "hendra.g@email.com",
+      "id": "usr_2",
+      "name": "Alya Safitri",
+      "email": "alya@email.com",
       "passwordHash": null,
-      "role": "patient",
-      "phone": "0857-1122-3344",
-      "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Hendra",
-      "title": null,
-      "age": 45,
+      "role": "user",
+      "phone": "0813-8899-1122",
+      "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+      "gender": "Perempuan",
+      "dateOfBirth": "2008-07-24"
+    },
+    {
+      "id": "usr_3",
+      "name": "Nadia Putri",
+      "email": "nadia@email.com",
+      "passwordHash": null,
+      "role": "user",
+      "phone": "0812-7766-5544",
+      "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+      "gender": "Perempuan",
+      "dateOfBirth": "2008-01-19"
+    },
+    {
+      "id": "usr_4",
+      "name": "Budi Santoso",
+      "email": "budi@medicore.com",
+      "passwordHash": "$2a$10$wNqH.J6uF.r7N7ZqK2K4ZeW6h2qPqP7aW8fV7n1j3lK9mOpQrStUu",
+      "role": "user",
+      "phone": "0812-3456-7890",
+      "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300",
       "gender": "Laki-laki",
-      "dateOfBirth": "1981-09-04",
-      "bloodType": "A+",
-      "height": 172,
-      "weight": 78,
-      "assignedDoctorId": "usr_admin_2"
+      "dateOfBirth": "1998-05-15"
     }
   ],
-  "patientProfiles": [
+  "userProfiles": [
     {
       "userId": "usr_1",
-      "riskLevel": "Tinggi",
-      "status": "Aktif",
-      "medicalNotes": "Pasien hipertensi derajat 2, butuh pengawasan pola konsumsi garam.",
-      "joinDate": "2025-01-12"
-    },
-    {
-      "userId": "PAT-002",
-      "riskLevel": "Sedang",
-      "status": "Aktif",
-      "medicalNotes": "Diabetes Melitus Tipe 2 teratur minum metformin.",
-      "joinDate": "2025-02-28"
-    },
-    {
-      "userId": "PAT-003",
+      "friendCode": "FE-SARAH-9901",
+      "schoolOrOrg": "SMA Negeri 1 Sehat",
+      "hbLevel": 12.4,
+      "hbStatus": "Normal",
       "riskLevel": "Rendah",
+      "height": 158.0,
+      "weight": 48.0,
+      "bloodType": "O+",
+      "streakCount": 6,
+      "levelTitle": "Super Consistent (Level 3)",
       "status": "Aktif",
-      "medicalNotes": "Pemeriksaan rutin pasca rawat jalan.",
-      "joinDate": "2025-03-15"
+      "notes": "Rutin minum TTD setiap Sabtu pagi dengan jus jeruk."
+    },
+    {
+      "userId": "usr_2",
+      "friendCode": "FE-ALYA-2026",
+      "schoolOrOrg": "SMA Negeri 1 Sehat",
+      "hbLevel": 12.1,
+      "hbStatus": "Normal",
+      "riskLevel": "Rendah",
+      "height": 160.0,
+      "weight": 50.0,
+      "bloodType": "A+",
+      "streakCount": 6,
+      "levelTitle": "Super Consistent (Level 3)",
+      "status": "Aktif",
+      "notes": "Buddy utama Sarah. Saling mengingatkan setiap akhir pekan."
+    },
+    {
+      "userId": "usr_3",
+      "friendCode": "FE-NADIA-7712",
+      "schoolOrOrg": "SMA Negeri 1 Sehat",
+      "hbLevel": 10.8,
+      "hbStatus": "Anemia Ringan",
+      "riskLevel": "Sedang",
+      "height": 155.0,
+      "weight": 45.0,
+      "bloodType": "B+",
+      "streakCount": 3,
+      "levelTitle": "Konsisten Berkembang (Level 2)",
+      "status": "Aktif",
+      "notes": "Kadar Hb 10.8 g/dL, dalam pendampingan konsumsi rutin."
+    },
+    {
+      "userId": "usr_4",
+      "friendCode": "FE-BUDI-1004",
+      "schoolOrOrg": "Komunitas Sahabat Darah",
+      "hbLevel": 13.5,
+      "hbStatus": "Normal",
+      "riskLevel": "Rendah",
+      "height": 170.0,
+      "weight": 68.0,
+      "bloodType": "O+",
+      "streakCount": 4,
+      "levelTitle": "Konsisten Berkembang (Level 2)",
+      "status": "Aktif",
+      "notes": "Pengguna portal mandiri."
     }
   ],
   "products": [
     {
-      "id": "PRD-001",
-      "name": "Amlodipine 5mg",
-      "category": "Obat Resep",
-      "sku": "MED-AML-005",
-      "stock": 120,
+      "id": "prod_1",
+      "name": "Tablet Tambah Darah (Sulfas Ferosus 200mg)",
+      "category": "Suplemen TTD",
+      "sku": "TTD-SF-200",
+      "stock": 450,
       "unit": "Tablet",
-      "price": 15000,
+      "price": 0.0,
       "status": "Tersedia",
-      "description": "Obat antihipertensi golongan calcium channel blocker."
+      "description": "Suplemen zat besi program Kemenkes RI untuk pencegahan anemia pada remaja putri. Mengandung 60mg elemental iron dan 400mcg asam folat."
     },
     {
-      "id": "PRD-002",
-      "name": "Metformin 500mg",
-      "category": "Obat Resep",
-      "sku": "MED-MET-500",
-      "stock": 45,
+      "id": "prod_2",
+      "name": "Ferrous Fumarate + Vitamin C 100mg",
+      "category": "Suplemen TTD",
+      "sku": "TTD-FF-VITC",
+      "stock": 180,
       "unit": "Tablet",
-      "price": 18000,
+      "price": 15000.0,
       "status": "Tersedia",
-      "description": "Obat antidiabetes oral lini pertama untuk DM Tipe 2."
+      "description": "Formulasi zat besi organik ramah lambung dengan tambahan Vitamin C untuk memaksimalkan absorpsi zat besi di usus halus."
     },
     {
-      "id": "PRD-003",
-      "name": "Vitamin D3 1000 IU",
-      "category": "Suplemen",
-      "sku": "SUP-VD3-100",
+      "id": "prod_3",
+      "name": "Vitamin C 500mg Strip Booster",
+      "category": "Suplemen TTD",
+      "sku": "VIT-C-500",
       "stock": 8,
-      "unit": "Botol (30 Kapsul)",
-      "price": 85000,
+      "unit": "Strip",
+      "price": 12000.0,
       "status": "Stok Menipis",
-      "description": "Suplemen pendukung imun dan kesehatan tulang."
-    },
-    {
-      "id": "PRD-004",
-      "name": "Tensimeter Digital Omron HEM-7120",
-      "category": "Alat Kesehatan",
-      "sku": "ALK-TEN-001",
-      "stock": 15,
-      "unit": "Unit",
-      "price": 450000,
-      "status": "Tersedia",
-      "description": "Alat pengukur tekanan darah digital lengan atas yang akurat."
-    },
-    {
-      "id": "PRD-005",
-      "name": "Aspirin 80mg Cardioprotective",
-      "category": "Obat Resep",
-      "sku": "MED-ASP-080",
-      "stock": 90,
-      "unit": "Strip (10 Tablet)",
-      "price": 25000,
-      "status": "Tersedia",
-      "description": "Antiplatelet untuk prevensi sekunder kardiovaskular."
+      "description": "Pendamping konsumsi TTD untuk mempercepat penyerapan zat besi non-heme."
     }
   ],
-  "medicationSchedules": [
+  "reminderSchedules": [
     {
-      "id": "SCH-001",
-      "patientId": "usr_1",
-      "productId": "PRD-001",
-      "medicationName": "Amlodipine 5mg",
-      "dosage": "1 Tablet (5mg)",
-      "frequency": "1x sehari",
-      "startDate": "2025-01-15",
-      "endDate": "2025-07-15",
-      "status": "Aktif",
-      "category": "Obat Resep",
-      "instructions": "Diminum pagi hari sesudah sarapan.",
-      "timeSlots": [
-        "08:00"
-      ]
+      "id": "sch_fe_1",
+      "userId": "usr_1",
+      "productId": "prod_1",
+      "tabletName": "Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)",
+      "dosage": "1 tablet",
+      "frequency": "weekly",
+      "dayOfWeek": "Sabtu",
+      "timeSlot": "08:00",
+      "isEnabled": true,
+      "remind15MinBefore": true,
+      "instructions": "Minum setelah sarapan atau sebelum tidur bersama segelas air jeruk/air putih.",
+      "status": "Aktif"
     },
     {
-      "id": "SCH-002",
-      "patientId": "usr_1",
-      "productId": "PRD-003",
-      "medicationName": "Vitamin D3 & Omega-3",
-      "dosage": "1 Kapsul Lunak",
-      "frequency": "1x sehari",
-      "startDate": "2025-01-15",
-      "endDate": "2025-12-31",
-      "status": "Aktif",
-      "category": "Suplemen",
-      "instructions": "Diminum siang hari bersama makanan berlemak baik.",
-      "timeSlots": [
-        "12:00"
-      ]
+      "id": "sch_fe_2",
+      "userId": "usr_2",
+      "productId": "prod_1",
+      "tabletName": "Tablet Tambah Darah (TTD)",
+      "dosage": "1 tablet",
+      "frequency": "weekly",
+      "dayOfWeek": "Sabtu",
+      "timeSlot": "08:00",
+      "isEnabled": true,
+      "remind15MinBefore": true,
+      "instructions": "Minum setelah makan malam.",
+      "status": "Aktif"
     },
     {
-      "id": "SCH-003",
-      "patientId": "usr_1",
-      "productId": null,
-      "medicationName": "Cek Tensi Darah Mandiri",
-      "dosage": "1 Kali Pengukuran",
-      "frequency": "1x sehari",
-      "startDate": "2025-01-15",
-      "endDate": "2025-12-31",
-      "status": "Aktif",
-      "category": "Aktivitas Medis",
-      "instructions": "Gunakan tensimeter di lengan kiri dalam kondisi tenang.",
-      "timeSlots": [
-        "15:00"
-      ]
-    }
-  ],
-  "reminders": [
-    {
-      "id": "rem_1",
-      "patientId": "usr_1",
-      "scheduleId": "SCH-001",
-      "title": "Obat Hipertensi (Amlodipine 5mg)",
-      "description": "Diminum sesudah makan pagi",
-      "offsetDays": 0,
-      "time": "08:00",
-      "status": "COMPLETED",
-      "type": "MEDICATION"
+      "id": "sch_fe_3",
+      "userId": "usr_3",
+      "productId": "prod_2",
+      "tabletName": "Ferrous Fumarate + Vit C",
+      "dosage": "1 tablet",
+      "frequency": "weekly",
+      "dayOfWeek": "Sabtu",
+      "timeSlot": "08:30",
+      "isEnabled": true,
+      "remind15MinBefore": true,
+      "instructions": "Hindari konsumsi bersama teh atau susu.",
+      "status": "Aktif"
     },
     {
-      "id": "rem_2",
-      "patientId": "usr_1",
-      "scheduleId": "SCH-002",
-      "title": "Vitamin D3 & Omega-3",
-      "description": "Suplemen harian pendukung imun",
-      "offsetDays": 0,
-      "time": "12:00",
-      "status": "PENDING",
-      "type": "MEDICATION"
-    },
-    {
-      "id": "rem_3",
-      "patientId": "usr_1",
-      "scheduleId": "SCH-003",
-      "title": "Cek Tensi Darah Mandiri",
-      "description": "Gunakan tensimeter di lengan kiri",
-      "offsetDays": 0,
-      "time": "15:00",
-      "status": "PENDING",
-      "type": "CHECKUP"
-    },
-    {
-      "id": "rem_4",
-      "patientId": "usr_1",
-      "scheduleId": null,
-      "title": "Obat Kolesterol (Simvastatin)",
-      "description": "Diminum sebelum tidur malam",
-      "offsetDays": 0,
-      "time": "21:00",
-      "status": "PENDING",
-      "type": "MEDICATION"
-    },
-    {
-      "id": "rem_5",
-      "patientId": "usr_1",
-      "scheduleId": "SCH-001",
-      "title": "Obat Hipertensi (Amlodipine 5mg)",
-      "description": "Diminum sesudah sarapan",
-      "offsetDays": -1,
-      "time": "08:00",
-      "status": "COMPLETED",
-      "type": "MEDICATION"
-    },
-    {
-      "id": "rem_6",
-      "patientId": "usr_1",
-      "scheduleId": null,
-      "title": "Jalan Santai 30 Menit",
-      "description": "Aktivitas fisik ringan sore hari",
-      "offsetDays": -1,
-      "time": "16:00",
-      "status": "MISSED",
-      "type": "EXERCISE"
-    },
-    {
-      "id": "rem_7",
-      "patientId": "usr_1",
-      "scheduleId": "SCH-001",
-      "title": "Obat Hipertensi (Amlodipine 5mg)",
-      "description": "Diminum sesudah sarapan pagi",
-      "offsetDays": 1,
-      "time": "08:00",
-      "status": "PENDING",
-      "type": "MEDICATION"
-    },
-    {
-      "id": "rem_8",
-      "patientId": "usr_1",
-      "scheduleId": null,
-      "title": "Konsultasi Dokter Spesialis",
-      "description": "Klinik Medika Utama - Lantai 2",
-      "offsetDays": 1,
-      "time": "10:30",
-      "status": "PENDING",
-      "type": "CHECKUP"
-    },
-    {
-      "id": "rem_9",
-      "patientId": "usr_1",
-      "scheduleId": null,
-      "title": "Fisioterapi Bahu & Peregangan",
-      "description": "Latihan rutin 45 menit",
-      "offsetDays": 2,
-      "time": "16:00",
-      "status": "PENDING",
-      "type": "EXERCISE"
+      "id": "sch_fe_4",
+      "userId": "usr_4",
+      "productId": "prod_1",
+      "tabletName": "Tablet Tambah Darah (TTD)",
+      "dosage": "1 tablet",
+      "frequency": "weekly",
+      "dayOfWeek": "Minggu",
+      "timeSlot": "08:00",
+      "isEnabled": true,
+      "remind15MinBefore": true,
+      "instructions": "Konsumsi rutin akhir pekan.",
+      "status": "Aktif"
     }
   ],
   "consumptionLogs": [
     {
-      "id": "log-today-1",
-      "patientId": "usr_1",
-      "reminderId": "rem_1",
-      "scheduleId": "SCH-001",
-      "title": "Obat Hipertensi (Amlodipine 5mg)",
-      "category": "MEDICATION",
-      "dosage": "1 Tablet (5mg)",
-      "offsetDays": 0,
+      "id": "log_wk_1",
+      "userId": "usr_1",
+      "scheduleId": "sch_fe_1",
+      "title": "Tablet Tambah Darah (TTD)",
+      "category": "TTD",
+      "dosage": "1 Tablet",
+      "scheduledDate": "2026-09-05",
       "scheduledTime": "08:00",
-      "takenAt": "08:05",
+      "takenAt": "08:15 WIB",
       "status": "ON_TIME",
-      "notes": "Diminum sesudah sarapan bubur ayam.",
-      "takenBy": "Pasien Mandiri"
+      "notes": "Diminum dengan segelas jus jeruk segar.",
+      "takenBy": "Self"
     },
     {
-      "id": "log-yest-1",
-      "patientId": "usr_1",
-      "reminderId": "rem_5",
-      "scheduleId": "SCH-001",
-      "title": "Obat Hipertensi (Amlodipine 5mg)",
-      "category": "MEDICATION",
-      "dosage": "1 Tablet (5mg)",
-      "offsetDays": -1,
+      "id": "log_wk_2",
+      "userId": "usr_1",
+      "scheduleId": "sch_fe_1",
+      "title": "Tablet Tambah Darah (TTD)",
+      "category": "TTD",
+      "dosage": "1 Tablet",
+      "scheduledDate": "2026-09-12",
       "scheduledTime": "08:00",
-      "takenAt": "08:12",
+      "takenAt": "08:05 WIB",
       "status": "ON_TIME",
-      "notes": "Diminum sesudah makan pagi.",
-      "takenBy": "Pasien Mandiri"
+      "notes": "Tepat waktu sebelum kegiatan sekolah.",
+      "takenBy": "Self"
     },
     {
-      "id": "log-yest-2",
-      "patientId": "usr_1",
-      "reminderId": "rem_6",
-      "scheduleId": null,
-      "title": "Jalan Santai 30 Menit",
-      "category": "EXERCISE",
-      "dosage": "30 Menit",
-      "offsetDays": -1,
-      "scheduledTime": "16:00",
-      "takenAt": null,
-      "status": "MISSED",
-      "notes": "Hujan deras, ditunda ke hari berikutnya.",
-      "takenBy": "Pasien Mandiri"
-    },
-    {
-      "id": "log-d2-1",
-      "patientId": "usr_1",
-      "reminderId": null,
-      "scheduleId": "SCH-001",
-      "title": "Obat Hipertensi (Amlodipine 5mg)",
-      "category": "MEDICATION",
-      "dosage": "1 Tablet (5mg)",
-      "offsetDays": -2,
+      "id": "log_wk_3",
+      "userId": "usr_1",
+      "scheduleId": "sch_fe_1",
+      "title": "Tablet Tambah Darah (TTD)",
+      "category": "TTD",
+      "dosage": "1 Tablet",
+      "scheduledDate": "2026-09-19",
       "scheduledTime": "08:00",
-      "takenAt": "09:20",
-      "status": "LATE",
-      "notes": "Terlambat karena meeting pagi.",
-      "takenBy": "Pasien Mandiri"
+      "takenAt": "08:20 WIB",
+      "status": "ON_TIME",
+      "notes": "Streak minggu ke-5 tercapai.",
+      "takenBy": "Self"
+    },
+    {
+      "id": "log_wk_4",
+      "userId": "usr_1",
+      "scheduleId": "sch_fe_1",
+      "title": "Tablet Tambah Darah (TTD)",
+      "category": "TTD",
+      "dosage": "1 Tablet",
+      "scheduledDate": "2026-09-26",
+      "scheduledTime": "08:00",
+      "takenAt": "08:10 WIB",
+      "status": "ON_TIME",
+      "notes": "Streak minggu ke-6 bersama Alya!",
+      "takenBy": "Self"
+    },
+    {
+      "id": "log_alya_1",
+      "userId": "usr_2",
+      "scheduleId": "sch_fe_2",
+      "title": "Tablet Tambah Darah (TTD)",
+      "category": "TTD",
+      "dosage": "1 Tablet",
+      "scheduledDate": "2026-09-26",
+      "scheduledTime": "08:00",
+      "takenAt": "08:30 WIB",
+      "status": "ON_TIME",
+      "notes": "Kompak bersama Sarah.",
+      "takenBy": "Self"
+    }
+  ],
+  "buddyConnections": [
+    {
+      "id": "con_sarah_alya",
+      "userId": "usr_1",
+      "buddyUserId": "usr_2",
+      "status": "ACCEPTED",
+      "sharedStreakCount": 6,
+      "thisWeekUserStatus": "recorded",
+      "thisWeekBuddyStatus": "recorded"
+    },
+    {
+      "id": "con_sarah_nadia",
+      "userId": "usr_1",
+      "buddyUserId": "usr_3",
+      "status": "ACCEPTED",
+      "sharedStreakCount": 3,
+      "thisWeekUserStatus": "recorded",
+      "thisWeekBuddyStatus": "pending"
+    }
+  ],
+  "buddyActivities": [
+    {
+      "id": "act_1",
+      "connectionId": "con_sarah_alya",
+      "actorId": "usr_2",
+      "actionType": "RECORDED",
+      "actionText": "mencatat konsumsi TTD tepat waktu",
+      "iconType": "check",
+      "isPositive": true
+    },
+    {
+      "id": "act_2",
+      "connectionId": "con_sarah_alya",
+      "actorId": "usr_1",
+      "actionType": "RECORDED",
+      "actionText": "mencatat konsumsi TTD tepat waktu",
+      "iconType": "check",
+      "isPositive": true
+    },
+    {
+      "id": "act_3",
+      "connectionId": "con_sarah_alya",
+      "actorId": "usr_2",
+      "actionType": "CHEER_SENT",
+      "actionText": "mengirimkan stiker semangat untukmu ❤️",
+      "iconType": "heart",
+      "isPositive": true
+    },
+    {
+      "id": "act_4",
+      "connectionId": "con_sarah_alya",
+      "actorId": "usr_1",
+      "actionType": "STREAK_ACHIEVED",
+      "actionText": "menyelesaikan streak 6 minggu berturut-turut! 🔥",
+      "iconType": "flame",
+      "isPositive": true
+    }
+  ],
+  "buddyCheers": [
+    {
+      "id": "chr_1",
+      "connectionId": "con_sarah_alya",
+      "senderId": "usr_2",
+      "receiverId": "usr_1",
+      "cheerType": "HEART",
+      "message": "Semangat terus Sarah, jangan lupa minum TTD ya! ❤️"
     }
   ],
   "articles": [
     {
       "id": "art_1",
-      "title": "The Importance of Daily Hydration for Cellular Health",
-      "summary": "Learn why drinking enough water is crucial for your cellular health, cognitive performance, and sustainable energy levels.",
-      "leadParagraph": "Water makes up roughly 60% of the human adult body, playing a pivotal role in every physiological function from temperature regulation to nutrient transport. Yet, mild chronic dehydration remains one of the most overlooked health culprits today.",
-      "imageUrl": "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?q=80&w=1200&auto=format&fit=crop",
-      "imageCaption": "Maintaining adequate hydration supports cellular regeneration and optimizes metabolic functions.",
-      "readTime": "4 min read",
-      "category": "Wellness",
+      "title": "Kenali Anemia: Penyebab, Gejala 5L, dan Dampaknya pada Remaja Putri",
+      "category": "Anemia",
+      "summary": "Pahami mengapa remaja putri rentan anemia saat menstruasi dan bagaimana cara mendeteksi tanda-tanda 5L (Lesu, Lelah, Letih, Lemah, Lalai).",
+      "leadParagraph": "Anemia defisiensi besi merupakan kondisi penurunan jumlah sel darah merah atau kadar hemoglobin akibat kurangnya asupan zat besi dalam pola makan sehari-hari.",
+      "imageUrl": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&auto=format&fit=crop&q=80",
+      "imageCaption": "Ilustrasi pemeriksaan hemoglobin dan pencegahan anemia remaja putri",
+      "readTime": "4 Menit Baca",
       "status": "Terbit",
-      "views": 1280,
-      "publishedAt": "2026-07-28",
-      "authorId": "usr_admin_1",
-      "authorName": "Dr. Sarah Jenkins",
-      "authorRole": "Clinical Nutritionist & Wellness Specialist",
-      "authoravatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
-      "authorBio": "Dr. Sarah Jenkins is a board-certified clinical nutritionist with over 12 years of experience in metabolic wellness.",
-      "keyTakeaways": [
-        "Dehydration of just 1–2% noticeably impairs cognitive focus and physical energy.",
-        "Begin each morning with a glass of water to kickstart metabolic clearance.",
-        "Incorporate water-rich whole foods such as cucumbers, berries, and melons into your daily diet.",
-        "Monitor urine color: pale straw yellow indicates optimal hydration levels."
-      ],
-      "tags": [
-        "Hydration",
-        "Wellness",
-        "Cellular Health",
-        "Nutrition"
-      ],
+      "isFeatured": true,
+      "views": 320,
+      "publishedAt": "2026-09-18",
+      "authorId": "adm_1",
+      "authorName": "Tim Medis Fe-Tablet",
+      "authorRole": "Fasilitator Kesehatan Sekolah",
+      "authorAvatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
+      "keyTakeaways": "[\"Remaja putri kehilangan 1.5-2mg zat besi setiap hari saat menstruasi\", \"Gejala 5L menurunkan konsentrasi belajar dan daya tahan tubuh\", \"Minum TTD 1x seminggu mampu mencegah penurunan kadar Hb secara signifikan\"]",
+      "tags": "[\"Anemia\", \"Remaja Putri\", \"Gejala 5L\", \"Hemoglobin\"]",
       "sections": [
         {
           "orderIndex": 1,
-          "heading": "Why Water Is Essential for Cellular Metabolism",
-          "subheading": null,
-          "paragraphs": [
-            "Every cell, tissue, and organ in your body requires adequate hydration to function correctly. When cellular water content drops by as little as 1.5%, cellular enzymatic processes slow down, impairing energy production and toxin clearance.",
-            "Hydration directly influences blood volume, meaning that when dehydrated, your heart must pump harder to deliver oxygen and essential nutrients across your body."
-          ],
+          "heading": "Mengapa Remaja Putri Rentan Mengalami Anemia?",
+          "subheading": "Faktor biologis dan fase pertumbuhan pesat",
+          "paragraphs": "[\"Masa remaja adalah fase pertumbuhan pesat (growth spurt) yang membutuhkan pasokan zat besi tinggi untuk pembentukan massa otot dan peningkatan volume darah.\", \"Selain itu, siklus menstruasi bulanan menyebabkan kehilangan darah secara berkala. Tanpa suplementasi zat besi yang cukup, simpanan zat besi dalam tubuh akan cepat menipis.\"]",
           "calloutType": "tip",
-          "calloutTitle": "Morning Hydration Protocol",
-          "calloutText": "Drink 400–500ml of room-temperature water with a pinch of mineral salt immediately upon waking to restore fluids lost overnight.",
-          "bulletPoints": null
-        },
-        {
-          "orderIndex": 2,
-          "heading": "Cognitive Function and Energy Levels",
-          "subheading": null,
-          "paragraphs": [
-            "Clinical studies demonstrate that even mild dehydration can trigger headaches, fatigue, mood swings, and marked reductions in memory and attention span.",
-            "Instead of reaching for another cup of coffee when the afternoon slump hits, a glass of cold water often provides a faster and more restorative lift to mental acuity."
-          ],
-          "calloutType": null,
-          "calloutTitle": null,
-          "calloutText": null,
-          "bulletPoints": [
-            "Improves concentration and mental clarity throughout working hours",
-            "Prevents tension headaches and eases joint friction through synovial fluid lubrication",
-            "Aids gastrointestinal digestion and prevents metabolic sluggishness",
-            "Enhances dermal elasticity and natural skin barrier moisture"
-          ]
+          "calloutTitle": "Fakta Penting",
+          "calloutText": "Lebih dari 30% remaja putri di Indonesia berisiko mengalami anemia jika tidak rutin mengonsumsi TTD 1x seminggu.",
+          "bulletPoints": "[\"Kadar Hb normal remaja putri: minimal 12.0 g/dL\", \"Anemia Ringan: 11.0 - 11.9 g/dL\", \"Anemia Sedang: 8.0 - 10.9 g/dL\", \"Anemia Berat: < 8.0 g/dL\"]"
         }
       ]
     },
     {
       "id": "art_2",
-      "title": "Managing Blood Pressure Naturally Through Lifestyle & Diet",
-      "summary": "Discover evidence-based dietary modifications, movement protocols, and stress reduction methods that help maintain healthy cardiovascular pressure.",
-      "leadParagraph": "Hypertension is often called the \"silent killer\" because it frequently develops without noticeable symptoms while steadily straining the cardiovascular system. Fortunately, targeted lifestyle modifications can yield measurable reductions in arterial pressure within weeks.",
-      "imageUrl": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop",
-      "imageCaption": "Daily moderate aerobic exercise combined with nutrient-rich foods supports arterial flexibility.",
-      "readTime": "6 min read",
-      "category": "Cardiovascular",
+      "title": "Cara Minum Tablet Tambah Darah yang Benar Tanpa Rasa Mual",
+      "category": "TTD",
+      "summary": "Tips praktis minum TTD setelah makan malam atau menjelang tidur dengan air putih atau jus jeruk kaya vitamin C.",
+      "leadParagraph": "Rasa mual ringan setelah minum TTD adalah respons alami lambung saat menyerap zat besi. Dengan trik waktu dan pendamping yang tepat, konsumsi TTD akan bebas mual.",
+      "imageUrl": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80",
+      "imageCaption": "Kombinasi TTD dan jus jeruk kaya vitamin C",
+      "readTime": "3 Menit Baca",
       "status": "Terbit",
-      "views": 940,
-      "publishedAt": "2026-07-25",
-      "authorId": "usr_admin_3",
-      "authorName": "Dr. Michael Chen, MD",
-      "authorRole": "Cardiologist & Preventive Medicine Fellow",
-      "authoravatarUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop",
-      "authorBio": "Dr. Michael Chen specializes in non-pharmacological blood pressure management and lifestyle cardiology.",
-      "keyTakeaways": [
-        "Prioritize potassium-rich whole foods to assist natural sodium excretion.",
-        "Commit to 30 minutes of low-to-moderate aerobic exercise 5 days a week.",
-        "Incorporate 5 minutes of deep diaphragmatic breathing to dampen sympathetic nervous arousal."
-      ],
-      "tags": [
-        "Blood Pressure",
-        "Heart Health",
-        "DASH Diet",
-        "Cardiovascular"
-      ],
+      "isFeatured": false,
+      "views": 215,
+      "publishedAt": "2026-09-14",
+      "authorId": "adm_2",
+      "authorName": "dr. Siti Rahma, Sp.PD",
+      "authorRole": "Spesialis Penyakit Dalam",
+      "authorAvatarUrl": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
+      "keyTakeaways": "[\"Jangan minum TTD saat perut kosong melompong\", \"Konsumsi vitamin C dapat melipatgandakan penyerapan zat besi\", \"Beri jeda 2 jam sebelum/sesudah minum teh, kopi, atau susu\"]",
+      "tags": "[\"TTD\", \"Tips Bebas Mual\", \"Vitamin C\", \"Suplementasi\"]",
       "sections": [
         {
           "orderIndex": 1,
-          "heading": "The DASH Framework: Potassium vs. Sodium Balance",
-          "subheading": null,
-          "paragraphs": [
-            "The Dietary Approaches to Stop Hypertension (DASH) diet is celebrated globally for its clinical efficacy. The cornerstone of this approach is restoring the balance between sodium and potassium.",
-            "Potassium encourages the kidneys to excrete excess sodium and promotes vasodilation, naturally softening the tension inside arterial walls."
-          ],
+          "heading": "3 Aturan Emas Konsumsi TTD Bebas Mual",
+          "subheading": "Langkah praktis untuk kebiasaan nyaman",
+          "paragraphs": "[\"1. Minum TTD setelah makan malam atau 30 menit sebelum tidur malam.\", \"2. Minum bersama air putih atau sari buah jeruk/lemon.\", \"3. Hindari teh, kopi, susu, dan tablet kalsium karena dapat mengikat zat besi.\"]",
           "calloutType": "tip",
-          "calloutTitle": "Actionable Dietary Swap",
-          "calloutText": "Swap standard table salt for mineralized sea salt and enrich meals with herbs like garlic, rosemary, and oregano for natural vascular support.",
-          "bulletPoints": [
-            "Increase intake of leafy greens, avocados, bananas, and sweet potatoes",
-            "Limit heavily processed, sodium-dense convenience foods and canned condiments",
-            "Incorporate magnesium-rich seeds, almonds, and raw dark chocolate"
-          ]
+          "calloutTitle": "Rekomendasi Waktu",
+          "calloutText": "Waktu terbaik adalah malam hari setelah makan malam untuk meminimalkan persepsi rasa tidak nyaman di lambung."
         }
       ]
     },
     {
       "id": "art_3",
-      "title": "Understanding Vitamin D Deficiency & Immune Resilience",
-      "summary": "How lack of sunlight affects your bone density, immune regulation, and mood — and practical steps to optimize your vitamin D status.",
-      "leadParagraph": "Technically a secosteroid hormone rather than a standard vitamin, Vitamin D receptor sites exist in nearly every cell in the body, governing immune modulation, calcium homeostasis, and gene expression.",
-      "imageUrl": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=1200&auto=format&fit=crop",
-      "imageCaption": "Sunlight exposure triggers natural vitamin D3 synthesis in the epidermal layers.",
-      "readTime": "5 min read",
-      "category": "Nutrition",
+      "title": "Daftar Makanan Lezat Sumber Zat Besi Tinggi untuk Remaja",
+      "category": "Nutrisi",
+      "summary": "Hati ayam, bayam, telur, dan daging sapi sebagai kombinasi sempurna pendamping suplemen darah harian.",
+      "leadParagraph": "Suplemen TTD bekerja optimal jika didukung dengan menu makanan kaya zat besi heme dan non-heme setiap hari.",
+      "imageUrl": "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&auto=format&fit=crop&q=80",
+      "imageCaption": "Bahan pangan segar kaya zat besi dan antioksidan",
+      "readTime": "5 Menit Baca",
       "status": "Terbit",
-      "views": 780,
-      "publishedAt": "2026-07-20",
-      "authorId": "usr_admin_2",
-      "authorName": "Dr. Elena Rostova",
-      "authorRole": "Immunologist & Biochemical Researcher",
-      "authoravatarUrl": "https://images.unsplash.com/photo-1594824813589-cf9b009e4d0b?q=80&w=200&auto=format&fit=crop",
-      "authorBio": "Dr. Elena Rostova conducts research on micronutrient immunology and autoimmune disease prevention.",
-      "keyTakeaways": [
-        "Test your 25(OH)D blood levels annually to establish a safe baseline.",
-        "Combine Vitamin D3 supplementation with Vitamin K2 and dietary Magnesium.",
-        "Take Vitamin D with a fat-containing meal to maximize gastrointestinal absorption."
-      ],
-      "tags": [
-        "Vitamin D",
-        "Immunity",
-        "Bone Health",
-        "Micronutrients"
-      ],
-      "sections": [
-        {
-          "orderIndex": 1,
-          "heading": "The Sunshine Hormone and Immune Defense",
-          "subheading": null,
-          "paragraphs": [
-            "Vitamin D activates vital immune peptides known as cathelicidins and defensins, which protect respiratory tissues against viral and bacterial invasion.",
-            "Individuals with low circulating 25-hydroxyvitamin D levels often report higher rates of seasonal infections and prolonged recovery times."
-          ],
-          "calloutType": "tip",
-          "calloutTitle": "Safe Sun Exposure Guidelines",
-          "calloutText": "15–20 minutes of midday sunlight on arms and legs without sunscreen provides sufficient natural synthesis without burning risk for most skin types.",
-          "bulletPoints": null
-        }
-      ]
-    }
-  ],
-  "healthPrograms": [
-    {
-      "id": "PRG-001",
-      "name": "Program Kendali Hipertensi Terpadu",
-      "code": "PROG-HT-01",
-      "description": "Program monitoring terstruktur 8 minggu untuk pasien dengan tekanan darah tinggi.",
-      "durationWeeks": 8,
-      "status": "Aktif",
-      "targetCategory": "Hipertensi",
-      "createdBy": "usr_admin_3"
+      "isFeatured": false,
+      "views": 189,
+      "publishedAt": "2026-09-10",
+      "authorId": "adm_1",
+      "authorName": "dr. Sarah Jenkins, Sp.GK",
+      "authorRole": "Clinical Nutritionist",
+      "authorAvatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
+      "keyTakeaways": "[\"Zat besi heme dari daging dan hati diserap 2-3x lebih cepat\", \"Zat besi non-heme nabati seperti bayam perlu didampingi vitamin C\"]",
+      "tags": "[\"Nutrisi\", \"Zat Besi\", \"Gizi Sehat\", \"Makanan\"]",
+      "sections": []
     },
     {
-      "id": "PRG-002",
-      "name": "Program Edukasi & Pengendalian Gula Darah",
-      "code": "PROG-DM-02",
-      "description": "Intervensi pola makan dan kepatuhan konsumsi antidiabetes oral.",
-      "durationWeeks": 12,
-      "status": "Aktif",
-      "targetCategory": "Diabetes",
-      "createdBy": "usr_admin_2"
-    }
-  ],
-  "healthProgramEnrollments": [
-    {
-      "programId": "PRG-001",
-      "patientId": "usr_1",
-      "enrolledAt": "2025-01-20",
-      "progressPercentage": 65.0,
-      "status": "Aktif"
+      "id": "art_4",
+      "title": "Mitos & Fakta: Apakah TTD Membuat Tekanan Darah Tinggi?",
+      "category": "Mitos & Fakta",
+      "summary": "Perbedaan mendasar antara darah rendah (hipotensi) dan kurang darah (anemia defisiensi besi).",
+      "leadParagraph": "Banyak yang salah kaprah mengira Tablet Tambah Darah akan menaikkan tekanan darah tensimeter. Mari kita luruskan faktanya.",
+      "imageUrl": "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&auto=format&fit=crop&q=80",
+      "imageCaption": "Klarifikasi medis mitos vs fakta TTD",
+      "readTime": "3 Menit Baca",
+      "status": "Terbit",
+      "isFeatured": false,
+      "views": 142,
+      "publishedAt": "2026-09-05",
+      "authorId": "adm_1",
+      "authorName": "Kemenkes RI & Fe-Tablet",
+      "authorRole": "Tim Medis",
+      "authorAvatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
+      "keyTakeaways": "[\"Kurang darah (anemia) berbeda dengan tekanan darah rendah (hipotensi)\", \"TTD tidak menyebabkan hipertensi dan aman untuk konsumsi jangka panjang\"]",
+      "tags": "[\"Mitos & Fakta\", \"Anemia\", \"Hipotensi\"]",
+      "sections": []
     },
     {
-      "programId": "PRG-002",
-      "patientId": "PAT-002",
-      "enrolledAt": "2025-03-01",
-      "progressPercentage": 80.0,
-      "status": "Aktif"
+      "id": "art_5",
+      "title": "Gaya Hidup Bugar & Tidur Cukup untuk Menjaga Hemoglobin Optimal",
+      "category": "Gaya Hidup",
+      "summary": "Pentingnya istirahat teratur dan hidrasi cukup dalam membantu penyerapan mikronutrien tubuh.",
+      "leadParagraph": "Aktivitas fisik teratur dan tidur berkualitas minimal 7-8 jam per malam merangsang produksi eritrosit sehat dalam sumsum tulang.",
+      "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&auto=format&fit=crop&q=80",
+      "imageCaption": "Gaya hidup aktif remaja sehat",
+      "readTime": "4 Menit Baca",
+      "status": "Terbit",
+      "isFeatured": false,
+      "views": 110,
+      "publishedAt": "2026-09-01",
+      "authorId": "adm_1",
+      "authorName": "Tim Medis Fe-Tablet",
+      "authorRole": "Fasilitator Kesehatan",
+      "keyTakeaways": "[\"Tidur cukup 7-8 jam mendukung regenerasi sel darah merah\", \"Olahraga ringan 3x seminggu meningkatkan sirkulasi oksigen\"]",
+      "tags": "[\"Gaya Hidup\", \"Tidur\", \"Kebugaran\"]",
+      "sections": []
+    }
+  ],
+  "adminNudges": [
+    {
+      "id": "ndg_1",
+      "userId": "usr_3",
+      "senderId": "adm_1",
+      "scheduleId": "sch_fe_3",
+      "title": "Pengingat Minum TTD Mingguan",
+      "message": "Halo Nadia! Jangan lupa minum Tablet Tambah Darah minggu ini ya. Tetap semangat menjaga kadar Hb optimal! 🌸",
+      "channel": "app",
+      "status": "UNREAD"
     }
   ]
 }

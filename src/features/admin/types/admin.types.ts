@@ -1,88 +1,89 @@
 export interface AdminStats {
-  totalPatients: number
-  activeSchedules: number
-  adherenceRate: number
-  publishedArticles: number
-  activePrograms: number
-  lowStockProducts: number
+  totalPatients: number;
+  activeSchedules: number;
+  adherenceRate: number;
+  publishedArticles: number;
+  activePrograms: number;
 }
 
 export interface PatientUser {
-  id: string
-  name: string
-  age: number
-  gender: 'Laki-laki' | 'Perempuan'
-  phone: string
-  email: string
-  riskLevel: 'Tinggi' | 'Sedang' | 'Rendah'
-  status: 'Aktif' | 'Nonaktif'
-  assignedDoctor: string
-  activeSchedulesCount: number
-  adherenceRate: number
-  lastActive: string
-  joinDate: string
-  medicalNotes?: string
-  lastReminderSent?: string
+  id: string;
+  name: string;
+  age: number;
+  gender: 'Laki-laki' | 'Perempuan';
+  phone: string;
+  email: string;
+  avatarUrl?: string;
+  riskLevel: 'Tinggi' | 'Sedang' | 'Rendah';
+  status: 'Aktif' | 'Nonaktif';
+  assignedDoctor: string;
+  schoolOrOrg?: string;
+  activeSchedulesCount: number;
+  adherenceRate: number;
+  lastActive: string;
+  joinDate: string;
+  medicalNotes?: string;
+  lastReminderSent?: string;
 }
+
+import type { ScheduleCategory } from '../constants/schedule.constants';
+export type { ScheduleCategory };
 
 export interface MedicationSchedule {
-  id: string
-  patientId: string
-  patientName: string
-  medicationName: string
-  dosage: string
-  frequency: string
-  timeSlots: string[]
-  startDate: string
-  endDate: string
-  status: 'Aktif' | 'Selesai' | 'Diberhentikan'
-  category: 'Obat Resep' | 'Suplemen' | 'Aktivitas Medis'
-  instructions: string
-  lastReminderSent?: string
-  todayStatus?: 'COMPLETED' | 'PENDING' | 'NO_REMINDER'
+  id: string;
+  patientId: string;
+  patientName: string;
+  medicationName: string;
+  dosage: string;
+  frequency: '1x Seminggu' | 'Harian' | string;
+  dayOfWeek?: string;
+  timeSlots: string[];
+  startDate: string;
+  endDate: string;
+  status: 'Aktif' | 'Selesai' | 'Diberhentikan';
+  category: ScheduleCategory;
+  instructions: string;
+  lastReminderSent?: string;
+  todayStatus?: 'COMPLETED' | 'PENDING' | 'NO_REMINDER';
 }
 
-export interface MedicalProduct {
-  id: string
-  name: string
-  category: 'Obat Resep' | 'Obat Bebas' | 'Suplemen' | 'Alat Kesehatan'
-  sku: string
-  stock: number
-  unit: string
-  price: number
-  status: 'Tersedia' | 'Stok Menipis' | 'Habis'
-  description: string
-}
+export type ArticleCategory =
+  | 'Anemia & TTD'
+  | 'Nutrisi & Gizi'
+  | 'Kesehatan Remaja'
+  | 'Tips Menstruasi'
+  | 'Mitos & Fakta'
+  | 'Gaya Hidup';
 
 export interface HealthArticle {
-  id: string
-  title: string
-  category: 'Hipertensi' | 'Diabetes' | 'Nutrisi' | 'Gaya Hidup' | 'Kardiovaskular'
-  author: string
-  publishDate: string
-  status: 'Terbit' | 'Draf'
-  views: number
-  summary: string
-  readTime: string
-  imageUrl?: string
-  content?: string
+  id: string;
+  title: string;
+  category: ArticleCategory | string;
+  author: string;
+  publishDate: string;
+  status: 'Terbit' | 'Draf';
+  views: number;
+  summary: string;
+  readTime: string;
+  imageUrl?: string;
+  content?: string;
 }
 
 export interface HealthProgram {
-  id: string
-  name: string
-  code: string
-  description: string
-  durationWeeks: number
-  enrolledPatientsCount: number
-  status: 'Aktif' | 'Draf' | 'Arsip'
-  targetCategory: string
-  createdBy: string
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  durationWeeks: number;
+  enrolledPatientsCount: number;
+  status: 'Aktif' | 'Draf' | 'Arsip';
+  targetCategory: string;
+  createdBy: string;
 }
 
 export interface ComplianceReport {
-  date: string
-  takenCount: number
-  missedCount: number
-  adherencePercentage: number
+  date: string;
+  takenCount: number;
+  missedCount: number;
+  adherencePercentage: number;
 }

@@ -4,7 +4,7 @@ import db from '@/src/db/client';
 import { ComplianceReport } from '../types/admin.types';
 
 interface ComplianceReportRow {
-  date: string;
+  date: string | Date;
   taken_count: string | number;
   missed_count: string | number;
   total: string | number;
@@ -41,8 +41,25 @@ export async function getComplianceReportsAction(): Promise<ComplianceReport[]> 
       const takenCount = Number(r.taken_count) || 0;
       const missedCount = Number(r.missed_count) || 0;
       const percentage = total > 0 ? Math.round((takenCount / total) * 100) : 100;
+
+      let dateLabel = '';
+      if (typeof r.date === 'string') {
+        const d = new Date(r.date);
+        dateLabel =
+          !isNaN(d.getTime()) && r.date.includes('-')
+            ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+            : r.date;
+      } else if (r.date && typeof r.date === 'object') {
+        const d = r.date instanceof Date ? r.date : new Date(String(r.date));
+        dateLabel = !isNaN(d.getTime())
+          ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+          : String(r.date);
+      } else if (r.date) {
+        dateLabel = String(r.date);
+      }
+
       return {
-        date: r.date,
+        date: dateLabel,
         takenCount,
         missedCount,
         adherencePercentage: percentage,

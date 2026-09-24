@@ -26,9 +26,8 @@ import { useAuth } from '@/src/features/auth';
 
 const adminNavItems: NavItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'Pasien & User', href: '/admin/users', icon: Users },
+  { name: 'Data Siswi & User', href: '/admin/users', icon: Users },
   { name: 'Jadwal & Pengingat', href: '/admin/schedules', icon: CalendarCheck },
-  { name: 'Katalog Obat', href: '/admin/products', icon: Pill },
   { name: 'Artikel Edukasi', href: '/admin/articles', icon: FileText },
   { name: 'Laporan & Analitik', href: '/admin/reports', icon: BarChart3 },
   { name: 'Profil Admin', href: '/admin/profile', icon: User },

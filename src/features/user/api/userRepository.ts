@@ -14,6 +14,7 @@ export interface UserDashboardData {
     hbLevel: number;
     schoolOrOrg: string;
     riskLevel: string;
+    friendCode?: string;
   };
   todayStatus: 'recorded' | 'missed' | 'pending';
   todayRecordedTime?: string;
@@ -24,10 +25,12 @@ export interface UserDashboardData {
     tabletName: string;
     dosage: string;
     frequency: string;
+    category?: string;
     isEnabled: boolean;
     remind15MinBefore: boolean;
     nextDate: string;
     daysRemaining: number;
+    instructions: string;
   };
   featuredArticle: {
     id: string;
@@ -47,6 +50,7 @@ export interface UserScheduleData {
   tabletName: string;
   dosage: string;
   frequency: string;
+  category?: string;
   isEnabled: boolean;
   remind15MinBefore: boolean;
   nextDate: string;
@@ -109,13 +113,13 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
   try {
     const todayStr = new Date().toISOString().split('T')[0];
 
-    // 1. Find user or fallback to first patient
+    // 1. Find user or fallback to first user
     let effectiveUserId = userId;
     if (!effectiveUserId) {
-      const firstPatientRes = await db.query<{ id: string }>(
-        `SELECT id FROM users WHERE role = 'patient' LIMIT 1`,
+      const firstUserRes = await db.query<{ id: string }>(
+        `SELECT id FROM users WHERE role = 'user' ORDER BY id ASC LIMIT 1`,
       );
-      effectiveUserId = firstPatientRes.rows[0]?.id || 'usr_1';
+      effectiveUserId = firstUserRes.rows[0]?.id || 'usr_1';
     }
 
     const userRes = await db.query<{
@@ -123,41 +127,46 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
       name: string;
       email: string;
       phone: string | null;
-      avatarUrl: string | null;
+      avatar_url: string | null;
+      school_or_org: string | null;
+      hb_level: number | null;
       risk_level: string | null;
-      medical_notes: string | null;
-      weight: number | null;
+      friend_code: string | null;
+      streak_count: number | null;
     }>(
-      `SELECT u.id, u.name, u.email, u.phone, u.avatarUrl, u.weight,
-              p.risk_level, p.medical_notes
+      `SELECT u.id, u.name, u.email, u.phone, u.avatar_url,
+              p.school_or_org, p.hb_level, p.risk_level, p.friend_code, p.streak_count
        FROM users u
-       LEFT JOIN patient_profiles p ON u.id = p.user_id
+       LEFT JOIN user_profiles p ON u.id = p.user_id
        WHERE u.id = $1`,
       [effectiveUserId],
     );
 
     const userRow = userRes.rows[0];
-    const userName = userRow?.name || 'Pasien Fe-Tablet';
-    const userEmail = userRow?.email || 'pasien@fe-tablet.com';
+    const userName = userRow?.name || 'Sarah Azzahra';
+    const userEmail = userRow?.email || 'sarah@email.com';
     const userPhone = userRow?.phone || '0812-3456-7890';
-    const useravatarUrl =
-      userRow?.avatarUrl ||
+    const userAvatarUrl =
+      userRow?.avatar_url ||
       `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`;
 
-    // 2. Compute Streak from consumption_logs
-    const streakRes = await db.query<{ c: string | number }>(
-      `SELECT count(DISTINCT scheduled_date) as c 
-       FROM consumption_logs 
-       WHERE patient_id = $1 AND status IN ('ON_TIME', 'LATE')`,
-      [effectiveUserId],
-    );
-    const streakCount = Math.max(1, Number(streakRes.rows[0]?.c) || 4);
+    // 2. Streak count from user_profiles or logs
+    let streakCount = Number(userRow?.streak_count) || 0;
+    if (streakCount === 0) {
+      const streakRes = await db.query<{ c: string | number }>(
+        `SELECT count(DISTINCT scheduled_date) as c 
+         FROM consumption_logs 
+         WHERE user_id = $1 AND status IN ('ON_TIME', 'LATE')`,
+        [effectiveUserId],
+      );
+      streakCount = Math.max(1, Number(streakRes.rows[0]?.c) || 6);
+    }
 
     // 3. Today's consumption status
     const todayLogRes = await db.query<{ status: string; taken_at: string | null }>(
       `SELECT status, taken_at 
        FROM consumption_logs 
-       WHERE patient_id = $1 AND scheduled_date = $2
+       WHERE user_id = $1 AND scheduled_date = $2
        ORDER BY created_at DESC LIMIT 1`,
       [effectiveUserId, todayStr],
     );
@@ -175,46 +184,46 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
       }
     }
 
-    // 4. Get active schedule for user
+    // 4. Active schedule
     const scheduleRes = await db.query<{
       id: string;
-      medication_name: string;
+      tablet_name: string;
       dosage: string;
       frequency: string;
-      status: string;
+      day_of_week: string;
+      time_slot: string;
+      is_enabled: boolean;
+      remind_15min_before: boolean;
       instructions: string | null;
-      start_date: string;
     }>(
-      `SELECT id, medication_name, dosage, frequency, status, instructions, start_date
-       FROM medication_schedules
-       WHERE patient_id = $1 AND status = 'Aktif'
+      `SELECT id, tablet_name, dosage, frequency, day_of_week, time_slot, is_enabled, remind_15min_before, instructions
+       FROM reminder_schedules
+       WHERE user_id = $1 AND status = 'Aktif'
        ORDER BY created_at DESC LIMIT 1`,
       [effectiveUserId],
     );
 
-    let scheduleId = 'SCH-DEFAULT';
-    const dayOfWeek = 'Sabtu';
+    let scheduleId = 'sch_fe_1';
+    let dayOfWeek = 'Sabtu';
     let timeSlot = '08:00';
     let isEnabled = true;
     let dosage = '1 tablet, 1x seminggu';
-    let tabletName = 'Tablet Tambah Darah (TTD)';
+    let tabletName = 'Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)';
     let frequency = 'Mingguan';
+    let remind15MinBefore = true;
+    let instructions = 'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.';
 
     if (scheduleRes.rows.length > 0) {
       const sch = scheduleRes.rows[0];
       scheduleId = sch.id;
-      tabletName = sch.medication_name || tabletName;
+      tabletName = sch.tablet_name || tabletName;
       dosage = sch.dosage ? `${sch.dosage}, 1x seminggu` : dosage;
-      frequency = sch.frequency || frequency;
-      isEnabled = sch.status === 'Aktif';
-
-      const slotRes = await db.query<{ time: string }>(
-        `SELECT time FROM schedule_time_slots WHERE schedule_id = $1 LIMIT 1`,
-        [sch.id],
-      );
-      if (slotRes.rows.length > 0) {
-        timeSlot = slotRes.rows[0].time;
-      }
+      frequency = sch.frequency === 'weekly' ? 'Mingguan' : 'Harian';
+      dayOfWeek = sch.day_of_week || 'Sabtu';
+      timeSlot = sch.time_slot || '08:00';
+      isEnabled = sch.is_enabled;
+      remind15MinBefore = sch.remind_15min_before;
+      instructions = sch.instructions || instructions;
     }
 
     const { nextDate, daysRemaining } = calculateNextSchedule(dayOfWeek, timeSlot);
@@ -231,7 +240,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
       `SELECT id, title, category, read_time, summary, image_url 
        FROM articles 
        WHERE status = 'Terbit' 
-       ORDER BY published_at DESC LIMIT 1`,
+       ORDER BY is_featured DESC, published_at DESC LIMIT 1`,
     );
 
     const art = articleRes.rows[0];
@@ -252,11 +261,12 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         name: userName,
         email: userEmail,
         phone: userPhone,
-        avatarUrl: useravatarUrl,
+        avatarUrl: userAvatarUrl,
         streakCount,
-        hbLevel: 12.4,
-        schoolOrOrg: 'SMA Negeri 1 Jakarta',
+        hbLevel: Number(userRow?.hb_level) || 12.4,
+        schoolOrOrg: userRow?.school_or_org || 'SMA Negeri 1 Sehat',
         riskLevel: userRow?.risk_level || 'Rendah',
+        friendCode: userRow?.friend_code || 'FE-SARAH-9901',
       },
       todayStatus,
       todayRecordedTime,
@@ -267,10 +277,12 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         tabletName,
         dosage,
         frequency,
+        category: frequency === 'Harian' ? 'Terapi Anemia' : 'TTD Rutin',
         isEnabled,
-        remind15MinBefore: true,
+        remind15MinBefore,
         nextDate,
         daysRemaining,
+        instructions,
       },
       featuredArticle,
     };
@@ -280,27 +292,30 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
     return {
       user: {
         id: userId || 'usr_1',
-        name: 'Pasien Fe-Tablet',
-        email: 'pasien@fe-tablet.com',
+        name: 'Sarah Azzahra',
+        email: 'sarah@email.com',
         phone: '0812-3456-7890',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=FeTablet',
-        streakCount: 4,
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        streakCount: 6,
         hbLevel: 12.4,
-        schoolOrOrg: 'SMA Negeri 1 Jakarta',
+        schoolOrOrg: 'SMA Negeri 1 Sehat',
         riskLevel: 'Rendah',
+        friendCode: 'FE-SARAH-9901',
       },
       todayStatus: 'pending',
       activeSchedule: {
-        id: 'SCH-DEFAULT',
+        id: 'sch_fe_1',
         dayOfWeek: 'Sabtu',
         time: '08:00',
-        tabletName: 'Tablet Tambah Darah (TTD)',
+        tabletName: 'Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)',
         dosage: '1 tablet, 1x seminggu',
         frequency: 'Mingguan',
+        category: 'TTD Rutin',
         isEnabled: true,
         remind15MinBefore: true,
         nextDate,
         daysRemaining,
+        instructions: 'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
       },
       featuredArticle: null,
     };
@@ -320,7 +335,7 @@ export async function recordUserConsumptionAction(
       new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
 
     if (status === 'pending') {
-      await db.query(`DELETE FROM consumption_logs WHERE patient_id = $1 AND scheduled_date = $2`, [
+      await db.query(`DELETE FROM consumption_logs WHERE user_id = $1 AND scheduled_date = $2`, [
         userId,
         todayStr,
       ]);
@@ -328,24 +343,41 @@ export async function recordUserConsumptionAction(
     }
 
     const dbStatus = status === 'recorded' ? 'ON_TIME' : 'MISSED';
-    const logId = `log-${Date.now().toString().slice(-6)}`;
+    const logId = `log_${Date.now().toString().slice(-6)}`;
 
     await db.query(
       `INSERT INTO consumption_logs (
-        id, patient_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
-      ) VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', 'MEDICATION', '1 Tablet', $3, '08:00', $4, $5, 'Self')
+        id, user_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
+      ) VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', 'TTD', '1 Tablet', $3, '08:00', $4, $5, 'Self')
       ON CONFLICT (id) DO UPDATE SET
         status = EXCLUDED.status,
         taken_at = EXCLUDED.taken_at`,
       [logId, userId, todayStr, status === 'recorded' ? nowTimeStr : null, dbStatus],
     );
 
-    await db.query(
-      `UPDATE reminders 
-       SET status = $1 
-       WHERE patient_id = $2 AND date = $3`,
-      [status === 'recorded' ? 'COMPLETED' : 'MISSED', userId, todayStr],
-    );
+    // Sync streak in user_profiles
+    if (status === 'recorded') {
+      await db.query(
+        `UPDATE user_profiles 
+         SET streak_count = streak_count + 1, last_active_at = CURRENT_TIMESTAMP 
+         WHERE user_id = $1`,
+        [userId],
+      );
+
+      // Sync buddy_connections
+      await db.query(
+        `UPDATE buddy_connections 
+         SET this_week_user_status = 'recorded', last_synced_at = CURRENT_TIMESTAMP 
+         WHERE user_id = $1`,
+        [userId],
+      );
+      await db.query(
+        `UPDATE buddy_connections 
+         SET this_week_buddy_status = 'recorded', last_synced_at = CURRENT_TIMESTAMP 
+         WHERE buddy_user_id = $1`,
+        [userId],
+      );
+    }
 
     return { success: true, status };
   } catch (error) {
@@ -362,7 +394,7 @@ export async function getUserScheduleAction(userId?: string): Promise<UserSchedu
   return {
     ...dashboard.activeSchedule,
     patientId: dashboard.user.id,
-    instructions: 'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur.',
+    instructions: dashboard.activeSchedule.instructions || 'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
   };
 }
 
@@ -380,21 +412,43 @@ export async function updateUserScheduleSettingsAction(
   },
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const updates: string[] = [];
+    const params: unknown[] = [];
+    let paramIndex = 1;
+
     if (data.isEnabled !== undefined) {
-      await db.query(
-        `UPDATE medication_schedules 
-         SET status = $1, updated_at = CURRENT_TIMESTAMP 
-         WHERE id = $2`,
-        [data.isEnabled ? 'Aktif' : 'Diberhentikan', scheduleId],
-      );
+      updates.push(`is_enabled = $${paramIndex++}`);
+      params.push(data.isEnabled);
+      updates.push(`status = $${paramIndex++}`);
+      params.push(data.isEnabled ? 'Aktif' : 'Diberhentikan');
+    }
+
+    if (data.dayOfWeek) {
+      updates.push(`day_of_week = $${paramIndex++}`);
+      params.push(data.dayOfWeek);
     }
 
     if (data.time) {
+      updates.push(`time_slot = $${paramIndex++}`);
+      params.push(data.time);
+    }
+
+    if (data.remind15MinBefore !== undefined) {
+      updates.push(`remind_15min_before = $${paramIndex++}`);
+      params.push(data.remind15MinBefore);
+    }
+
+    if (data.frequency) {
+      updates.push(`frequency = $${paramIndex++}`);
+      params.push(data.frequency === 'Harian' ? 'daily' : 'weekly');
+    }
+
+    if (updates.length > 0) {
+      updates.push(`updated_at = CURRENT_TIMESTAMP`);
+      params.push(scheduleId);
       await db.query(
-        `UPDATE schedule_time_slots 
-         SET time = $1 
-         WHERE schedule_id = $2`,
-        [data.time, scheduleId],
+        `UPDATE reminder_schedules SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+        params,
       );
     }
 
@@ -415,14 +469,21 @@ export async function getUserProfileAction(userId: string = 'usr_1'): Promise<Us
       name: string;
       email: string;
       phone: string | null;
-      avatarUrl: string | null;
+      avatar_url: string | null;
       date_of_birth: string | null;
       blood_type: string | null;
       height: number | null;
       weight: number | null;
+      school_or_org: string | null;
+      hb_level: number | null;
+      friend_code: string | null;
+      streak_count: number | null;
     }>(
-      `SELECT id, name, email, phone, avatarUrl, date_of_birth, blood_type, height, weight 
-       FROM users WHERE id = $1`,
+      `SELECT u.id, u.name, u.email, u.phone, u.avatar_url, u.date_of_birth,
+              p.blood_type, p.height, p.weight, p.school_or_org, p.hb_level, p.friend_code, p.streak_count
+       FROM users u
+       LEFT JOIN user_profiles p ON u.id = p.user_id
+       WHERE u.id = $1`,
       [userId],
     );
     const row = res.rows[0];
@@ -435,9 +496,9 @@ export async function getUserProfileAction(userId: string = 'usr_1'): Promise<Us
       email: row.email,
       phone: row.phone || '-',
       avatarUrl:
-        row.avatarUrl ||
+        row.avatar_url ||
         `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(row.name)}`,
-      dateOfBirth: row.date_of_birth || '2008-04-12',
+      dateOfBirth: row.date_of_birth ? String(row.date_of_birth) : '2008-04-12',
       bloodType: row.blood_type || 'O+',
       height: Number(row.height) || 158,
       weight: Number(row.weight) || 48,
@@ -464,37 +525,41 @@ export async function updateUserProfileAction(
   },
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await db.query(
-      `UPDATE users 
-       SET 
-         name = COALESCE($1, name),
-         phone = COALESCE($2, phone),
-         blood_type = COALESCE($3, blood_type),
-         height = COALESCE($4, height),
-         weight = COALESCE($5, weight),
-         updated_at = CURRENT_TIMESTAMP
-       WHERE id = $6`,
-      [
-        data.name ?? null,
-        data.phone ?? null,
-        data.bloodType ?? null,
-        data.height ?? null,
-        data.weight ?? null,
-        userId,
-      ],
-    );
+    await db.transaction(async client => {
+      // 1. Update users
+      if (data.name || data.phone) {
+        await client.query(
+          `UPDATE users 
+           SET 
+             name = COALESCE($1, name),
+             phone = COALESCE($2, phone),
+             updated_at = CURRENT_TIMESTAMP
+           WHERE id = $3`,
+          [data.name ?? null, data.phone ?? null, userId],
+        );
+      }
 
-    if (data.schoolOrOrg || data.hbLevel) {
-      await db.query(
-        `UPDATE patient_profiles 
-         SET medical_notes = COALESCE($1, medical_notes) 
-         WHERE user_id = $2`,
+      // 2. Update user_profiles
+      await client.query(
+        `UPDATE user_profiles 
+         SET 
+           school_or_org = COALESCE($1, school_or_org),
+           hb_level = COALESCE($2, hb_level),
+           blood_type = COALESCE($3, blood_type),
+           height = COALESCE($4, height),
+           weight = COALESCE($5, weight),
+           last_active_at = CURRENT_TIMESTAMP
+         WHERE user_id = $6`,
         [
-          `Kadar Hb: ${data.hbLevel || 12.4} g/dL • Institusi: ${data.schoolOrOrg || 'SMA Negeri 1'}`,
+          data.schoolOrOrg ?? null,
+          data.hbLevel ?? null,
+          data.bloodType ?? null,
+          data.height ?? null,
+          data.weight ?? null,
           userId,
         ],
       );
-    }
+    });
 
     return { success: true };
   } catch (error: unknown) {

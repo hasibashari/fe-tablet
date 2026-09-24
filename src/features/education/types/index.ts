@@ -30,7 +30,9 @@ export interface Article {
   publishedAt: string;
   author?: Author;
   leadParagraph?: string;
+  content?: string;
   sections?: ContentSection[];
   keyTakeaways?: string[];
   tags?: string[];
 }
+

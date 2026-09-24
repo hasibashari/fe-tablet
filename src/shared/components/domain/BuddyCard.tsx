@@ -5,10 +5,14 @@ import Image from 'next/image';
 import { Flame, Heart, CheckCircle2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { BuddyStreakMock } from '../../mock/feTabletData';
+export interface BuddyStreakInfo {
+  buddyName: string;
+  buddyavatarUrl: string;
+  streakCount: number;
+}
 
 export interface BuddyCardProps {
-  buddyData: BuddyStreakMock;
+  buddyData: BuddyStreakInfo;
   useravatarUrl?: string;
   userName?: string;
 }

@@ -1,126 +1,172 @@
 -- ============================================================
--- POSTGRESQL SCHEMA FOR TABLET HEALTHCARE APP
+-- FE-TABLET CLEAN RELATIONAL SCHEMA (2-ROLE ARCHITECTURE)
+-- PostgreSQL 15+ Schema Definition
 -- ============================================================
 
--- 1. USERS
-CREATE TABLE IF NOT EXISTS users (
+-- Clean up any legacy tables to ensure fresh relational constraints
+DROP TABLE IF EXISTS admin_nudges CASCADE;
+DROP TABLE IF EXISTS user_bookmarks CASCADE;
+DROP TABLE IF EXISTS article_sections CASCADE;
+DROP TABLE IF EXISTS articles CASCADE;
+DROP TABLE IF EXISTS buddy_cheers CASCADE;
+DROP TABLE IF EXISTS buddy_activities CASCADE;
+DROP TABLE IF EXISTS buddy_connections CASCADE;
+DROP TABLE IF EXISTS consumption_logs CASCADE;
+DROP TABLE IF EXISTS schedule_time_slots CASCADE;
+DROP TABLE IF EXISTS reminder_schedules CASCADE;
+DROP TABLE IF EXISTS medication_schedules CASCADE;
+DROP TABLE IF EXISTS reminders CASCADE;
+DROP TABLE IF EXISTS health_program_enrollments CASCADE;
+DROP TABLE IF EXISTS health_programs CASCADE;
+DROP TABLE IF EXISTS patient_profiles CASCADE;
+DROP TABLE IF EXISTS user_profiles CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- 1. USERS (MASTER ACCOUNT: 'admin' | 'user')
+CREATE TABLE users (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255),
-    role VARCHAR(50) NOT NULL CHECK(role IN ('admin', 'patient')),
+    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK(role IN ('admin', 'user')),
     phone VARCHAR(50),
-    avatarUrl TEXT,
-    title VARCHAR(255),
-    age INTEGER,
-    gender VARCHAR(50) CHECK(gender IN ('Laki-laki', 'Perempuan')),
-    date_of_birth VARCHAR(50),
-    blood_type VARCHAR(20),
-    height DOUBLE PRECISION,
-    weight DOUBLE PRECISION,
-    assigned_doctor_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+    avatar_url TEXT,
+    gender VARCHAR(20) DEFAULT 'Perempuan' CHECK(gender IN ('Perempuan', 'Laki-laki')),
+    date_of_birth DATE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. PATIENT PROFILES
-CREATE TABLE IF NOT EXISTS patient_profiles (
+-- 2. USER PROFILES (BIOMETRICS, SCHOOL, HB LEVEL, FRIEND CODE)
+CREATE TABLE user_profiles (
     user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    friend_code VARCHAR(50) NOT NULL UNIQUE,
+    school_or_org VARCHAR(255) NOT NULL DEFAULT 'SMA Negeri 1 Sehat',
+    hb_level DOUBLE PRECISION NOT NULL DEFAULT 12.4,
+    hb_status VARCHAR(50) NOT NULL DEFAULT 'Normal' CHECK(hb_status IN ('Normal', 'Anemia Ringan', 'Anemia Sedang', 'Anemia Berat')),
     risk_level VARCHAR(50) NOT NULL DEFAULT 'Rendah' CHECK(risk_level IN ('Tinggi', 'Sedang', 'Rendah')),
+    height DOUBLE PRECISION DEFAULT 158.0,
+    weight DOUBLE PRECISION DEFAULT 48.0,
+    blood_type VARCHAR(10) DEFAULT 'O+',
+    streak_count INTEGER NOT NULL DEFAULT 0,
+    level_title VARCHAR(100) NOT NULL DEFAULT 'Pemula Sehat',
     status VARCHAR(50) NOT NULL DEFAULT 'Aktif' CHECK(status IN ('Aktif', 'Nonaktif')),
-    medical_notes TEXT,
-    last_reminder_sent VARCHAR(255),
-    last_active VARCHAR(255),
-    join_date VARCHAR(50) NOT NULL DEFAULT CURRENT_DATE::text
+    notes TEXT,
+    last_active_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. PRODUCTS (INVENTORY)
-CREATE TABLE IF NOT EXISTS products (
+-- 3. PRODUCTS (SUPPLEMENTS & TTD INVENTORY)
+CREATE TABLE products (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    category VARCHAR(100) NOT NULL CHECK(category IN ('Obat Resep', 'Obat Bebas', 'Suplemen', 'Alat Kesehatan')),
+    category VARCHAR(100) NOT NULL DEFAULT 'Suplemen TTD',
     sku VARCHAR(100) NOT NULL UNIQUE,
     stock INTEGER NOT NULL DEFAULT 0,
-    unit VARCHAR(50) NOT NULL,
+    unit VARCHAR(50) NOT NULL DEFAULT 'Tablet',
     price DOUBLE PRECISION NOT NULL DEFAULT 0.0,
-    status VARCHAR(50) NOT NULL CHECK(status IN ('Tersedia', 'Stok Menipis', 'Habis')),
+    status VARCHAR(50) NOT NULL DEFAULT 'Tersedia' CHECK(status IN ('Tersedia', 'Stok Menipis', 'Habis')),
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. MEDICATION SCHEDULES & TIME SLOTS
-CREATE TABLE IF NOT EXISTS medication_schedules (
+-- 4. REMINDER SCHEDULES
+CREATE TABLE reminder_schedules (
     id VARCHAR(255) PRIMARY KEY,
-    patient_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     product_id VARCHAR(255) REFERENCES products(id) ON DELETE SET NULL,
-    medication_name VARCHAR(255) NOT NULL,
-    dosage VARCHAR(100) NOT NULL,
-    frequency VARCHAR(100) NOT NULL,
-    start_date VARCHAR(50) NOT NULL,
-    end_date VARCHAR(50) NOT NULL,
-    status VARCHAR(50) NOT NULL CHECK(status IN ('Aktif', 'Selesai', 'Diberhentikan')),
-    category VARCHAR(100) NOT NULL CHECK(category IN ('Obat Resep', 'Suplemen', 'Aktivitas Medis')),
-    instructions TEXT,
-    last_reminder_sent VARCHAR(255),
+    tablet_name VARCHAR(255) NOT NULL DEFAULT 'Tablet Tambah Darah (TTD)',
+    dosage VARCHAR(100) NOT NULL DEFAULT '1 tablet',
+    frequency VARCHAR(50) NOT NULL DEFAULT 'weekly' CHECK(frequency IN ('weekly', 'daily')),
+    day_of_week VARCHAR(50) NOT NULL DEFAULT 'Sabtu',
+    time_slot VARCHAR(50) NOT NULL DEFAULT '08:00',
+    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    remind_15min_before BOOLEAN NOT NULL DEFAULT TRUE,
+    instructions TEXT DEFAULT 'Minum setelah makan malam atau sebelum tidur dengan air putih.',
+    status VARCHAR(50) NOT NULL DEFAULT 'Aktif' CHECK(status IN ('Aktif', 'Selesai', 'Diberhentikan')),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS schedule_time_slots (
+CREATE TABLE schedule_time_slots (
     id SERIAL PRIMARY KEY,
-    schedule_id VARCHAR(255) NOT NULL REFERENCES medication_schedules(id) ON DELETE CASCADE,
-    time VARCHAR(50) NOT NULL
+    schedule_id VARCHAR(255) NOT NULL REFERENCES reminder_schedules(id) ON DELETE CASCADE,
+    time VARCHAR(50) NOT NULL DEFAULT '08:00'
 );
 
--- 5. REMINDERS & CONSUMPTION LOGS
-CREATE TABLE IF NOT EXISTS reminders (
+-- 5. CONSUMPTION LOGS
+CREATE TABLE consumption_logs (
     id VARCHAR(255) PRIMARY KEY,
-    patient_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    schedule_id VARCHAR(255) REFERENCES medication_schedules(id) ON DELETE SET NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    date VARCHAR(50) NOT NULL,
-    time VARCHAR(50) NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'COMPLETED', 'MISSED')),
-    type VARCHAR(50) NOT NULL CHECK(type IN ('MEDICATION', 'CHECKUP', 'EXERCISE', 'OTHER')),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS consumption_logs (
-    id VARCHAR(255) PRIMARY KEY,
-    patient_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    reminder_id VARCHAR(255) REFERENCES reminders(id) ON DELETE SET NULL,
-    schedule_id VARCHAR(255) REFERENCES medication_schedules(id) ON DELETE SET NULL,
-    title VARCHAR(255) NOT NULL,
-    category VARCHAR(50) NOT NULL CHECK(category IN ('MEDICATION', 'CHECKUP', 'EXERCISE', 'OTHER')),
-    dosage VARCHAR(100),
-    scheduled_date VARCHAR(50) NOT NULL,
-    scheduled_time VARCHAR(50) NOT NULL,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    schedule_id VARCHAR(255) REFERENCES reminder_schedules(id) ON DELETE SET NULL,
+    title VARCHAR(255) NOT NULL DEFAULT 'Tablet Tambah Darah (TTD)',
+    category VARCHAR(50) NOT NULL DEFAULT 'TTD',
+    dosage VARCHAR(100) DEFAULT '1 Tablet',
+    scheduled_date DATE NOT NULL,
+    scheduled_time VARCHAR(50) NOT NULL DEFAULT '08:00',
     taken_at VARCHAR(50),
-    status VARCHAR(50) NOT NULL CHECK(status IN ('ON_TIME', 'LATE', 'MISSED', 'SKIPPED')),
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK(status IN ('ON_TIME', 'LATE', 'MISSED', 'SKIPPED', 'PENDING')),
     notes TEXT,
     taken_by VARCHAR(100) NOT NULL DEFAULT 'Self',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. ARTICLES & SECTIONS
-CREATE TABLE IF NOT EXISTS articles (
+-- 6. BUDDY STREAK SYSTEM (BUDDY CONNECTIONS, ACTIVITIES, CHEERS)
+CREATE TABLE buddy_connections (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    buddy_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(50) NOT NULL DEFAULT 'ACCEPTED' CHECK(status IN ('PENDING', 'ACCEPTED', 'REJECTED', 'BLOCKED')),
+    shared_streak_count INTEGER NOT NULL DEFAULT 0,
+    this_week_user_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK(this_week_user_status IN ('recorded', 'missed', 'pending')),
+    this_week_buddy_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK(this_week_buddy_status IN ('recorded', 'missed', 'pending')),
+    last_synced_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_different_users CHECK(user_id != buddy_user_id),
+    CONSTRAINT uq_buddy_pair UNIQUE(user_id, buddy_user_id)
+);
+
+CREATE TABLE buddy_activities (
+    id VARCHAR(255) PRIMARY KEY,
+    connection_id VARCHAR(255) NOT NULL REFERENCES buddy_connections(id) ON DELETE CASCADE,
+    actor_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    action_type VARCHAR(100) NOT NULL,
+    action_text TEXT NOT NULL,
+    icon_type VARCHAR(50) NOT NULL DEFAULT 'check' CHECK(icon_type IN ('check', 'flame', 'heart', 'alert')),
+    is_positive BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE buddy_cheers (
+    id VARCHAR(255) PRIMARY KEY,
+    connection_id VARCHAR(255) NOT NULL REFERENCES buddy_connections(id) ON DELETE CASCADE,
+    sender_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    receiver_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    cheer_type VARCHAR(50) NOT NULL DEFAULT 'HEART' CHECK(cheer_type IN ('HEART', 'FLAME', 'STAR', 'CLAP')),
+    message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. EDUCATION ARTICLES & SECTIONS
+CREATE TABLE articles (
     id VARCHAR(255) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL CHECK(category IN ('Anemia', 'TTD', 'Nutrisi', 'Gaya Hidup', 'Mitos & Fakta', 'Mitos')),
     summary TEXT NOT NULL,
     lead_paragraph TEXT,
     image_url TEXT NOT NULL,
     image_caption TEXT,
-    read_time VARCHAR(50) NOT NULL,
-    category VARCHAR(100) NOT NULL,
+    read_time VARCHAR(50) NOT NULL DEFAULT '3 Menit Baca',
     status VARCHAR(50) NOT NULL DEFAULT 'Terbit' CHECK(status IN ('Terbit', 'Draf')),
+    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
     views INTEGER NOT NULL DEFAULT 0,
-    published_at VARCHAR(50) NOT NULL,
+    published_at DATE NOT NULL DEFAULT CURRENT_DATE,
     author_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
     author_name VARCHAR(255),
     author_role VARCHAR(255),
-    author_avatarUrl TEXT,
+    author_avatar_url TEXT,
     author_bio TEXT,
     key_takeaways TEXT,
     tags TEXT,
@@ -128,7 +174,7 @@ CREATE TABLE IF NOT EXISTS articles (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS article_sections (
+CREATE TABLE article_sections (
     id SERIAL PRIMARY KEY,
     article_id VARCHAR(255) NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
     order_index INTEGER NOT NULL DEFAULT 1,
@@ -141,7 +187,7 @@ CREATE TABLE IF NOT EXISTS article_sections (
     bullet_points TEXT
 );
 
-CREATE TABLE IF NOT EXISTS user_bookmarks (
+CREATE TABLE user_bookmarks (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     article_id VARCHAR(255) NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
@@ -149,41 +195,13 @@ CREATE TABLE IF NOT EXISTS user_bookmarks (
     UNIQUE(user_id, article_id)
 );
 
--- 7. HEALTH PROGRAMS
-CREATE TABLE IF NOT EXISTS health_programs (
+-- 8. ADMIN NUDGES (PERSONAL MANUAL REMINDERS)
+CREATE TABLE admin_nudges (
     id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    code VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT,
-    duration_weeks INTEGER NOT NULL DEFAULT 4,
-    status VARCHAR(50) NOT NULL DEFAULT 'Aktif' CHECK(status IN ('Aktif', 'Draf', 'Arsip')),
-    target_category VARCHAR(100) NOT NULL,
-    created_by VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS health_program_enrollments (
-    id SERIAL PRIMARY KEY,
-    program_id VARCHAR(255) NOT NULL REFERENCES health_programs(id) ON DELETE CASCADE,
-    patient_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    enrolled_at VARCHAR(50) NOT NULL DEFAULT CURRENT_DATE::text,
-    progress_percentage DOUBLE PRECISION NOT NULL DEFAULT 0.0,
-    status VARCHAR(50) NOT NULL DEFAULT 'Aktif' CHECK(status IN ('Aktif', 'Selesai', 'Berhenti')),
-    UNIQUE(program_id, patient_id)
-);
-
--- 8. ADMIN NUDGES (MANUAL REMINDERS)
-CREATE TABLE IF NOT EXISTS admin_nudges (
-    id VARCHAR(255) PRIMARY KEY,
-    patient_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     sender_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
-    sender_name VARCHAR(255) NOT NULL,
-    sender_role VARCHAR(255) NOT NULL,
-    schedule_id VARCHAR(255) REFERENCES medication_schedules(id) ON DELETE SET NULL,
-    medication_name VARCHAR(255),
-    dosage VARCHAR(100),
-    time_slot VARCHAR(50),
+    schedule_id VARCHAR(255) REFERENCES reminder_schedules(id) ON DELETE SET NULL,
+    title VARCHAR(255) NOT NULL DEFAULT 'Pengingat Minum TTD',
     message TEXT NOT NULL,
     channel VARCHAR(50) NOT NULL DEFAULT 'app' CHECK(channel IN ('app', 'whatsapp')),
     status VARCHAR(50) NOT NULL DEFAULT 'UNREAD' CHECK(status IN ('UNREAD', 'READ', 'DISMISSED')),
@@ -193,12 +211,16 @@ CREATE TABLE IF NOT EXISTS admin_nudges (
 -- ============================================================
 -- PERFORMANCE INDEXES
 -- ============================================================
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_schedules_patient ON medication_schedules(patient_id);
-CREATE INDEX IF NOT EXISTS idx_reminders_patient_date ON reminders(patient_id, date);
-CREATE INDEX IF NOT EXISTS idx_logs_patient_date ON consumption_logs(patient_id, scheduled_date);
-CREATE INDEX IF NOT EXISTS idx_articles_category ON articles(category);
-CREATE INDEX IF NOT EXISTS idx_article_sections_art_order ON article_sections(article_id, order_index);
-CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON user_bookmarks(user_id);
-CREATE INDEX IF NOT EXISTS idx_nudges_patient_status ON admin_nudges(patient_id, status);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_profiles_friend_code ON user_profiles(friend_code);
+CREATE INDEX idx_profiles_school ON user_profiles(school_or_org);
+CREATE INDEX idx_schedules_user_status ON reminder_schedules(user_id, status);
+CREATE INDEX idx_logs_user_date ON consumption_logs(user_id, scheduled_date);
+CREATE INDEX idx_buddy_user ON buddy_connections(user_id, status);
+CREATE INDEX idx_buddy_pair ON buddy_connections(buddy_user_id, status);
+CREATE INDEX idx_buddy_activities_conn ON buddy_activities(connection_id, created_at DESC);
+CREATE INDEX idx_articles_category ON articles(category, status);
+CREATE INDEX idx_article_sections_order ON article_sections(article_id, order_index);
+CREATE INDEX idx_bookmarks_user ON user_bookmarks(user_id);
+CREATE INDEX idx_nudges_user_unread ON admin_nudges(user_id, status);

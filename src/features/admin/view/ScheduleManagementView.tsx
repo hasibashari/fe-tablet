@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -10,60 +10,45 @@ import {
   InputAdornment,
   Chip,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
-  Grid,
   IconButton,
   Tooltip,
-} from '@mui/material'
-import { Search, Plus, BellRing, Edit, Trash2 } from 'lucide-react'
-import AdminHeader from '../components/AdminHeader'
-import SendReminderModal from '../components/SendReminderModal'
-import { DataTable, Column } from '@/src/shared/components/DataTable'
-import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog'
-import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog'
-import { ToastFeedback } from '@/src/shared/components/ToastFeedback'
-import { useCrudModal } from '@/src/shared/hooks/useCrudModal'
-import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm'
-import { useToast } from '@/src/shared/hooks/useToast'
+} from '@mui/material';
+import { Search, Plus, BellRing, Edit, Trash2 } from 'lucide-react';
+import AdminHeader from '../components/AdminHeader';
+import SendReminderModal from '../components/SendReminderModal';
+import ScheduleFormModal from '../components/ScheduleFormModal';
+import { DataTable, Column } from '@/src/shared/components/DataTable';
+import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog';
+import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
+import { useCrudModal } from '@/src/shared/hooks/useCrudModal';
+import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm';
+import { useToast } from '@/src/shared/hooks/useToast';
 import {
   getSchedulesAction,
   createScheduleAction,
   updateScheduleAction,
   deleteScheduleAction,
   sendReminderNudgeAction,
-} from '../api/scheduleRepository'
-import { getPatientsAction } from '../api/patientRepository'
-import { MedicationSchedule, PatientUser } from '../types/admin.types'
-import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync'
-
-interface ScheduleFormData {
-  patientId: string
-  medicationName: string
-  dosage: string
-  frequency: string
-  timeSlot: string
-  category: 'Obat Resep' | 'Suplemen' | 'Aktivitas Medis'
-  instructions: string
-}
-
-const initialScheduleFormData: ScheduleFormData = {
-  patientId: '',
-  medicationName: '',
-  dosage: '1 Tablet',
-  frequency: '1x Sehari',
-  timeSlot: '08:00',
-  category: 'Obat Resep',
-  instructions: '',
-}
+} from '../api/scheduleRepository';
+import { getPatientsAction } from '../api/patientRepository';
+import { MedicationSchedule, PatientUser } from '../types/admin.types';
+import {
+  INITIAL_SCHEDULE_FORM_DATA,
+  ScheduleFormData,
+  SCHEDULE_CATEGORIES,
+  SCHEDULE_CATEGORY_COLORS,
+  ScheduleCategory,
+} from '../constants/schedule.constants';
+import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync';
 
 export default function ScheduleManagementView() {
-  const [schedules, setSchedules] = useState<MedicationSchedule[]>([])
-  const [patients, setPatients] = useState<PatientUser[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('Semua')
-  const [submitting, setSubmitting] = useState(false)
+  const [schedules, setSchedules] = useState<MedicationSchedule[]>([]);
+  const [patients, setPatients] = useState<PatientUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('Semua');
+  const [submitting, setSubmitting] = useState(false);
 
   // 1. Hook Form Modal Add/Edit
   const {
@@ -74,7 +59,7 @@ export default function ScheduleManagementView() {
     handleOpenEdit,
     handleCloseModal,
     updateFormData,
-  } = useCrudModal<ScheduleFormData>(initialScheduleFormData)
+  } = useCrudModal<ScheduleFormData>(INITIAL_SCHEDULE_FORM_DATA);
 
   // 2. Hook Konfirmasi Hapus
   const {
@@ -82,7 +67,7 @@ export default function ScheduleManagementView() {
     itemToDelete: scheduleToDelete,
     requestDelete: handleDeleteRequest,
     closeDelete: handleCloseDelete,
-  } = useDeleteConfirm<string>()
+  } = useDeleteConfirm<string>();
 
   // 3. Hook Feedback Notifikasi
   const {
@@ -91,113 +76,113 @@ export default function ScheduleManagementView() {
     severity: toastSeverity,
     showToast,
     hideToast,
-  } = useToast()
+  } = useToast();
 
   // Reminder Modal State
-  const [reminderModalOpen, setReminderModalOpen] = useState(false)
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
   const [reminderData, setReminderData] = useState<{
-    patientId?: string
-    patientName: string
-    patientPhone?: string
-    scheduleId?: string
-    medicationName?: string
-    dosage?: string
-    timeSlot?: string
+    patientId?: string;
+    patientName: string;
+    patientPhone?: string;
+    scheduleId?: string;
+    medicationName?: string;
+    dosage?: string;
+    timeSlot?: string;
   }>({
     patientName: '',
-  })
+  });
 
   const loadData = useCallback(async () => {
-    const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()])
-    setSchedules(s)
-    setPatients(p)
-  }, [])
+    const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()]);
+    setSchedules(s);
+    setPatients(p);
+  }, []);
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
     const fetchData = async () => {
-      const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()])
+      const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()]);
       if (isMounted) {
-        setSchedules(s)
-        setPatients(p)
+        setSchedules(s);
+        setPatients(p);
       }
-    }
+    };
 
-    fetchData()
+    fetchData();
 
-    // 1. Instant Cross-Tab Sync via BroadcastChannel (0s latency)
-    const unsubscribe = subscribeRealtimeEvent((event) => {
+    // Cross-Tab Sync via BroadcastChannel
+    const unsubscribe = subscribeRealtimeEvent(event => {
       if (
         event.type === 'MEDICATION_TAKEN' ||
         event.type === 'SCHEDULE_UPDATED' ||
         event.type === 'NUDGE_DISMISSED'
       ) {
-        fetchData()
+        fetchData();
       }
-    })
+    });
 
-    // 2. Smart Background Polling (every 8 seconds for multi-device sync)
+    // Multi-device polling
     const pollInterval = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        fetchData()
+        fetchData();
       }
-    }, 8000)
+    }, 8000);
 
-    // 3. Window focus listener
     const handleFocus = () => {
-      fetchData()
-    }
-    window.addEventListener('focus', handleFocus)
+      fetchData();
+    };
+    window.addEventListener('focus', handleFocus);
 
     return () => {
-      isMounted = false
-      unsubscribe()
-      clearInterval(pollInterval)
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [])
+      isMounted = false;
+      unsubscribe();
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
-  const filteredSchedules = schedules.filter((s) => {
+  const filteredSchedules = schedules.filter(s => {
     const matchesSearch =
       s.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.medicationName.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === 'Semua' || s.category === categoryFilter
-    return matchesSearch && matchesCategory
-  })
+      s.medicationName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'Semua' || s.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   const onOpenAdd = () => {
     handleOpenAdd({
       patientId: patients[0]?.id || 'usr_1',
-    })
-  }
+    });
+  };
 
   const onOpenEdit = (schedule: MedicationSchedule) => {
     handleOpenEdit(schedule.id, {
       patientId: schedule.patientId,
       medicationName: schedule.medicationName,
       dosage: schedule.dosage,
-      frequency: schedule.frequency,
+      frequency: schedule.frequency === 'Harian' ? 'Harian' : '1x Seminggu',
+      dayOfWeek: schedule.dayOfWeek || 'Sabtu',
       timeSlot: schedule.timeSlots.join(', '),
-      category: schedule.category,
+      category: (schedule.category as ScheduleCategory) || 'TTD Rutin',
       instructions: schedule.instructions,
-    })
-  }
+    });
+  };
 
   const handleSaveSchedule = async () => {
     if (!formData.medicationName) {
-      showToast('Nama obat / suplemen wajib diisi', 'error')
-      return
+      showToast('Nama obat / suplemen wajib diisi', 'error');
+      return;
     }
 
     const rawSlots = formData.timeSlot
       .split(/[,;]+/)
-      .map((s) => s.trim().replace('.', ':'))
-      .filter((s) => s.length > 0)
+      .map(s => s.trim().replace('.', ':'))
+      .filter(s => s.length > 0);
 
-    const timeSlotsArray = rawSlots.length > 0 ? rawSlots : ['08:00']
-    const today = new Date().toISOString().split('T')[0]
+    const timeSlotsArray = rawSlots.length > 0 ? rawSlots : ['08:00'];
+    const today = new Date().toISOString().split('T')[0];
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
       if (editingId) {
         const res = await updateScheduleAction(editingId, {
@@ -205,18 +190,22 @@ export default function ScheduleManagementView() {
           medicationName: formData.medicationName,
           dosage: formData.dosage,
           frequency: formData.frequency,
+          dayOfWeek: formData.dayOfWeek,
           timeSlots: timeSlotsArray,
           category: formData.category,
           instructions: formData.instructions,
-        })
+        });
 
         if (res.success) {
-          await loadData()
-          publishRealtimeEvent('SCHEDULE_UPDATED', { patientId: formData.patientId, scheduleId: editingId })
-          handleCloseModal()
-          showToast('Jadwal berhasil diperbarui di database!', 'success')
+          await loadData();
+          publishRealtimeEvent('SCHEDULE_UPDATED', {
+            patientId: formData.patientId,
+            scheduleId: editingId,
+          });
+          handleCloseModal();
+          showToast('Jadwal berhasil diperbarui di database!', 'success');
         } else {
-          showToast(res.error || 'Gagal memperbarui jadwal', 'error')
+          showToast(res.error || 'Gagal memperbarui jadwal', 'error');
         }
       } else {
         const res = await createScheduleAction({
@@ -224,43 +213,46 @@ export default function ScheduleManagementView() {
           medicationName: formData.medicationName,
           dosage: formData.dosage,
           frequency: formData.frequency,
+          dayOfWeek: formData.dayOfWeek,
           timeSlots: timeSlotsArray,
           startDate: today,
           endDate: '2026-12-31',
           category: formData.category,
-          instructions: formData.instructions || 'Diminum teratur sesuai petunjuk pengobatan.',
-        })
+          instructions:
+            formData.instructions ||
+            'Minum 1 tablet setelah sarapan atau sebelum tidur dengan air putih.',
+        });
 
         if (res.success) {
-          await loadData()
-          publishRealtimeEvent('SCHEDULE_UPDATED', { patientId: formData.patientId })
-          handleCloseModal()
-          showToast('Jadwal baru berhasil disimpan ke database!', 'success')
+          await loadData();
+          publishRealtimeEvent('SCHEDULE_UPDATED', { patientId: formData.patientId });
+          handleCloseModal();
+          showToast('Jadwal baru berhasil disimpan ke database!', 'success');
         } else {
-          showToast(res.error || 'Gagal membuat jadwal', 'error')
+          showToast(res.error || 'Gagal membuat jadwal', 'error');
         }
       }
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleConfirmDelete = async () => {
     if (scheduleToDelete) {
-      const res = await deleteScheduleAction(scheduleToDelete)
+      const res = await deleteScheduleAction(scheduleToDelete);
       if (res.success) {
-        await loadData()
-        publishRealtimeEvent('SCHEDULE_UPDATED', { scheduleId: scheduleToDelete })
-        showToast('Jadwal berhasil dihapus dari database.', 'success')
+        await loadData();
+        publishRealtimeEvent('SCHEDULE_UPDATED', { scheduleId: scheduleToDelete });
+        showToast('Jadwal berhasil dihapus dari database.', 'success');
       } else {
-        showToast(res.error || 'Gagal menghapus jadwal', 'error')
+        showToast(res.error || 'Gagal menghapus jadwal', 'error');
       }
     }
-    handleCloseDelete()
-  }
+    handleCloseDelete();
+  };
 
   const handleOpenReminder = (schedule: MedicationSchedule) => {
-    const patientObj = patients.find((p) => p.id === schedule.patientId)
+    const patientObj = patients.find(p => p.id === schedule.patientId);
     setReminderData({
       patientId: schedule.patientId,
       patientName: schedule.patientName,
@@ -269,9 +261,9 @@ export default function ScheduleManagementView() {
       medicationName: schedule.medicationName,
       dosage: schedule.dosage,
       timeSlot: schedule.timeSlots.join(', ') + ' WIB',
-    })
-    setReminderModalOpen(true)
-  }
+    });
+    setReminderModalOpen(true);
+  };
 
   const handleSendSuccess = async (channel: 'app' | 'whatsapp', messageSent: string) => {
     if (reminderData.patientId) {
@@ -285,106 +277,100 @@ export default function ScheduleManagementView() {
         timeSlot: reminderData.timeSlot,
         message: messageSent,
         channel,
-      })
-      await loadData()
+      });
+      await loadData();
       publishRealtimeEvent('NUDGE_SENT', {
         patientId: reminderData.patientId,
-        scheduleId: reminderData.scheduleId,
-      })
+      });
     }
-    const channelName = channel === 'whatsapp' ? 'WhatsApp' : 'Notifikasi App'
-    showToast(`Pengingat obat berhasil dikirim ke ${reminderData.patientName} via ${channelName}!`, 'success')
-  }
+  };
 
   const columns: Column<MedicationSchedule>[] = [
     {
-      id: 'no',
-      label: 'No.',
-      width: '4%',
-      renderCell: (_, index) => (
-        <Typography variant="body2" color="text.secondary">
-          {index + 1}
-        </Typography>
-      ),
-    },
-    {
-      id: 'pasien',
-      label: 'Pasien',
+      id: 'patientName',
+      label: 'Pasien (Siswi)',
       width: '18%',
-      renderCell: (schedule) => (
-        <>
-          <Typography variant="subtitle2" color="text.primary">
+      renderCell: schedule => (
+        <Box>
+          <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
             {schedule.patientName}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant='caption' color='text.secondary'>
             ID: {schedule.patientId}
           </Typography>
-        </>
-      ),
-    },
-    {
-      id: 'obat',
-      label: 'Obat / Tindakan',
-      width: '24%',
-      renderCell: (schedule) => (
-        <Box>
-          <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
-            {schedule.medicationName}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.25 }}>
-            <Chip
-              label={schedule.category}
-              size="small"
-              sx={{ height: 18, fontSize: '0.68rem', fontWeight: 600, bgcolor: 'primary.light', color: 'primary.dark' }}
-            />
-            <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
-              {schedule.instructions}
-            </Typography>
-          </Box>
         </Box>
       ),
     },
     {
-      id: 'dosis',
-      label: 'Dosis & Frekuensi',
-      width: '15%',
-      renderCell: (schedule) => (
-        <>
-          <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
-            {schedule.dosage}
+      id: 'medicationName',
+      label: 'Nama Obat / Suplemen',
+      width: '20%',
+      renderCell: schedule => (
+        <Box>
+          <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+            {schedule.medicationName}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {schedule.frequency}
+          <Typography variant='caption' color='text.secondary'>
+            {schedule.dosage} • {schedule.frequency}
           </Typography>
-        </>
+        </Box>
       ),
     },
     {
-      id: 'jadwal',
-      label: 'Waktu',
-      width: '14%',
-      renderCell: (schedule) => (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-          {Array.isArray(schedule.timeSlots) && schedule.timeSlots.length > 0 ? (
-            schedule.timeSlots.map((slot) => (
-              <Chip
-                key={slot}
-                label={slot}
-                size="small"
-                variant="outlined"
-                sx={{
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                  borderColor: 'divider',
-                  bgcolor: 'action.hover',
-                }}
-              />
-            ))
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              -
-            </Typography>
-          )}
+      id: 'category',
+      label: 'Program',
+      width: '15%',
+      renderCell: schedule => {
+        const style =
+          SCHEDULE_CATEGORY_COLORS[schedule.category || ''] || SCHEDULE_CATEGORY_COLORS.default;
+        return (
+          <Chip
+            label={schedule.category || 'TTD Rutin'}
+            size='small'
+            sx={{
+              bgcolor: style.bg,
+              color: style.text,
+              fontWeight: 700,
+              fontSize: '0.7rem',
+              height: 22,
+              borderRadius: 1,
+            }}
+          />
+        );
+      },
+    },
+    {
+      id: 'dayOfWeek',
+      label: 'Jadwal Minum',
+      width: '16%',
+      renderCell: schedule => (
+        <Box>
+          <Typography variant='body2' sx={{ fontWeight: 600 }}>
+            {schedule.dayOfWeek || 'Sabtu'}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.25 }}>
+            {schedule.timeSlots?.length > 0 ? (
+              schedule.timeSlots.map((time, idx) => (
+                <Chip
+                  key={idx}
+                  label={`${time} WIB`}
+                  size='small'
+                  variant='outlined'
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '0.72rem',
+                    borderColor: 'divider',
+                    bgcolor: 'action.hover',
+                    height: 20,
+                  }}
+                />
+              ))
+            ) : (
+              <Typography variant='caption' color='text.secondary'>
+                08:00 WIB
+              </Typography>
+            )}
+          </Box>
         </Box>
       ),
     },
@@ -392,12 +378,12 @@ export default function ScheduleManagementView() {
       id: 'todayStatus',
       label: 'Status Hari Ini',
       width: '13%',
-      renderCell: (schedule) => {
+      renderCell: schedule => {
         if (schedule.todayStatus === 'COMPLETED') {
           return (
             <Chip
-              label="Sudah Diminum"
-              size="small"
+              label='Sudah Diminum'
+              size='small'
               sx={{
                 bgcolor: 'rgba(22, 163, 74, 0.12)',
                 color: '#15803d',
@@ -407,13 +393,13 @@ export default function ScheduleManagementView() {
                 borderRadius: 1,
               }}
             />
-          )
+          );
         }
         if (schedule.todayStatus === 'PENDING') {
           return (
             <Chip
-              label="Belum Diminum"
-              size="small"
+              label='Belum Diminum'
+              size='small'
               sx={{
                 bgcolor: 'rgba(245, 158, 11, 0.12)',
                 color: '#b45309',
@@ -423,23 +409,23 @@ export default function ScheduleManagementView() {
                 borderRadius: 1,
               }}
             />
-          )
+          );
         }
         return (
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant='caption' color='text.secondary'>
             -
           </Typography>
-        )
+        );
       },
     },
     {
       id: 'status',
       label: 'Status',
       width: '8%',
-      renderCell: (schedule) => (
-        <Chip 
-          label={schedule.status} 
-          size="small" 
+      renderCell: schedule => (
+        <Chip
+          label={schedule.status}
+          size='small'
           color={schedule.status === 'Aktif' ? 'success' : 'default'}
         />
       ),
@@ -449,33 +435,33 @@ export default function ScheduleManagementView() {
       label: 'Aksi',
       align: 'right',
       width: '10%',
-      renderCell: (schedule) => (
+      renderCell: schedule => (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-          <Tooltip title="Ingatkan Pasien">
-            <IconButton size="small" color="primary" onClick={() => handleOpenReminder(schedule)}>
+          <Tooltip title='Ingatkan Pasien'>
+            <IconButton size='small' color='primary' onClick={() => handleOpenReminder(schedule)}>
               <BellRing size={16} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Edit Jadwal">
-            <IconButton size="small" onClick={() => onOpenEdit(schedule)}>
+          <Tooltip title='Edit Jadwal'>
+            <IconButton size='small' onClick={() => onOpenEdit(schedule)}>
               <Edit size={16} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Hapus Jadwal">
-            <IconButton size="small" color="error" onClick={() => handleDeleteRequest(schedule.id)}>
+          <Tooltip title='Hapus Jadwal'>
+            <IconButton size='small' color='error' onClick={() => handleDeleteRequest(schedule.id)}>
               <Trash2 size={16} />
             </IconButton>
           </Tooltip>
         </Box>
       ),
     },
-  ]
+  ];
 
   return (
     <Box>
       <AdminHeader
-        title="Manajemen Jadwal Obat"
-        subtitle="Tetapkan instruksi dosis, frekuensi, serta jadwal pengingat otomatis untuk setiap pasien."
+        title='Manajemen Jadwal Obat'
+        subtitle='Tetapkan instruksi dosis, frekuensi, serta jadwal pengingat otomatis untuk setiap pasien.'
       />
 
       {/* Filter Bar */}
@@ -489,35 +475,39 @@ export default function ScheduleManagementView() {
             gap: 2,
           }}
         >
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}>
+          <Box
+            sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flex: 1 }}
+          >
             <TextField
-              placeholder="Cari nama obat atau pasien..."
+              placeholder='Cari nama obat atau pasien...'
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              size="small"
+              onChange={e => setSearchQuery(e.target.value)}
+              size='small'
               fullWidth
               slotProps={{
                 input: {
                   startAdornment: (
-                    <InputAdornment position="start">
+                    <InputAdornment position='start'>
                       <Search size={18} />
                     </InputAdornment>
                   ),
                 },
               }}
             />
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-              <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                <MenuItem value="Semua">Semua Kategori</MenuItem>
-                <MenuItem value="Obat Resep">Obat Resep</MenuItem>
-                <MenuItem value="Suplemen">Suplemen</MenuItem>
-                <MenuItem value="Aktivitas Medis">Aktivitas Medis</MenuItem>
+            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 220 } }}>
+              <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+                <MenuItem value='Semua'>Semua Kategori Program</MenuItem>
+                {SCHEDULE_CATEGORIES.map(cat => (
+                  <MenuItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>
 
           <Button
-            variant="contained"
+            variant='contained'
             startIcon={<Plus size={18} />}
             onClick={onOpenAdd}
             sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -531,281 +521,225 @@ export default function ScheduleManagementView() {
       <DataTable
         columns={columns}
         data={filteredSchedules}
-        emptyMessage="Tidak ada jadwal yang ditemukan."
-        renderMobileCard={(schedule) => (
-          <Card
-            sx={{
-              p: 2,
-              borderRadius: '16px',
-              border: '1px solid #fce7f3',
-              bgcolor: '#ffffff',
-              boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.5,
-            }}
-          >
-            {/* Header: Medication + Category Chip */}
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>
-                  {schedule.medicationName}
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  Pasien: <strong>{schedule.patientName}</strong> ({schedule.patientId})
-                </Typography>
-              </Box>
-
-              <Chip
-                label={schedule.category}
-                size="small"
-                sx={{
-                  bgcolor: '#ffe4e6',
-                  color: '#e11d48',
-                  fontWeight: 700,
-                  fontSize: '0.68rem',
-                  height: 22,
-                }}
-              />
-            </Box>
-
-            {/* Middle Details Grid */}
-            <Box
+        emptyMessage='Tidak ada jadwal yang ditemukan.'
+        renderMobileCard={schedule => {
+          const style =
+            SCHEDULE_CATEGORY_COLORS[schedule.category || ''] || SCHEDULE_CATEGORY_COLORS.default;
+          return (
+            <Card
               sx={{
-                p: 1.25,
-                borderRadius: '12px',
-                bgcolor: '#fff5f7',
+                p: 2,
+                borderRadius: '16px',
                 border: '1px solid #fce7f3',
+                bgcolor: '#ffffff',
+                boxShadow: '0 2px 8px rgba(225, 29, 72, 0.04)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 1,
+                gap: 1.5,
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  Dosis & Frekuensi:
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.8rem' }}>
-                  {schedule.dosage} • {schedule.frequency}
-                </Typography>
+              {/* Header: Medication + Category Chip */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: 1,
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}
+                  >
+                    {schedule.medicationName}
+                  </Typography>
+                  <Typography variant='caption' sx={{ color: '#64748b' }}>
+                    Pasien: <strong>{schedule.patientName}</strong> ({schedule.patientId})
+                  </Typography>
+                </Box>
+
+                <Chip
+                  label={schedule.category}
+                  size='small'
+                  sx={{
+                    bgcolor: style.bg,
+                    color: style.text,
+                    fontWeight: 700,
+                    fontSize: '0.68rem',
+                    height: 22,
+                  }}
+                />
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  Jam Minum:
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                  {schedule.timeSlots.map((ts) => (
+              {/* Middle Details Grid */}
+              <Box
+                sx={{
+                  p: 1.25,
+                  borderRadius: '12px',
+                  bgcolor: '#fff5f7',
+                  border: '1px solid #fce7f3',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                }}
+              >
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Typography variant='caption' sx={{ color: '#64748b' }}>
+                    Dosis & Frekuensi:
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.8rem' }}
+                  >
+                    {schedule.dosage} • {schedule.frequency}
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Typography variant='caption' sx={{ color: '#64748b' }}>
+                    Hari & Jam Minum:
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 700, color: '#1e293b', fontSize: '0.8rem' }}
+                  >
+                    {schedule.dayOfWeek || 'Sabtu'}, {schedule.timeSlots.join(', ')} WIB
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    pt: 0.5,
+                    borderTop: '1px dashed #fce7f3',
+                  }}
+                >
+                  <Typography variant='caption' sx={{ color: '#64748b' }}>
+                    Status Hari Ini:
+                  </Typography>
+                  {schedule.todayStatus === 'COMPLETED' ? (
                     <Chip
-                      key={ts}
-                      label={ts}
-                      size="small"
+                      label='Sudah Diminum'
+                      size='small'
                       sx={{
-                        height: 20,
-                        fontSize: '0.7rem',
+                        bgcolor: 'rgba(22, 163, 74, 0.12)',
+                        color: '#15803d',
                         fontWeight: 700,
-                        bgcolor: '#ffffff',
-                        border: '1px solid #fce7f3',
-                        color: '#1e293b',
+                        fontSize: '0.68rem',
+                        height: 20,
                       }}
                     />
-                  ))}
+                  ) : schedule.todayStatus === 'PENDING' ? (
+                    <Chip
+                      label='Belum Diminum'
+                      size='small'
+                      sx={{
+                        bgcolor: 'rgba(245, 158, 11, 0.12)',
+                        color: '#b45309',
+                        fontWeight: 700,
+                        fontSize: '0.68rem',
+                        height: 20,
+                      }}
+                    />
+                  ) : (
+                    <Typography variant='caption' color='text.secondary'>
+                      -
+                    </Typography>
+                  )}
                 </Box>
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 0.5, borderTop: '1px dashed #fce7f3' }}>
-                <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  Status Hari Ini:
-                </Typography>
-                {schedule.todayStatus === 'COMPLETED' ? (
-                  <Chip
-                    label="Sudah Diminum"
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(22, 163, 74, 0.12)',
-                      color: '#15803d',
-                      fontWeight: 700,
-                      fontSize: '0.68rem',
-                      height: 20,
-                    }}
-                  />
-                ) : schedule.todayStatus === 'PENDING' ? (
-                  <Chip
-                    label="Belum Diminum"
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(245, 158, 11, 0.12)',
-                      color: '#b45309',
-                      fontWeight: 700,
-                      fontSize: '0.68rem',
-                      height: 20,
-                    }}
-                  />
-                ) : (
-                  <Typography variant="caption" color="text.secondary">-</Typography>
-                )}
-              </Box>
-            </Box>
-
-            {/* Actions Row */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, pt: 0.5 }}>
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<BellRing size={14} />}
-                onClick={() => handleOpenReminder(schedule)}
+              {/* Actions Row */}
+              <Box
                 sx={{
-                  flex: 1,
-                  py: 0.75,
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  bgcolor: '#e11d48',
-                  borderRadius: '9999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 1,
+                  pt: 0.5,
                 }}
               >
-                Ingatkan Pasien
-              </Button>
+                <Button
+                  size='small'
+                  variant='contained'
+                  startIcon={<BellRing size={14} />}
+                  onClick={() => handleOpenReminder(schedule)}
+                  sx={{
+                    flex: 1,
+                    py: 0.75,
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    bgcolor: '#e11d48',
+                    borderRadius: '9999px',
+                  }}
+                >
+                  Ingatkan Pasien
+                </Button>
 
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <IconButton
-                  size="small"
-                  onClick={() => onOpenEdit(schedule)}
-                  sx={{
-                    bgcolor: '#f1f5f9',
-                    color: '#475569',
-                    width: 34,
-                    height: 34,
-                    borderRadius: '10px',
-                    '&:hover': { bgcolor: '#ffe4e6', color: '#e11d48' },
-                  }}
-                  title="Edit Jadwal"
-                >
-                  <Edit size={15} />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteRequest(schedule.id)}
-                  sx={{
-                    bgcolor: '#fee2e2',
-                    color: '#dc2626',
-                    width: 34,
-                    height: 34,
-                    borderRadius: '10px',
-                    '&:hover': { bgcolor: '#fca5a5' },
-                  }}
-                  title="Hapus Jadwal"
-                >
-                  <Trash2 size={15} />
-                </IconButton>
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  <IconButton
+                    size='small'
+                    onClick={() => onOpenEdit(schedule)}
+                    sx={{
+                      bgcolor: '#f1f5f9',
+                      color: '#475569',
+                      width: 34,
+                      height: 34,
+                      borderRadius: '10px',
+                      '&:hover': { bgcolor: '#ffe4e6', color: '#e11d48' },
+                    }}
+                    title='Edit Jadwal'
+                  >
+                    <Edit size={15} />
+                  </IconButton>
+                  <IconButton
+                    size='small'
+                    color='error'
+                    onClick={() => handleDeleteRequest(schedule.id)}
+                    sx={{
+                      bgcolor: '#fee2e2',
+                      color: '#dc2626',
+                      width: 34,
+                      height: 34,
+                      borderRadius: '10px',
+                      '&:hover': { bgcolor: '#fca5a5' },
+                    }}
+                    title='Hapus Jadwal'
+                  >
+                    <Trash2 size={15} />
+                  </IconButton>
+                </Box>
               </Box>
-            </Box>
-          </Card>
-        )}
+            </Card>
+          );
+        }}
       />
 
-      {/* Add/Edit Schedule Modal */}
-      <CrudModalDialog
+      {/* Add/Edit Schedule Modal Component */}
+      <ScheduleFormModal
         open={openModal}
-        onClose={handleCloseModal}
-        title={editingId ? 'Edit Jadwal Obat' : 'Buat Jadwal Baru'}
-        onSubmit={handleSaveSchedule}
-        submitText={editingId ? 'Simpan Perubahan' : 'Simpan Jadwal'}
+        editingId={editingId}
+        formData={formData}
+        patients={patients}
         submitting={submitting}
-      >
-        <FormControl fullWidth size="small">
-          <InputLabel>Pasien</InputLabel>
-          <Select
-            value={formData.patientId}
-            label="Pasien"
-            onChange={(e) => updateFormData({ patientId: e.target.value })}
-          >
-            {patients.map((p) => (
-              <MenuItem key={p.id} value={p.id}>
-                {p.name} ({p.id})
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        onClose={handleCloseModal}
+        onSave={handleSaveSchedule}
+        onUpdateFormData={updateFormData}
+      />
 
-        <TextField
-          label="Nama Obat / Suplemen"
-          fullWidth
-          size="small"
-          value={formData.medicationName}
-          onChange={(e) => updateFormData({ medicationName: e.target.value })}
-        />
-
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 6 }}>
-            <TextField
-              label="Dosis (misal: 1 Tablet)"
-              fullWidth
-              size="small"
-              value={formData.dosage}
-              onChange={(e) => updateFormData({ dosage: e.target.value })}
-            />
-          </Grid>
-          <Grid size={{ xs: 6 }}>
-            <TextField
-              label="Frekuensi (misal: 2x Sehari)"
-              fullWidth
-              size="small"
-              value={formData.frequency}
-              onChange={(e) => updateFormData({ frequency: e.target.value })}
-            />
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 6 }}>
-            <TextField
-              label="Waktu Pengingat (HH:MM)"
-              fullWidth
-              size="small"
-              placeholder="08:00, 12:00, 20:00"
-              helperText="Pisahkan dengan koma jika lebih dari 1 waktu"
-              value={formData.timeSlot}
-              onChange={(e) => updateFormData({ timeSlot: e.target.value })}
-            />
-          </Grid>
-          <Grid size={{ xs: 6 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Kategori</InputLabel>
-              <Select
-                value={formData.category}
-                label="Kategori"
-                onChange={(e) =>
-                  updateFormData({
-                    category: e.target.value as ScheduleFormData['category'],
-                  })
-                }
-              >
-                <MenuItem value="Obat Resep">Obat Resep</MenuItem>
-                <MenuItem value="Suplemen">Suplemen</MenuItem>
-                <MenuItem value="Aktivitas Medis">Aktivitas Medis</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        <TextField
-          label="Petunjuk Khusus Penggunaan"
-          multiline
-          rows={2}
-          fullWidth
-          size="small"
-          value={formData.instructions}
-          onChange={(e) => updateFormData({ instructions: e.target.value })}
-        />
-      </CrudModalDialog>
-      
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteDialog
         open={deleteConfirmOpen}
-        title="Konfirmasi Hapus"
-        message="Apakah Anda yakin ingin menghapus jadwal ini? Data yang dihapus tidak dapat dikembalikan."
-        confirmText="Hapus Jadwal"
+        title='Konfirmasi Hapus'
+        message='Apakah Anda yakin ingin menghapus jadwal ini? Data yang dihapus tidak dapat dikembalikan.'
+        confirmText='Hapus Jadwal'
         onClose={handleCloseDelete}
         onConfirm={handleConfirmDelete}
       />
@@ -830,5 +764,5 @@ export default function ScheduleManagementView() {
         onClose={hideToast}
       />
     </Box>
-  )
+  );
 }
