@@ -189,9 +189,9 @@ export async function getDailyProgressStatsAction(
     const stats = res.rows[0];
 
     let total = Number(stats?.total) || 0;
-    let completed = Number(stats?.completed) || 0;
+    const completed = Number(stats?.completed) || 0;
     let pending = Number(stats?.pending) || 0;
-    let missed = Number(stats?.missed) || 0;
+    const missed = Number(stats?.missed) || 0;
 
     if (total === 0) {
       total = 1;

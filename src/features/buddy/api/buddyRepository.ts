@@ -6,6 +6,7 @@ import {
   BuddyActivity,
   BuddyItem,
   CheerType,
+  IconType,
   SendCheerResult,
   AddBuddyResult,
   RemoveBuddyResult,
@@ -157,7 +158,7 @@ export async function getBuddyStreakDataAction(
         action: a.action_text,
         timestamp: timeStr,
         isPositive: a.is_positive,
-        iconType: (a.icon_type as any) || 'check',
+        iconType: (a.icon_type as IconType) || 'check',
       };
     });
 

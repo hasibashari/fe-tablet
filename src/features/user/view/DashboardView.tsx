@@ -16,6 +16,7 @@ import {
   recordUserConsumptionAction,
   UserDashboardData,
 } from '../api/userRepository';
+import { sendBuddyCheerAction } from '@/src/features/buddy/api/buddyRepository';
 
 type DashboardConsumptionStatus = 'recorded' | 'missed' | 'pending';
 
@@ -83,6 +84,38 @@ export default function DashboardView() {
   };
 
   const featuredArticle = dashboardData?.featuredArticle;
+
+  // Dynamic milestone level calculation based on real streak count
+  const getMilestoneInfo = (streak: number) => {
+    if (streak >= 12) {
+      return {
+        level: 4,
+        title: 'Duta Remaja Sehat (Level 4 - Champion)',
+        desc: `Luar biasa! Kamu telah konsisten selama ${streak} minggu berturut-turut. Kadar hemoglobin dan kebugaranmu terjaga maksimal!`,
+      };
+    }
+    if (streak >= 6) {
+      return {
+        level: 3,
+        title: 'Pejuang Bebas Anemia (Level 3)',
+        desc: `Kamu telah meminum ${streak} tablet berturut-turut. Pertahankan konsistensimu agar kadar hemoglobin tetap optimal!`,
+      };
+    }
+    if (streak >= 3) {
+      return {
+        level: 2,
+        title: 'Pejuang Konsisten (Level 2)',
+        desc: `Keren! ${streak} minggu konsumsi TTD berturut-turut. Terus jaga kebiasaan baik ini setiap minggu!`,
+      };
+    }
+    return {
+      level: 1,
+      title: 'Pemula Sehat (Level 1)',
+      desc: `Langkah awal yang hebat! Minum tablet tambah darah secara teratur untuk mencegah anemia sejak dini.`,
+    };
+  };
+
+  const milestone = getMilestoneInfo(currentUser.streakCount);
 
   if (loading && !dashboardData) {
     return (
@@ -222,17 +255,29 @@ export default function DashboardView() {
             </Card>
           </section>
 
-          {/* Buddy Streak Card */}
+          {/* Buddy Streak Card (100% Dynamic from PostgreSQL) */}
           <section aria-label='Buddy Streak & Komunitas'>
             <BuddyCard
-              buddyData={{
-                buddyName: 'Alya Rahma',
-                buddyavatarUrl:
-                  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-                streakCount: currentUser.streakCount,
-              }}
+              buddyData={
+                dashboardData?.activeBuddy
+                  ? {
+                      connectionId: dashboardData.activeBuddy.connectionId,
+                      buddyId: dashboardData.activeBuddy.buddyId,
+                      buddyName: dashboardData.activeBuddy.buddyName,
+                      buddyavatarUrl: dashboardData.activeBuddy.buddyAvatarUrl,
+                      streakCount: dashboardData.activeBuddy.sharedStreakCount,
+                      userStatusThisWeek: dashboardData.activeBuddy.userStatusThisWeek,
+                      buddyStatusThisWeek: dashboardData.activeBuddy.buddyStatusThisWeek,
+                    }
+                  : null
+              }
               userName={currentUser.name.split(' ')[0]}
               useravatarUrl={currentUser.avatarUrl}
+              userStatusThisWeek={dashboardData?.todayStatus}
+              onCheer={async (connId, bId) => {
+                const senderId = authUser?.id || currentUser.id;
+                await sendBuddyCheerAction(connId, senderId, bId, 'HEART');
+              }}
             />
           </section>
 
@@ -245,13 +290,12 @@ export default function DashboardView() {
               <div>
                 <h4 className='text-xs font-bold text-[#1e293b]'>Tingkat Kepatuhan</h4>
                 <span className='text-[11px] font-semibold text-[#e11d48]'>
-                  Pejuang Bebas Anemia (Level 3)
+                  {milestone.title}
                 </span>
               </div>
             </div>
             <p className='text-xs text-[#475569] leading-relaxed'>
-              Kamu telah meminum {currentUser.streakCount} tablet berturut-turut. Pertahankan
-              konsistensimu agar kadar hemoglobin tetap optimal!
+              {milestone.desc}
             </p>
           </Card>
         </div>

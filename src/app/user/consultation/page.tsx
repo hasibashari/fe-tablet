@@ -18,6 +18,7 @@ import {
   ChatMessageMock,
 } from '@/src/shared/mock/feTabletData';
 import { askGeminiConsultationAction } from '@/src/lib/gemini';
+import { MarkdownRenderer } from '@/src/shared/components/markdown';
 
 const createMsgId = (prefix: string) => `${prefix}_${Math.random().toString(36).substring(2, 9)}`;
 const getFormattedTimestamp = () =>
@@ -96,9 +97,9 @@ export default function ConsultationPage() {
   };
 
   return (
-    <div className='flex flex-col gap-6 w-full'>
-      {/* Screen Title */}
-      <div className='flex items-center justify-between'>
+    <div className='flex flex-col gap-3 sm:gap-4 w-full h-[calc(100dvh-130px)] md:h-[calc(100vh-75px)] min-h-[500px] overflow-hidden'>
+      {/* Screen Title Header (Shrink-0) */}
+      <div className='shrink-0 flex items-center justify-between'>
         <div>
           <h2 className='text-xl sm:text-2xl font-extrabold text-[#1e293b] tracking-tight'>
             Konsultasi AI (Asisten Fe-Tablet)
@@ -111,7 +112,7 @@ export default function ConsultationPage() {
         <button
           type='button'
           onClick={handleResetChat}
-          className='inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:text-[#e11d48] rounded-xl hover:bg-rose-50 transition-colors border border-[#fce7f3] bg-white cursor-pointer'
+          className='inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:text-[#e11d48] rounded-xl hover:bg-rose-50 transition-colors border border-[#fce7f3] bg-white cursor-pointer shadow-2xs'
           title='Reset Percakapan'
         >
           <RotateCcw size={14} />
@@ -119,11 +120,11 @@ export default function ConsultationPage() {
         </button>
       </div>
 
-      {/* Main Responsive Layout: Mobile Full / Desktop Split Panel */}
-      <div className='grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 items-start h-[calc(100vh-210px)] min-h-[520px] max-h-[750px]'>
-        {/* LEFT PANEL: Suggested Questions & Topics (Visible stacked on mobile, left sidebar on md+) */}
-        <div className='hidden md:flex md:col-span-4 flex-col gap-4 h-full overflow-y-auto'>
-          <Card padding='md' className='bg-gradient-to-br from-[#fff5f7] to-[#ffe4e6]'>
+      {/* Main Responsive Grid Layout (Flex-1 Min-h-0) */}
+      <div className='flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-stretch h-full overflow-hidden'>
+        {/* LEFT PANEL: Suggested Questions & Topics (Visible on md+) */}
+        <div className='hidden md:flex md:col-span-4 flex-col gap-4 h-full min-h-0 overflow-y-auto pr-1'>
+          <Card padding='md' className='shrink-0 bg-gradient-to-br from-[#fff5f7] to-[#ffe4e6]'>
             <div className='flex items-center gap-2.5 mb-2'>
               <div className='w-9 h-9 rounded-2xl bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center shadow-md shadow-rose-500/20'>
                 <Bot size={20} />
@@ -139,7 +140,10 @@ export default function ConsultationPage() {
             </p>
           </Card>
 
-          <Card padding='md' className='flex-1 flex flex-col justify-between'>
+          <Card
+            padding='md'
+            className='flex-1 min-h-0 flex flex-col justify-between overflow-y-auto'
+          >
             <div>
               <h4 className='text-xs font-bold text-[#1e293b] mb-3 flex items-center gap-1.5'>
                 <Sparkles size={13} className='text-[#e11d48]' />
@@ -167,7 +171,7 @@ export default function ConsultationPage() {
               </div>
             </div>
 
-            <div className='mt-4 pt-3 border-t border-[#fce7f3] flex items-start gap-1.5 text-[10px] text-[#64748b]'>
+            <div className='mt-4 pt-3 border-t border-[#fce7f3] flex items-start gap-1.5 text-[10px] text-[#64748b] shrink-0'>
               <Info size={13} className='text-rose-500 shrink-0 mt-0.5' />
               <span>
                 Jawaban disesuaikan dengan pedoman Kemenkes RI untuk suplementasi TTD remaja.
@@ -177,9 +181,9 @@ export default function ConsultationPage() {
         </div>
 
         {/* RIGHT PANEL: Chat Conversation (md:col-span-8) */}
-        <div className='md:col-span-8 h-full flex flex-col'>
-          {/* Mobile-Only Horizontal Chips Bar */}
-          <div className='flex md:hidden items-center gap-1.5 overflow-x-auto pb-2 mb-2 no-scrollbar'>
+        <div className='md:col-span-8 h-full min-h-0 flex flex-col overflow-hidden'>
+          {/* Mobile-Only Horizontal Chips Bar (Shrink-0) */}
+          <div className='shrink-0 flex md:hidden items-center gap-1.5 overflow-x-auto pb-2 mb-1.5 no-scrollbar'>
             {MOCK_CONSULTATION_TOPICS.map(topic => (
               <button
                 key={topic.id}
@@ -194,11 +198,11 @@ export default function ConsultationPage() {
           </div>
 
           <Card
-            padding='md'
-            className='flex-1 flex flex-col justify-between overflow-hidden bg-[#fffdfd] shadow-sm'
+            padding='none'
+            className='flex-1 min-h-0 flex flex-col overflow-hidden bg-[#fffdfd] shadow-sm border border-[#fce7f3] p-3 sm:p-4'
           >
-            {/* Scrollable Message List */}
-            <div className='flex-1 overflow-y-auto pr-2 space-y-3 pb-2'>
+            {/* Scrollable Message List (Only this section scrolls!) */}
+            <div className='flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-2 space-y-3 pb-2 overscroll-contain'>
               {messages.map(msg => {
                 const isUser = msg.sender === 'user';
 
@@ -207,7 +211,7 @@ export default function ConsultationPage() {
                     key={msg.id}
                     className={`flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
                   >
-                    {/* avatarUrl Icon */}
+                    {/* Avatar Icon */}
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white ${
                         isUser
@@ -220,13 +224,20 @@ export default function ConsultationPage() {
 
                     {/* Message Bubble */}
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-2xs ${
+                      className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-2xs ${
                         isUser
                           ? 'bg-[#e11d48] text-white rounded-tr-none'
                           : 'bg-white text-[#1e293b] border border-[#fce7f3] rounded-tl-none'
                       }`}
                     >
-                      <p>{msg.text}</p>
+                      {isUser ? (
+                        <p className='whitespace-pre-wrap'>{msg.text}</p>
+                      ) : (
+                        <MarkdownRenderer
+                          content={msg.text}
+                          className='text-xs sm:text-sm [&_p]:text-xs [&_p]:sm:text-sm [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:text-xs [&_li]:sm:text-sm [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold [&_h1]:my-2 [&_h2]:my-1.5 [&_h3]:my-1.5'
+                        />
+                      )}
                       <span
                         className={`text-[10px] block mt-1.5 ${
                           isUser ? 'text-rose-100 text-right' : 'text-[#94a3b8]'
@@ -257,8 +268,8 @@ export default function ConsultationPage() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Medical Disclaimer Banner */}
-            <div className='bg-[#fff5f7] border border-[#fce7f3] rounded-xl p-2.5 my-2 flex items-center gap-2'>
+            {/* Medical Disclaimer Banner (Shrink-0) */}
+            <div className='shrink-0 bg-[#fff5f7] border border-[#fce7f3] rounded-xl p-2 sm:p-2.5 my-2 flex items-center gap-2'>
               <AlertCircle size={14} className='text-[#e11d48] shrink-0' />
               <p className='text-[11px] text-[#64748b]'>
                 Informasi ini bersifat edukatif dan bukan pengganti saran, resep, atau diagnosa
@@ -266,26 +277,26 @@ export default function ConsultationPage() {
               </p>
             </div>
 
-            {/* Input Message Form */}
+            {/* Input Message Form (Shrink-0) */}
             <form
               onSubmit={e => {
                 e.preventDefault();
                 handleSendMessage();
               }}
-              className='flex items-center gap-2.5 pt-2 border-t border-[#fce7f3]'
+              className='shrink-0 flex items-center gap-2.5 pt-2 border-t border-[#fce7f3]'
             >
               <input
                 type='text'
                 placeholder='Ketik pertanyaan seputar Tablet Tambah Darah...'
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
-                className='flex-1 bg-[#fff5f7] text-[#1e293b] placeholder-[#94a3b8] text-xs sm:text-sm rounded-full border border-[#fce7f3] focus:border-[#e11d48] px-4 py-3 outline-none'
+                className='flex-1 bg-[#fff5f7] text-[#1e293b] placeholder-[#94a3b8] text-xs sm:text-sm rounded-full border border-[#fce7f3] focus:border-[#e11d48] px-4 py-2.5 sm:py-3 outline-none'
               />
 
               <button
                 type='submit'
                 disabled={!inputText.trim() || isTyping}
-                className='w-11 h-11 rounded-full bg-[#e11d48] text-white hover:bg-[#be123c] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20 transition-all cursor-pointer'
+                className='w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#e11d48] text-white hover:bg-[#be123c] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20 transition-all cursor-pointer'
               >
                 <Send size={17} />
               </button>

@@ -1,26 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { Cormorant_Garamond, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/src/features/auth';
 import ServiceWorkerRegister from '@/src/shared/components/ServiceWorkerRegister';
-
-const cormorantSerif = Cormorant_Garamond({
-  variable: '--font-serif',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-});
-
-const interSans = Inter({
-  variable: '--font-sans',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-mono',
-  subsets: ['latin'],
-  weight: ['400', '500'],
-});
 
 export const viewport: Viewport = {
   themeColor: '#e11d48',
@@ -61,7 +42,7 @@ export default function RootLayout({
     <html
       lang='id'
       suppressHydrationWarning
-      className={`${cormorantSerif.variable} ${interSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className='h-full antialiased'
     >
       <body
         suppressHydrationWarning

@@ -35,19 +35,6 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
     // Timezone Asia/Jakarta (WIB)
     const now = new Date();
     const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }); // 'YYYY-MM-DD'
-    const currentDayName = new Intl.DateTimeFormat('id-ID', {
-      timeZone: 'Asia/Jakarta',
-      weekday: 'long',
-    }).format(now); // 'Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'
-
-    const timeFormatter = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Jakarta',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    const [hStr, mStr] = timeFormatter.format(now).split(':');
-    const nowTotalMinutes = parseInt(hStr, 10) * 60 + parseInt(mStr, 10);
 
     // Fetch logs recorded for today and recent weekly logs
     const logsRes = await db.query<{

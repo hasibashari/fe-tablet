@@ -23,6 +23,9 @@ import BuddyHeroCard from '../components/BuddyHeroCard';
 import BuddyFriendsList from '../components/BuddyFriendsList';
 import AddBuddyModal from '../components/AddBuddyModal';
 
+let tempActivityCounter = 0;
+const generateTempActivityId = () => `act_tmp_${++tempActivityCounter}`;
+
 export default function BuddyView() {
   const { user } = useAuth();
   const userId = user?.id || 'usr_1';
@@ -111,8 +114,9 @@ export default function BuddyView() {
     showToast(`Stiker semangat terkirim ke ${bName}! ❤️`);
 
     // Add activity locally immediately
+    const tempId = generateTempActivityId();
     const newAct = {
-      id: `act_${Date.now()}`,
+      id: tempId,
       userName: userName,
       action: `mengirimkan stiker semangat ke ${bName} ❤️`,
       timestamp: 'Baru saja',

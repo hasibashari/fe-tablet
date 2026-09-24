@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import {
   LayoutDashboard,
   Users,
@@ -41,9 +42,9 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
     <div className='flex flex-col gap-2'>
       {user && (
         <div className='p-2.5 rounded-2xl bg-[#fff5f7] border border-pink-100 flex items-center gap-2.5'>
-          <div className='w-8 h-8 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border-2 border-rose-400 overflow-hidden'>
+          <div className='relative w-8 h-8 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border-2 border-rose-400 overflow-hidden'>
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} className='w-full h-full object-cover' />
+              <Image src={user.avatarUrl} alt={user.name} fill sizes='32px' className='object-cover' />
             ) : (
               <span>{user.name.charAt(0)}</span>
             )}

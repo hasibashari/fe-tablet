@@ -17,8 +17,7 @@ export interface SendReminderModalProps {
   onSendSuccess: (channel: 'app' | 'whatsapp', messageSent: string) => void;
 }
 
-export default function SendReminderModal({
-  open,
+function SendReminderModalContent({
   onClose,
   patientName,
   patientPhone = '0812-3456-7890',
@@ -26,7 +25,7 @@ export default function SendReminderModal({
   dosage = '1 Tablet (Setelah makan)',
   timeSlot = '08:00 WIB',
   onSendSuccess,
-}: SendReminderModalProps) {
+}: Omit<SendReminderModalProps, 'open'>) {
   const [channel, setChannel] = useState<'app' | 'whatsapp'>('whatsapp');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('standard');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -49,26 +48,18 @@ export default function SendReminderModal({
   const [message, setMessage] = useState<string>(() => getTemplateContent('standard'));
 
   useEffect(() => {
-    if (open) {
-      setMessage(getTemplateContent(selectedTemplate));
-    }
-  }, [open, patientName, medicationName, dosage, timeSlot]);
-
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
-    if (open) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, onClose]);
+  }, [onClose]);
 
   const handleTemplateChange = (newTemplate: string) => {
     setSelectedTemplate(newTemplate);
@@ -110,8 +101,6 @@ export default function SendReminderModal({
     onSendSuccess(channel, finalMsg);
     onClose();
   };
-
-  if (!open) return null;
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
@@ -163,14 +152,14 @@ export default function SendReminderModal({
               <button
                 type='button'
                 onClick={() => setChannel('whatsapp')}
-                className={`p-3 rounded-2xl border-2 flex items-center gap-3 text-left transition-all cursor-pointer ${
+                className={`p-3 rounded-2xl border flex items-center gap-3 transition-all cursor-pointer ${
                   channel === 'whatsapp'
-                    ? 'border-emerald-500 bg-emerald-50/60'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    ? 'border-emerald-500 bg-emerald-50/50 text-emerald-900 ring-2 ring-emerald-500/20'
+                    : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                 }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                     channel === 'whatsapp'
                       ? 'bg-emerald-500 text-white'
                       : 'bg-slate-100 text-slate-500'
@@ -178,81 +167,89 @@ export default function SendReminderModal({
                 >
                   <MessageSquare size={16} />
                 </div>
-                <div>
-                  <div className='font-bold text-xs sm:text-sm text-slate-800'>WhatsApp</div>
-                  <div className='text-[11px] text-slate-500'>Direct Chat</div>
+                <div className='text-left'>
+                  <div className='text-xs font-bold'>WhatsApp</div>
+                  <div className='text-[10px] text-slate-500'>Direct via wa.me</div>
                 </div>
               </button>
 
               <button
                 type='button'
                 onClick={() => setChannel('app')}
-                className={`p-3 rounded-2xl border-2 flex items-center gap-3 text-left transition-all cursor-pointer ${
+                className={`p-3 rounded-2xl border flex items-center gap-3 transition-all cursor-pointer ${
                   channel === 'app'
-                    ? 'border-rose-500 bg-rose-50/60'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    ? 'border-rose-500 bg-rose-50/50 text-rose-900 ring-2 ring-rose-500/20'
+                    : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                 }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                     channel === 'app' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-500'
                   }`}
                 >
                   <Smartphone size={16} />
                 </div>
-                <div>
-                  <div className='font-bold text-xs sm:text-sm text-slate-800'>In-App Push</div>
-                  <div className='text-[11px] text-slate-500'>Notifikasi Pasien</div>
+                <div className='text-left'>
+                  <div className='text-xs font-bold'>Notifikasi App</div>
+                  <div className='text-[10px] text-slate-500'>Push Notification PWA</div>
                 </div>
               </button>
             </div>
           </div>
 
-          {/* Template Selection & AI Generator Button */}
-          <div className='flex flex-col sm:flex-row gap-3 items-stretch sm:items-center'>
-            <div className='flex-1'>
-              <label className='block text-xs font-semibold text-slate-600 mb-1'>
-                Pilih Template Pesan
+          {/* Template Quick Selection */}
+          <div>
+            <div className='flex items-center justify-between mb-2'>
+              <label className='block text-xs font-bold uppercase tracking-wider text-slate-500'>
+                Pilihan Template Pesan:
               </label>
-              <select
-                value={selectedTemplate}
-                onChange={e => handleTemplateChange(e.target.value)}
-                className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
-              >
-                <option value='standard'>📋 Standar Medis (Rekomendasi)</option>
-                <option value='friendly'>😊 Ramah & Edukatif</option>
-                <option value='urgent'>🚨 Peringatan Medis Penting</option>
-              </select>
-            </div>
-
-            <div className='sm:self-end'>
               <button
                 type='button'
-                disabled={isGeneratingAi}
                 onClick={handleGenerateAiMessage}
-                className='inline-flex items-center justify-center gap-1.5 w-full sm:w-auto px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 font-bold text-xs hover:bg-rose-100 transition-colors cursor-pointer disabled:opacity-50'
+                disabled={isGeneratingAi}
+                className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-[11px] font-bold text-purple-700 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer disabled:opacity-50'
               >
-                <Sparkles size={15} />
-                <span>{isGeneratingAi ? 'Menulis...' : 'Tulis dengan AI ✨'}</span>
+                <Sparkles size={12} className='text-purple-600' />
+                <span>{isGeneratingAi ? 'AI Menulis...' : 'Generate Teks AI'}</span>
               </button>
+            </div>
+            <div className='flex flex-wrap gap-2'>
+              {[
+                { id: 'standard', label: 'Standar Rutin' },
+                { id: 'friendly', label: 'Ramah & Semangat' },
+                { id: 'urgent', label: 'Penting (Tertinggal)' },
+              ].map(t => (
+                <button
+                  key={t.id}
+                  type='button'
+                  onClick={() => handleTemplateChange(t.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    selectedTemplate === t.id
+                      ? 'bg-rose-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Custom Message Editor */}
+          {/* Message Textarea */}
           <div>
-            <div className='flex items-center justify-between mb-1.5'>
-              <label className='text-xs font-bold text-slate-600'>Pratinjau & Edit Pesan:</label>
-              <span className='text-[11px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md'>
-                Dapat Diedit
-              </span>
-            </div>
+            <label className='block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2'>
+              Pratinjau & Edit Isi Pesan:
+            </label>
             <textarea
               rows={4}
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder='Tuliskan pesan pengingat khusus untuk pasien...'
-              className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all resize-none leading-relaxed'
+              className='w-full p-3.5 rounded-2xl border border-pink-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 text-xs sm:text-sm text-slate-800 leading-relaxed outline-none transition-all resize-none'
+              placeholder='Ketik pesan pengingat di sini...'
             />
+            <p className='text-[11px] text-slate-400 mt-1.5'>
+              *Pesan dapat diedit secara bebas sebelum dikirimkan ke pasien.
+            </p>
           </div>
         </div>
 
@@ -282,5 +279,15 @@ export default function SendReminderModal({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SendReminderModal(props: SendReminderModalProps) {
+  if (!props.open) return null;
+  return (
+    <SendReminderModalContent
+      key={`${props.patientId || props.patientName}_${props.medicationName || ''}`}
+      {...props}
+    />
   );
 }

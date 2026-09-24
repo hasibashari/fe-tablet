@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Heart, LogOut, LayoutDashboard, Sparkles } from 'lucide-react';
+import { Menu, X, Heart, LogOut, LayoutDashboard, Sparkles, ChevronDown } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useAuth } from '@/src/features/auth';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
@@ -19,6 +21,24 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Handle click outside to close profile dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileMenuOpen]);
 
   const dashboardHref = user?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
   const roleLabel = user?.role === 'admin' ? 'ADMIN' : 'PASIEN';
@@ -73,22 +93,28 @@ export default function Navbar() {
 
         <div className='hidden lg:flex items-center gap-3'>
           {isAuthenticated && user ? (
-            <div className='flex items-center gap-2.5 bg-slate-50 border border-slate-200/80 rounded-full py-1.5 pl-2 pr-3'>
-              <div className='relative w-7 h-7 rounded-full overflow-hidden ring-1.5 ring-[#e11d48] shrink-0'>
-                <Image
-                  src={
-                    user.avatarUrl ||
-                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`
-                  }
-                  alt={user.name}
-                  fill
-                  className='object-cover'
-                  sizes='28px'
-                />
-              </div>
-              <div className='flex flex-col text-left'>
-                <div className='flex items-center gap-1.5'>
-                  <span className='text-xs font-bold text-slate-800 leading-none truncate max-w-28'>
+            <div className='relative' ref={profileDropdownRef}>
+              <button
+                type='button'
+                onClick={() => setIsProfileMenuOpen(prev => !prev)}
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup='true'
+                className='flex items-center gap-2 bg-white/90 hover:bg-white border border-slate-200/80 hover:border-rose-200 rounded-full py-1.5 pl-1.5 pr-3 shadow-xs hover:shadow-sm transition-all cursor-pointer group'
+              >
+                <div className='relative w-7 h-7 rounded-full overflow-hidden ring-1.5 ring-[#e11d48] shrink-0'>
+                  <Image
+                    src={
+                      user.avatarUrl ||
+                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`
+                    }
+                    alt={user.name}
+                    fill
+                    className='object-cover'
+                    sizes='28px'
+                  />
+                </div>
+                <div className='flex items-center gap-1.5 text-left'>
+                  <span className='text-xs font-bold text-slate-800 leading-none truncate max-w-28 group-hover:text-[#e11d48] transition-colors'>
                     {user.name.split(',')[0]}
                   </span>
                   <span
@@ -99,23 +125,43 @@ export default function Navbar() {
                     {roleLabel}
                   </span>
                 </div>
-              </div>
-
-              <Link
-                href={dashboardHref}
-                className='bg-[#e11d48] hover:bg-[#be123c] text-white px-3 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 shadow-sm'
-              >
-                <LayoutDashboard size={14} />
-                <span>Dashboard</span>
-              </Link>
-
-              <button
-                onClick={logout}
-                title='Keluar'
-                className='text-slate-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50 cursor-pointer'
-              >
-                <LogOut size={15} />
+                <ChevronDown
+                  size={14}
+                  className={cn(
+                    'text-slate-400 group-hover:text-slate-600 transition-transform duration-200 ml-0.5',
+                    isProfileMenuOpen && 'rotate-180 text-[#e11d48]',
+                  )}
+                />
               </button>
+
+              {/* Profile Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl bg-white border border-rose-100 shadow-xl shadow-rose-900/10 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150'>
+                  {/* Menu Links */}
+                  <div className='p-1 flex flex-col gap-0.5'>
+                    <Link
+                      href={dashboardHref}
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className='flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-[#e11d48] hover:bg-rose-50/70 rounded-xl transition-colors'
+                    >
+                      <LayoutDashboard size={15} className='text-[#e11d48]' />
+                      <span>Ke Dashboard</span>
+                    </Link>
+
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        logout();
+                      }}
+                      className='w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50/80 rounded-xl transition-colors text-left cursor-pointer'
+                    >
+                      <LogOut size={15} className='text-red-500' />
+                      <span>Keluar Akun</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <Link

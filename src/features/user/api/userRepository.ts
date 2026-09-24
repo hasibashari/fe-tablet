@@ -40,6 +40,15 @@ export interface UserDashboardData {
     summary: string;
     imageUrl: string;
   } | null;
+  activeBuddy: {
+    connectionId: string;
+    buddyId: string;
+    buddyName: string;
+    buddyAvatarUrl: string;
+    sharedStreakCount: number;
+    userStatusThisWeek: 'recorded' | 'missed' | 'pending';
+    buddyStatusThisWeek: 'recorded' | 'missed' | 'pending';
+  } | null;
 }
 
 export interface UserScheduleData {
@@ -256,6 +265,53 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         }
       : null;
 
+    // 6. Active Buddy Connection
+    let activeBuddy = null;
+    const buddyRes = await db.query<{
+      connection_id: string;
+      user_id: string;
+      buddy_user_id: string;
+      shared_streak_count: number;
+      this_week_user_status: string;
+      this_week_buddy_status: string;
+      buddy_id: string;
+      buddy_name: string;
+      buddy_avatar_url: string | null;
+    }>(
+      `SELECT bc.id as connection_id, bc.user_id, bc.buddy_user_id, bc.shared_streak_count,
+              bc.this_week_user_status, bc.this_week_buddy_status,
+              bu.id as buddy_id, bu.name as buddy_name, bu.avatar_url as buddy_avatar_url
+       FROM buddy_connections bc
+       JOIN users bu ON (CASE WHEN bc.user_id = $1 THEN bc.buddy_user_id ELSE bc.user_id END) = bu.id
+       WHERE (bc.user_id = $1 OR bc.buddy_user_id = $1) AND bc.status = 'ACCEPTED'
+       ORDER BY bc.shared_streak_count DESC, bc.updated_at DESC
+       LIMIT 1`,
+      [effectiveUserId],
+    );
+
+    if (buddyRes.rows.length > 0) {
+      const bRow = buddyRes.rows[0];
+      const isUserInitiator = bRow.user_id === effectiveUserId;
+      const uStatus = (
+        isUserInitiator ? bRow.this_week_user_status : bRow.this_week_buddy_status
+      ) as 'recorded' | 'missed' | 'pending';
+      const bStatus = (
+        isUserInitiator ? bRow.this_week_buddy_status : bRow.this_week_user_status
+      ) as 'recorded' | 'missed' | 'pending';
+
+      activeBuddy = {
+        connectionId: bRow.connection_id,
+        buddyId: bRow.buddy_id,
+        buddyName: bRow.buddy_name || 'Sahabat Sehat',
+        buddyAvatarUrl:
+          bRow.buddy_avatar_url ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(bRow.buddy_name || 'Buddy')}`,
+        sharedStreakCount: Number(bRow.shared_streak_count) || 0,
+        userStatusThisWeek: uStatus || 'pending',
+        buddyStatusThisWeek: bStatus || 'pending',
+      };
+    }
+
     return {
       user: {
         id: effectiveUserId,
@@ -286,6 +342,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         instructions,
       },
       featuredArticle,
+      activeBuddy,
     };
   } catch (error) {
     console.error('Error in getUserDashboardDataAction:', error);
@@ -321,6 +378,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
           'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
       },
       featuredArticle: null,
+      activeBuddy: null,
     };
   }
 }
