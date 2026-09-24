@@ -221,7 +221,7 @@ export default function BuddyView() {
             Buddy Streak
           </h2>
           <p className='text-xs sm:text-sm text-[#64748b]'>
-            Bangun kebiasaan sehat minum TTD bersama sahabatmu (Duolingo Style)
+            Bangun kebiasaan sehat minum TTD bersama sahabatmu
           </p>
         </div>
 
@@ -283,6 +283,7 @@ export default function BuddyView() {
           <div className='md:col-span-7 flex flex-col gap-5'>
             <BuddyFriendsList
               friendsList={buddyData.friendsList}
+              activeBuddyName={buddyData.buddyName}
               onOpenAddModal={() => setIsAddModalOpen(true)}
               onSendCheer={(bId, cId, bName) => handleSendCheer(bId, cId, bName)}
               onSwitchActiveBuddy={handleSwitchActiveBuddy}

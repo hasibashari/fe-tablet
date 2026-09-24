@@ -2,12 +2,14 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Users, Plus, Flame, Heart, Crown, Trash2 } from 'lucide-react';
+import { Users, Plus, Flame, Heart, Crown, Trash2, UserPlus } from 'lucide-react';
 import { Card } from '@/src/shared/components/ui/Card';
+import { Button } from '@/src/shared/components/ui/Button';
 import { BuddyItem } from '../types';
 
 interface BuddyFriendsListProps {
   friendsList: BuddyItem[];
+  activeBuddyName?: string;
   onOpenAddModal: () => void;
   onSendCheer: (buddyId: string, connectionId: string, name: string) => void;
   onSwitchActiveBuddy: (connectionId: string) => void;
@@ -16,19 +18,22 @@ interface BuddyFriendsListProps {
 
 export default function BuddyFriendsList({
   friendsList,
+  activeBuddyName,
   onOpenAddModal,
   onSendCheer,
   onSwitchActiveBuddy,
   onSelectBuddyToDelete,
 }: BuddyFriendsListProps) {
-  const hasFriends = friendsList && friendsList.length > 0;
+  // Filter out the active hero buddy so it doesn't duplicate
+  const otherFriends = friendsList ? friendsList.filter(f => !f.isActive) : [];
+  const hasActiveBuddy = friendsList ? friendsList.some(f => f.isActive) : false;
 
   return (
     <Card padding='lg'>
       <div className='flex items-center justify-between mb-4'>
         <h4 className='text-sm sm:text-base font-bold text-[#1e293b] flex items-center gap-2'>
           <Users size={18} className='text-[#e11d48]' />
-          <span>Daftar Sahabat Sehat ({friendsList.length})</span>
+          <span>Sahabat Lainnya ({otherFriends.length})</span>
         </h4>
         <button
           type='button'
@@ -39,14 +44,12 @@ export default function BuddyFriendsList({
         </button>
       </div>
 
-      {hasFriends ? (
+      {otherFriends.length > 0 ? (
         <div className='flex flex-col divide-y divide-[#fce7f3]'>
-          {friendsList.map(friend => (
+          {otherFriends.map(friend => (
             <div
               key={friend.connectionId}
-              className={`py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 transition-colors rounded-xl px-2 ${
-                friend.isActive ? 'bg-[#fff5f7]/70' : 'hover:bg-slate-50'
-              }`}
+              className='py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors rounded-xl px-2'
             >
               {/* Friend Avatar & Info */}
               <div className='flex items-center gap-3 min-w-0'>
@@ -65,11 +68,6 @@ export default function BuddyFriendsList({
                     <span className='text-xs sm:text-sm font-bold text-[#1e293b] truncate'>
                       {friend.name}
                     </span>
-                    {friend.isActive && (
-                      <span className='text-[10px] font-bold text-rose-600 bg-rose-100 px-1.5 py-0.2 rounded-full shrink-0'>
-                        Utama
-                      </span>
-                    )}
                   </div>
                   <div className='flex items-center gap-2 mt-0.5'>
                     <span className='text-[11px] font-bold text-[#e11d48] flex items-center gap-0.5'>
@@ -103,16 +101,14 @@ export default function BuddyFriendsList({
                   <Heart size={15} className='fill-rose-500' />
                 </button>
 
-                {!friend.isActive && (
-                  <button
-                    type='button'
-                    title='Jadikan partner duel utama di hero'
-                    onClick={() => onSwitchActiveBuddy(friend.connectionId)}
-                    className='w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-700 flex items-center justify-center transition-transform active:scale-90 cursor-pointer'
-                  >
-                    <Crown size={15} />
-                  </button>
-                )}
+                <button
+                  type='button'
+                  title='Jadikan partner duel utama di hero'
+                  onClick={() => onSwitchActiveBuddy(friend.connectionId)}
+                  className='w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-700 flex items-center justify-center transition-transform active:scale-90 cursor-pointer'
+                >
+                  <Crown size={15} />
+                </button>
 
                 <button
                   type='button'
@@ -125,6 +121,37 @@ export default function BuddyFriendsList({
               </div>
             </div>
           ))}
+        </div>
+      ) : hasActiveBuddy ? (
+        <div className='bg-[#fff5f7]/60 border border-dashed border-rose-200 rounded-2xl p-5 text-center flex flex-col items-center gap-2.5 my-1'>
+          <div className='w-10 h-10 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center shadow-2xs'>
+            <UserPlus size={18} />
+          </div>
+          <div>
+            <h5 className='text-xs sm:text-sm font-bold text-[#1e293b]'>
+              Tambah Sahabat Lainnya
+            </h5>
+            <p className='text-xs text-[#64748b] max-w-xs mt-0.5 leading-relaxed'>
+              {activeBuddyName ? (
+                <>
+                  <strong>{activeBuddyName}</strong> aktif sebagai partner utamamu. Tambah teman
+                  sekolah lainnya untuk memperluas jejaring dukungan sehatmu!
+                </>
+              ) : (
+                'Tambah teman sekolah lainnya untuk saling mengingatkan minum TTD setiap minggu!'
+              )}
+            </p>
+          </div>
+          <Button
+            variant='soft'
+            size='sm'
+            shape='pill'
+            icon={<Plus size={14} />}
+            onClick={onOpenAddModal}
+            className='text-xs mt-1'
+          >
+            Tambah Buddy Baru
+          </Button>
         </div>
       ) : (
         <div className='py-6 text-center text-xs text-[#94a3b8]'>

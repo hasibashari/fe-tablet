@@ -6,7 +6,7 @@ import { MedicationSchedule, ScheduleCategory } from '../types/admin.types';
 interface ScheduleDbRow {
   id: string;
   user_id: string;
-  patient_name: string | null;
+  user_name: string | null;
   tablet_name: string;
   dosage: string;
   frequency: string;
@@ -25,7 +25,7 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
     const res = await db.query<ScheduleDbRow>(`
       SELECT 
         s.id, s.user_id, s.tablet_name, s.dosage, s.frequency, s.day_of_week, s.time_slot, s.status, s.instructions, s.created_at,
-        u.name as patient_name
+        u.name as user_name
       FROM reminder_schedules s
       JOIN users u ON s.user_id = u.id
       ORDER BY s.created_at DESC
@@ -103,8 +103,10 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
 
       result.push({
         id: r.id,
+        userId: r.user_id,
+        userName: r.user_name || 'Siswi Fe-Tablet',
         patientId: r.user_id,
-        patientName: r.patient_name || 'Siswi Fe-Tablet',
+        patientName: r.user_name || 'Siswi Fe-Tablet',
         medicationName: r.tablet_name || 'Tablet Tambah Darah (TTD)',
         dosage: r.dosage || '1 tablet',
         frequency: isDaily ? 'Harian' : '1x Seminggu',
@@ -129,7 +131,8 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
 }
 
 export async function sendReminderNudgeAction(data: {
-  patientId: string;
+  userId?: string;
+  patientId?: string;
   senderId?: string;
   senderName: string;
   senderRole: string;
@@ -141,6 +144,10 @@ export async function sendReminderNudgeAction(data: {
   channel: 'app' | 'whatsapp';
 }): Promise<{ success: boolean; nudgeId?: string; error?: string }> {
   try {
+    const targetUserId = data.userId || data.patientId;
+    if (!targetUserId) {
+      return { success: false, error: 'User ID is required' };
+    }
     const newId = `ndg_${Date.now().toString().slice(-6)}`;
 
     await db.query(
@@ -149,7 +156,7 @@ export async function sendReminderNudgeAction(data: {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'UNREAD')`,
       [
         newId,
-        data.patientId,
+        targetUserId,
         data.senderId ?? null,
         data.scheduleId ?? null,
         data.medicationName ? `Pengingat ${data.medicationName}` : 'Pengingat Minum TTD',
@@ -167,7 +174,8 @@ export async function sendReminderNudgeAction(data: {
 }
 
 export async function createScheduleAction(data: {
-  patientId: string;
+  userId?: string;
+  patientId?: string;
   medicationName: string;
   dosage: string;
   frequency: string;
@@ -179,6 +187,7 @@ export async function createScheduleAction(data: {
   instructions?: string;
 }): Promise<{ success: boolean; schedule?: MedicationSchedule; error?: string }> {
   try {
+    const targetUserId = data.userId || data.patientId || 'usr_1';
     const newId = `sch_${Date.now().toString().slice(-6)}`;
     const mainSlot = data.timeSlots[0] || '08:00';
     const dayOfWeek = data.dayOfWeek || 'Sabtu';
@@ -193,7 +202,7 @@ export async function createScheduleAction(data: {
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'Aktif', $8)`,
         [
           newId,
-          data.patientId,
+          targetUserId,
           data.medicationName || 'Tablet Tambah Darah (TTD)',
           data.dosage || '1 tablet',
           dbFrequency,

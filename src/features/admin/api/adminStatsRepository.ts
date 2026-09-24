@@ -18,7 +18,7 @@ interface AdherenceSummaryRow {
 export async function getAdminStatsAction(): Promise<AdminStats> {
   try {
     const usersRes = await db.query<CountRow>(`SELECT count(*) as c FROM users WHERE role = 'user'`);
-    const totalPatients = Number(usersRes.rows[0]?.c) || 0;
+    const totalUsers = Number(usersRes.rows[0]?.c) || 0;
 
     const schedulesRes = await db.query<CountRow>(
       `SELECT count(*) as c FROM reminder_schedules WHERE status = 'Aktif'`,
@@ -47,7 +47,7 @@ export async function getAdminStatsAction(): Promise<AdminStats> {
     const activePrograms = Number(buddyRes.rows[0]?.c) || 2;
 
     return {
-      totalPatients,
+      totalUsers,
       activeSchedules,
       adherenceRate,
       publishedArticles,
@@ -56,7 +56,7 @@ export async function getAdminStatsAction(): Promise<AdminStats> {
   } catch (error) {
     console.error('Error in getAdminStatsAction:', error);
     return {
-      totalPatients: 4,
+      totalUsers: 4,
       activeSchedules: 4,
       adherenceRate: 92.5,
       publishedArticles: 5,

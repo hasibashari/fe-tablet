@@ -8,6 +8,7 @@ export type RealtimeEventType =
 
 export interface RealtimeEventPayload {
   type: RealtimeEventType
+  userId?: string
   patientId?: string
   scheduleId?: string
   nudgeId?: string

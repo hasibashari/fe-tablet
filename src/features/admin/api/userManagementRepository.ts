@@ -1,7 +1,7 @@
 'use server';
 
 import db from '@/src/db/client';
-import { PatientUser } from '../types/admin.types';
+import { ManagedUser } from '../types/admin.types';
 
 interface UserManagementDbRow {
   id: string;
@@ -27,7 +27,7 @@ interface UserManagementDbRow {
 // ============================================================
 // USER MANAGEMENT (ADMIN VIEW FOR SISWI / USERS)
 // ============================================================
-export async function getPatientsAction(): Promise<PatientUser[]> {
+export async function getUsersAction(): Promise<ManagedUser[]> {
   try {
     const res = await db.query<UserManagementDbRow>(`
       SELECT 
@@ -52,6 +52,8 @@ export async function getPatientsAction(): Promise<PatientUser[]> {
         ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
         : 'Hari ini';
 
+      const schoolOrOrg = r.school_or_org || 'SMA Negeri 1 Sehat';
+
       return {
         id: r.id,
         name: r.name,
@@ -62,8 +64,8 @@ export async function getPatientsAction(): Promise<PatientUser[]> {
         avatarUrl: r.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.name)}`,
         riskLevel: r.risk_level || 'Rendah',
         status: r.status || 'Aktif',
-        assignedDoctor: r.school_or_org || 'SMA Negeri 1 Sehat',
-        schoolOrOrg: r.school_or_org || 'SMA Negeri 1 Sehat',
+        schoolOrOrg,
+        assignedDoctor: schoolOrOrg, // Backwards compatible alias
         activeSchedulesCount: Number(r.active_schedules_count) || 1,
         adherenceRate,
         lastActive: lastActiveStr,
@@ -73,26 +75,28 @@ export async function getPatientsAction(): Promise<PatientUser[]> {
       };
     });
   } catch (error) {
-    console.error('Error in getPatientsAction:', error);
+    console.error('Error in getUsersAction:', error);
     return [];
   }
 }
 
-export async function createPatientAction(data: {
+export async function createUserAction(data: {
   name: string;
   email: string;
   phone: string;
   age: number;
   gender: 'Laki-laki' | 'Perempuan';
   riskLevel: 'Tinggi' | 'Sedang' | 'Rendah';
+  schoolOrOrg?: string;
   assignedDoctor?: string;
   medicalNotes?: string;
-}): Promise<{ success: boolean; patient?: PatientUser; error?: string }> {
+}): Promise<{ success: boolean; user?: ManagedUser; error?: string }> {
   try {
     const newId = `usr_${Date.now().toString().slice(-6)}`;
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}`;
     const cleanTag = data.name.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5) || 'USER';
     const friendCode = `FE-${cleanTag}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const school = data.schoolOrOrg || data.assignedDoctor || 'SMA Negeri 1 Sehat';
 
     await db.transaction(async client => {
       await client.query(
@@ -111,7 +115,7 @@ export async function createPatientAction(data: {
       await client.query(
         `INSERT INTO user_profiles (user_id, friend_code, school_or_org, risk_level, status, notes)
          VALUES ($1, $2, $3, $4, 'Aktif', $5)`,
-        [newId, friendCode, data.assignedDoctor || 'SMA Negeri 1 Sehat', data.riskLevel, data.medicalNotes || null],
+        [newId, friendCode, school, data.riskLevel, data.medicalNotes || null],
       );
 
       // Create default weekly schedule
@@ -122,9 +126,9 @@ export async function createPatientAction(data: {
       );
     });
 
-    const patients = await getPatientsAction();
-    const created = patients.find(p => p.id === newId);
-    return { success: true, patient: created };
+    const users = await getUsersAction();
+    const created = users.find(u => u.id === newId);
+    return { success: true, user: created };
   } catch (error: unknown) {
     console.error('Error creating user:', error);
     const errMsg = error instanceof Error ? error.message : 'Gagal membuat data pengguna baru';
@@ -132,9 +136,9 @@ export async function createPatientAction(data: {
   }
 }
 
-export async function updatePatientAction(
-  patientId: string,
-  data: Partial<PatientUser>,
+export async function updateUserAction(
+  userId: string,
+  data: Partial<ManagedUser>,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await db.transaction(async client => {
@@ -153,12 +157,13 @@ export async function updatePatientAction(
             data.email ? data.email.toLowerCase().trim() : null,
             data.phone ?? null,
             data.gender ?? null,
-            patientId,
+            userId,
           ],
         );
       }
 
-      if (data.riskLevel || data.status || data.medicalNotes || data.assignedDoctor) {
+      const school = data.schoolOrOrg || data.assignedDoctor;
+      if (data.riskLevel || data.status || data.medicalNotes || school) {
         await client.query(
           `UPDATE user_profiles
            SET 
@@ -168,24 +173,24 @@ export async function updatePatientAction(
              notes = COALESCE($4, notes),
              last_active_at = CURRENT_TIMESTAMP
            WHERE user_id = $5`,
-          [data.riskLevel ?? null, data.status ?? null, data.assignedDoctor ?? null, data.medicalNotes ?? null, patientId],
+          [data.riskLevel ?? null, data.status ?? null, school ?? null, data.medicalNotes ?? null, userId],
         );
       }
     });
 
     return { success: true };
   } catch (error: unknown) {
-    console.error('Error updating patient:', error);
+    console.error('Error updating user:', error);
     const errMsg = error instanceof Error ? error.message : 'Gagal memperbarui data pengguna';
     return { success: false, error: errMsg };
   }
 }
 
-export async function deletePatientAction(
-  patientId: string,
+export async function deleteUserAction(
+  userId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await db.query(`DELETE FROM users WHERE id = $1`, [patientId]);
+    await db.query(`DELETE FROM users WHERE id = $1`, [userId]);
     return { success: true };
   } catch (error: unknown) {
     console.error('Error deleting user:', error);
@@ -194,8 +199,8 @@ export async function deletePatientAction(
   }
 }
 
-export async function sendPatientReminderAction(
-  patientId: string,
+export async function sendUserReminderAction(
+  userId: string,
   message?: string,
 ): Promise<{ success: boolean }> {
   try {
@@ -205,12 +210,19 @@ export async function sendPatientReminderAction(
     await db.query(
       `INSERT INTO admin_nudges (id, user_id, title, message, channel, status)
        VALUES ($1, $2, 'Pengingat Minum TTD', $3, 'app', 'UNREAD')`,
-      [nudgeId, patientId, msg],
+      [nudgeId, userId, msg],
     );
 
     return { success: true };
   } catch (error) {
-    console.error('Error sending reminder nudge:', error);
+    console.error('Error sending user reminder nudge:', error);
     return { success: false };
   }
 }
+
+// Aliases for backward compatibility
+export const getPatientsAction = getUsersAction;
+export const createPatientAction = createUserAction;
+export const updatePatientAction = updateUserAction;
+export const deletePatientAction = deleteUserAction;
+export const sendPatientReminderAction = sendUserReminderAction;

@@ -62,9 +62,9 @@ export const testimonialsData = [
   },
   {
     quote:
-      'The transparency regarding their clinical trials and ingredient sourcing is unparalleled in the industry. I confidently recommend this to my patients.',
+      'The transparency regarding their clinical trials and ingredient sourcing is unparalleled in the industry. I confidently recommend this to our community.',
     author: 'James T.',
-    role: 'Patient since 2023',
+    role: 'User since 2023',
     avatarUrl:
       'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=300',
   },

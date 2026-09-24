@@ -5,7 +5,7 @@ import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog';
 import {
   GENDER_OPTIONS,
   RISK_LEVEL_OPTIONS,
-  PatientFormData,
+  UserFormData,
   UserGender,
   RiskLevel,
 } from '../constants/user.constants';
@@ -13,11 +13,11 @@ import {
 interface UserFormModalProps {
   open: boolean;
   editingId: string | null;
-  formData: PatientFormData;
+  formData: UserFormData;
   submitting: boolean;
   onClose: () => void;
   onSave: () => void;
-  onUpdateFormData: (updates: Partial<PatientFormData>) => void;
+  onUpdateFormData: (updates: Partial<UserFormData>) => void;
 }
 
 export default function UserFormModal({

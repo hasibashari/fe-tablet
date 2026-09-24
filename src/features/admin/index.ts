@@ -17,6 +17,6 @@ export * from './types/admin.types';
 export * from './constants/schedule.constants';
 export * from './constants/user.constants';
 export * from './api/adminRepository';
+export * from './api/userManagementRepository';
 export * from './api/scheduleRepository';
-export * from './api/patientRepository';
 export * from './api/articleRepository';

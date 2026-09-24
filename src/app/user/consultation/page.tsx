@@ -102,7 +102,7 @@ export default function ConsultationPage() {
       <div className='shrink-0 flex items-center justify-between'>
         <div>
           <h2 className='text-xl sm:text-2xl font-extrabold text-[#1e293b] tracking-tight'>
-            Konsultasi AI (Asisten Fe-Tablet)
+            Konsultasi AI
           </h2>
           <p className='text-xs sm:text-sm text-[#64748b]'>
             Tanya jawab pintar seputar anemia & tips minum tablet

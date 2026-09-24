@@ -1,12 +1,12 @@
 export interface AdminStats {
-  totalPatients: number;
+  totalUsers: number;
   activeSchedules: number;
   adherenceRate: number;
   publishedArticles: number;
   activePrograms: number;
 }
 
-export interface PatientUser {
+export interface ManagedUser {
   id: string;
   name: string;
   age: number;
@@ -16,8 +16,8 @@ export interface PatientUser {
   avatarUrl?: string;
   riskLevel: 'Tinggi' | 'Sedang' | 'Rendah';
   status: 'Aktif' | 'Nonaktif';
-  assignedDoctor: string;
-  schoolOrOrg?: string;
+  schoolOrOrg: string;
+  assignedDoctor?: string;
   activeSchedulesCount: number;
   adherenceRate: number;
   lastActive: string;
@@ -31,8 +31,10 @@ export type { ScheduleCategory };
 
 export interface MedicationSchedule {
   id: string;
-  patientId: string;
-  patientName: string;
+  userId: string;
+  userName: string;
+  patientId?: string;
+  patientName?: string;
   medicationName: string;
   dosage: string;
   frequency: '1x Seminggu' | 'Harian' | string;
@@ -75,7 +77,7 @@ export interface HealthProgram {
   code: string;
   description: string;
   durationWeeks: number;
-  enrolledPatientsCount: number;
+  enrolledUsersCount: number;
   status: 'Aktif' | 'Draf' | 'Arsip';
   targetCategory: string;
   createdBy: string;

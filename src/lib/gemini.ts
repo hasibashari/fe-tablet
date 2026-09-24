@@ -185,10 +185,11 @@ Berikan output dalam format JSON valid persis seperti ini (tanpa markdown backti
 }
 
 /**
- * Generate Pesan Pengingat Personal Berdasarkan Profil Pasien (Admin Feature)
+ * Generate Pesan Pengingat Personal Berdasarkan Profil Siswi/Pengguna (Admin Feature)
  */
-export async function generateAiPatientNudgeAction(params: {
-  patientName: string;
+export async function generateAiUserNudgeAction(params: {
+  userName?: string;
+  patientName?: string;
   medicationName: string;
   dosage: string;
   timeSlot: string;
@@ -200,15 +201,17 @@ export async function generateAiPatientNudgeAction(params: {
       return { success: false, message: '', error: 'API Key missing' };
     }
 
+    const name = params.userName || params.patientName || 'Siswi';
+
     const prompt = `
-Tuliskan 1 pesan pengingat WhatsApp singkat (2-3 kalimat) dari Klinik Fe-Tablet untuk pasien berikut:
-- Nama Pasien: ${params.patientName}
-- Nama Obat: ${params.medicationName} (${params.dosage})
+Tuliskan 1 pesan pengingat WhatsApp singkat (2-3 kalimat) dari Pembina UKS / Tim Fe-Tablet untuk siswi/pengguna berikut:
+- Nama Siswi: ${name}
+- Nama Tablet/Obat: ${params.medicationName} (${params.dosage})
 - Waktu Minum: ${params.timeSlot}
 - Tingkat Kepatuhan Saat Ini: ${params.adherenceRate || 80}%
 - Nada Pesan: ${params.tone || 'motivational'}
 
-Pesan harus sopan, menyemangati, ada sedikit sentuhan emotikon hangat, dan mengingatkan pentingnya minum obat tepat waktu. Berikan hanya teks pesannya saja.
+Pesan harus ramah, menyemangati, ada sedikit sentuhan emotikon hangat, dan mengingatkan pentingnya minum tablet penambah darah tepat waktu untuk cegah anemia. Berikan hanya teks pesannya saja.
 `;
 
     const response = await fetch(
@@ -238,3 +241,6 @@ Pesan harus sopan, menyemangati, ada sedikit sentuhan emotikon hangat, dan mengi
     return { success: false, message: '', error: msg };
   }
 }
+
+export const generateAiPatientNudgeAction = generateAiUserNudgeAction;
+

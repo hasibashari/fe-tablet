@@ -4,21 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { Printer, TrendingUp, CheckCircle2, AlertCircle, FileSpreadsheet } from 'lucide-react';
 import AdminHeader from '../components/AdminHeader';
 import { getComplianceReportsAction } from '../api/complianceRepository';
-import { getPatientsAction } from '../api/patientRepository';
-import { ComplianceReport, PatientUser } from '../types/admin.types';
+import { getUsersAction } from '../api/userManagementRepository';
+import { ComplianceReport, ManagedUser } from '../types/admin.types';
 
 export default function ReportAnalyticsView() {
   const [period, setPeriod] = useState('7-hari');
   const [reports, setReports] = useState<ComplianceReport[]>([]);
-  const [patients, setPatients] = useState<PatientUser[]>([]);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
 
   useEffect(() => {
     let isMounted = true;
     const fetchReports = async () => {
-      const [r, p] = await Promise.all([getComplianceReportsAction(), getPatientsAction()]);
+      const [r, u] = await Promise.all([getComplianceReportsAction(), getUsersAction()]);
       if (isMounted) {
         setReports(r);
-        setPatients(p);
+        setUsers(u);
       }
     };
     fetchReports();
@@ -41,7 +41,7 @@ export default function ReportAnalyticsView() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Laporan_Kepatuhan_MediCore_${period}.csv`);
+    link.setAttribute('download', `Laporan_Kepatuhan_Tablet_Fe_${period}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -50,8 +50,8 @@ export default function ReportAnalyticsView() {
   return (
     <div className='space-y-6'>
       <AdminHeader
-        title='Laporan & Analitik Klinik'
-        subtitle='Analisis statistik kepatuhan konsumsi obat pasien, tren aktivitas harian, serta ekspor dokumen medis.'
+        title='Laporan & Analitik Kepatuhan'
+        subtitle='Analisis statistik kepatuhan konsumsi tablet Fe pengguna/siswi, tren aktivitas berkala, serta ekspor data.'
       />
 
       {/* Control Bar */}
@@ -104,7 +104,7 @@ export default function ReportAnalyticsView() {
           <div className='flex items-center gap-2 mb-2'>
             <CheckCircle2 size={18} className='text-emerald-600' />
             <h3 className='text-xs sm:text-sm font-semibold text-slate-600'>
-              Obat Diminum Tepat Waktu
+              Tablet Diminum Tepat Waktu
             </h3>
           </div>
           <div className='text-xl sm:text-2xl font-bold text-slate-900 mb-1'>
@@ -120,7 +120,7 @@ export default function ReportAnalyticsView() {
           <div className='flex items-center gap-2 mb-2'>
             <AlertCircle size={18} className='text-amber-500' />
             <h3 className='text-xs sm:text-sm font-semibold text-slate-600'>
-              Obat Terlewat / Lupa
+              Tablet Terlewat / Lupa
             </h3>
           </div>
           <div className='text-xl sm:text-2xl font-bold text-amber-600 mb-1'>
@@ -136,14 +136,14 @@ export default function ReportAnalyticsView() {
           <div className='flex items-center gap-2 mb-2'>
             <TrendingUp size={18} className='text-rose-600' />
             <h3 className='text-xs sm:text-sm font-semibold text-slate-600'>
-              Skor Efektivitas Klinik
+              Skor Efektivitas Program
             </h3>
           </div>
           <div className='text-xl sm:text-2xl font-bold text-rose-600 mb-1'>
             Sangat Baik (A)
           </div>
           <p className='text-xs font-medium text-slate-500'>
-            Berdasarkan Indikator Standar Medis
+            Berdasarkan Indikator Program Fe
           </p>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function ReportAnalyticsView() {
         {/* Table breakdown */}
         <div className='lg:col-span-8 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-pink-100 shadow-sm'>
           <h3 className='text-sm sm:text-base font-bold text-slate-900 mb-4'>
-            Rincian Kepatuhan Konsumsi Harian Pasien
+            Rincian Kepatuhan Konsumsi Harian Pengguna
           </h3>
           <div className='space-y-4'>
             {reports.map((report, idx) => {
@@ -199,25 +199,26 @@ export default function ReportAnalyticsView() {
           </div>
         </div>
 
-        {/* Patient Adherence Leaderboard */}
+        {/* User Adherence Leaderboard */}
         <div className='lg:col-span-4 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-pink-100 shadow-sm'>
           <h3 className='text-sm sm:text-base font-bold text-slate-900 mb-4'>
-            Distribusi Kepatuhan Pasien
+            Distribusi Kepatuhan Pengguna
           </h3>
           <div className='space-y-2.5'>
-            {patients.slice(0, 5).map(p => {
-              const isGood = p.adherenceRate >= 90;
+            {users.slice(0, 5).map(u => {
+              const isGood = u.adherenceRate >= 90;
+              const org = u.schoolOrOrg || u.assignedDoctor || 'SMA Negeri 1 Sehat';
               return (
                 <div
-                  key={p.id}
+                  key={u.id}
                   className='flex justify-between items-center p-3 rounded-xl bg-rose-50/30 border border-pink-50 hover:bg-rose-50/60 transition-colors'
                 >
                   <div className='min-w-0 pr-2'>
                     <p className='text-xs sm:text-sm font-bold text-slate-900 truncate'>
-                      {p.name}
+                      {u.name}
                     </p>
                     <p className='text-[11px] text-slate-500 truncate'>
-                      {p.assignedDoctor.split(',')[0]}
+                      {org.split(',')[0]}
                     </p>
                   </div>
                   <span
@@ -227,7 +228,7 @@ export default function ReportAnalyticsView() {
                         : 'bg-amber-50 text-amber-700 border border-amber-200'
                     }`}
                   >
-                    {p.adherenceRate}%
+                    {u.adherenceRate}%
                   </span>
                 </div>
               );

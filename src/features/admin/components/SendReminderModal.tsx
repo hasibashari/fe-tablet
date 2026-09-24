@@ -2,13 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { BellRing, MessageSquare, Send, X, Smartphone, Sparkles } from 'lucide-react';
-import { generateAiPatientNudgeAction } from '@/src/lib/gemini';
+import { generateAiUserNudgeAction } from '@/src/lib/gemini';
 
 export interface SendReminderModalProps {
   open: boolean;
   onClose: () => void;
+  userId?: string;
+  userName?: string;
+  userPhone?: string;
   patientId?: string;
-  patientName: string;
+  patientName?: string;
   patientPhone?: string;
   scheduleId?: string;
   medicationName?: string;
@@ -19,6 +22,8 @@ export interface SendReminderModalProps {
 
 function SendReminderModalContent({
   onClose,
+  userName,
+  userPhone,
   patientName,
   patientPhone = '0812-3456-7890',
   medicationName = 'Tablet Tambah Darah (TTD)',
@@ -26,6 +31,8 @@ function SendReminderModalContent({
   timeSlot = '08:00 WIB',
   onSendSuccess,
 }: Omit<SendReminderModalProps, 'open'>) {
+  const displayName = userName || patientName || 'Siswi';
+  const displayPhone = userPhone || patientPhone || '0812-3456-7890';
   const [channel, setChannel] = useState<'app' | 'whatsapp'>('whatsapp');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('standard');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -35,13 +42,13 @@ function SendReminderModalContent({
   const getTemplateContent = (templateKey: string) => {
     switch (templateKey) {
       case 'standard':
-        return `Halo ${patientName}, ini pengingat dari Pembina UKS / Fe-Tablet untuk minum ${medicationName} (${dosage}) pada jam ${timeSlot}. Jangan lupa diminum setelah makan dengan air putih/jeruk ya! 🌸`;
+        return `Halo ${displayName}, ini pengingat dari Pembina UKS / Fe-Tablet untuk minum ${medicationName} (${dosage}) pada jam ${timeSlot}. Jangan lupa diminum setelah makan dengan air putih/jeruk ya! 🌸`;
       case 'friendly':
-        return `Halo ${patientName}, cegah anemia biar tetap fit dan konsentrasi belajar! Jangan lupa minum ${medicationName} (${dosage}) hari ini ya! Semangat selalu! 🌸`;
+        return `Halo ${displayName}, cegah anemia biar tetap fit dan konsentrasi belajar! Jangan lupa minum ${medicationName} (${dosage}) hari ini ya! Semangat selalu! 🌸`;
       case 'urgent':
-        return `PENGINGAT PENTING: Halo ${patientName}, jadwal minum ${medicationName} kamu minggu ini belum tercatat. Yuk segera minum suplemen TTD kamu dan catat di aplikasi ya!`;
+        return `PENGINGAT PENTING: Halo ${displayName}, jadwal minum ${medicationName} kamu minggu ini belum tercatat. Yuk segera minum suplemen TTD kamu dan catat di aplikasi ya!`;
       default:
-        return `Halo ${patientName}, jangan lupa minum ${medicationName} (${dosage}) sesuai jadwal suplementasi kamu ya!`;
+        return `Halo ${displayName}, jangan lupa minum ${medicationName} (${dosage}) sesuai jadwal suplementasi kamu ya!`;
     }
   };
 
@@ -69,8 +76,8 @@ function SendReminderModalContent({
   const handleGenerateAiMessage = async () => {
     setIsGeneratingAi(true);
     try {
-      const res = await generateAiPatientNudgeAction({
-        patientName,
+      const res = await generateAiUserNudgeAction({
+        userName: displayName,
         medicationName,
         dosage,
         timeSlot,
@@ -92,7 +99,7 @@ function SendReminderModalContent({
   const handleSend = () => {
     const finalMsg = message || getTemplateContent(selectedTemplate);
     if (channel === 'whatsapp') {
-      const cleanPhone = patientPhone.replace(/[^0-9]/g, '');
+      const cleanPhone = displayPhone.replace(/[^0-9]/g, '');
       const formattedPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
       const encodedMsg = encodeURIComponent(finalMsg);
       window.open(`https://wa.me/${formattedPhone}?text=${encodedMsg}`, '_blank');
@@ -126,10 +133,10 @@ function SendReminderModalContent({
             </div>
             <div>
               <h3 className='font-extrabold text-base sm:text-lg text-slate-800 leading-tight'>
-                Kirim Pengingat Obat
+                Kirim Pengingat Tablet Fe
               </h3>
               <p className='text-xs text-slate-500 mt-0.5'>
-                Pasien: {patientName} • {dosage}
+                Siswi: {displayName} • {dosage}
               </p>
             </div>
           </div>
@@ -248,7 +255,7 @@ function SendReminderModalContent({
               placeholder='Ketik pesan pengingat di sini...'
             />
             <p className='text-[11px] text-slate-400 mt-1.5'>
-              *Pesan dapat diedit secara bebas sebelum dikirimkan ke pasien.
+              *Pesan dapat diedit secara bebas sebelum dikirimkan ke siswi.
             </p>
           </div>
         </div>
@@ -273,7 +280,7 @@ function SendReminderModalContent({
           >
             {channel === 'whatsapp' ? <MessageSquare size={16} /> : <Send size={16} />}
             <span>
-              {channel === 'whatsapp' ? 'Buka WhatsApp Pasien' : 'Kirim Pengingat Sekarang'}
+              {channel === 'whatsapp' ? 'Buka WhatsApp Siswi' : 'Kirim Pengingat Sekarang'}
             </span>
           </button>
         </div>
@@ -284,10 +291,12 @@ function SendReminderModalContent({
 
 export default function SendReminderModal(props: SendReminderModalProps) {
   if (!props.open) return null;
+  const keyId = props.userId || props.userName || props.patientId || props.patientName;
   return (
     <SendReminderModalContent
-      key={`${props.patientId || props.patientName}_${props.medicationName || ''}`}
+      key={`${keyId}_${props.medicationName || ''}`}
       {...props}
     />
   );
 }
+

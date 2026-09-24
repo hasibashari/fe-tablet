@@ -11,17 +11,18 @@ import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
 import { useCrudModal } from '@/src/shared/hooks/useCrudModal';
 import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm';
 import { useToast } from '@/src/shared/hooks/useToast';
+import { publishRealtimeEvent } from '@/src/shared/utils/realtimeSync';
 import {
-  getPatientsAction,
-  createPatientAction,
-  updatePatientAction,
-  deletePatientAction,
-  sendPatientReminderAction,
-} from '../api/patientRepository';
-import { PatientUser } from '../types/admin.types';
+  getUsersAction,
+  createUserAction,
+  updateUserAction,
+  deleteUserAction,
+  sendUserReminderAction,
+} from '../api/userManagementRepository';
+import { ManagedUser } from '../types/admin.types';
 import {
-  INITIAL_PATIENT_FORM_DATA,
-  PatientFormData,
+  INITIAL_USER_FORM_DATA,
+  UserFormData,
   RISK_LEVEL_OPTIONS,
   RISK_LEVEL_COLORS,
   RiskLevel,
@@ -29,7 +30,7 @@ import {
 } from '../constants/user.constants';
 
 export default function UserManagementView() {
-  const [patients, setPatients] = useState<PatientUser[]>([]);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState<string>('Semua');
   const [submitting, setSubmitting] = useState(false);
@@ -43,12 +44,12 @@ export default function UserManagementView() {
     handleOpenEdit,
     handleCloseModal,
     updateFormData,
-  } = useCrudModal<PatientFormData>(INITIAL_PATIENT_FORM_DATA);
+  } = useCrudModal<UserFormData>(INITIAL_USER_FORM_DATA);
 
   // 2. Hook Konfirmasi Hapus
   const {
     open: deleteConfirmOpen,
-    itemToDelete: patientToDelete,
+    itemToDelete: userToDelete,
     requestDelete: handleDeleteRequest,
     closeDelete: handleCloseDelete,
   } = useDeleteConfirm<string>();
@@ -65,34 +66,34 @@ export default function UserManagementView() {
   // Reminder Modal State
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
   const [reminderData, setReminderData] = useState<{
-    patientId?: string;
-    patientName: string;
-    patientPhone?: string;
+    userId?: string;
+    userName: string;
+    userPhone?: string;
   }>({
-    patientName: '',
+    userName: '',
   });
 
-  const loadPatients = useCallback(async () => {
-    const data = await getPatientsAction();
-    setPatients(data);
+  const loadUsers = useCallback(async () => {
+    const data = await getUsersAction();
+    setUsers(data);
   }, []);
 
   useEffect(() => {
     let isMounted = true;
-    const fetchPatients = async () => {
-      const data = await getPatientsAction();
-      if (isMounted) setPatients(data);
+    const fetchUsers = async () => {
+      const data = await getUsersAction();
+      if (isMounted) setUsers(data);
     };
-    fetchPatients();
+    fetchUsers();
 
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        fetchPatients();
+        fetchUsers();
       }
     }, 8000);
 
     const handleFocus = () => {
-      fetchPatients();
+      fetchUsers();
     };
     window.addEventListener('focus', handleFocus);
 
@@ -103,12 +104,12 @@ export default function UserManagementView() {
     };
   }, []);
 
-  const filteredPatients = patients.filter(p => {
+  const filteredUsers = users.filter(u => {
     const matchesSearch =
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.phone.includes(searchQuery);
-    const matchesRisk = riskFilter === 'Semua' || p.riskLevel === riskFilter;
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.phone.includes(searchQuery);
+    const matchesRisk = riskFilter === 'Semua' || u.riskLevel === riskFilter;
     return matchesSearch && matchesRisk;
   });
 
@@ -116,20 +117,21 @@ export default function UserManagementView() {
     handleOpenAdd();
   };
 
-  const onOpenEdit = (patient: PatientUser) => {
-    handleOpenEdit(patient.id, {
-      name: patient.name,
-      age: String(patient.age),
-      gender: patient.gender as UserGender,
-      phone: patient.phone,
-      email: patient.email || '',
-      riskLevel: (patient.riskLevel as RiskLevel) || 'Rendah',
-      assignedDoctor: patient.schoolOrOrg || 'SMA Negeri 1 Sehat',
-      medicalNotes: patient.medicalNotes || '',
+  const onOpenEdit = (user: ManagedUser) => {
+    handleOpenEdit(user.id, {
+      name: user.name,
+      age: String(user.age),
+      gender: user.gender as UserGender,
+      phone: user.phone,
+      email: user.email || '',
+      riskLevel: (user.riskLevel as RiskLevel) || 'Rendah',
+      schoolOrOrg: user.schoolOrOrg || 'SMA Negeri 1 Sehat',
+      assignedDoctor: user.schoolOrOrg || 'SMA Negeri 1 Sehat',
+      medicalNotes: user.medicalNotes || '',
     });
   };
 
-  const handleSavePatient = async () => {
+  const handleSaveUser = async () => {
     if (!formData.name || !formData.phone) {
       showToast('Nama dan nomor telepon wajib diisi', 'error');
       return;
@@ -138,38 +140,38 @@ export default function UserManagementView() {
     setSubmitting(true);
     try {
       if (editingId) {
-        const res = await updatePatientAction(editingId, {
+        const res = await updateUserAction(editingId, {
           name: formData.name,
           age: parseInt(formData.age, 10) || 16,
           gender: formData.gender,
           phone: formData.phone,
           email: formData.email,
           riskLevel: formData.riskLevel,
-          schoolOrOrg: formData.assignedDoctor,
+          schoolOrOrg: formData.schoolOrOrg || formData.assignedDoctor,
           medicalNotes: formData.medicalNotes,
         });
 
         if (res.success) {
-          await loadPatients();
+          await loadUsers();
           handleCloseModal();
           showToast('Data siswi berhasil diperbarui di database!', 'success');
         } else {
           showToast(res.error || 'Gagal memperbarui data', 'error');
         }
       } else {
-        const res = await createPatientAction({
+        const res = await createUserAction({
           name: formData.name,
           age: parseInt(formData.age, 10) || 16,
           gender: formData.gender,
           phone: formData.phone,
           email: formData.email || `${formData.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
           riskLevel: formData.riskLevel,
-          assignedDoctor: formData.assignedDoctor || 'SMA Negeri 1 Sehat',
+          schoolOrOrg: formData.schoolOrOrg || formData.assignedDoctor || 'SMA Negeri 1 Sehat',
           medicalNotes: formData.medicalNotes,
         });
 
         if (res.success) {
-          await loadPatients();
+          await loadUsers();
           handleCloseModal();
           showToast('Siswi baru berhasil ditambahkan ke database!', 'success');
         } else {
@@ -182,10 +184,10 @@ export default function UserManagementView() {
   };
 
   const handleConfirmDelete = async () => {
-    if (patientToDelete) {
-      const res = await deletePatientAction(patientToDelete);
+    if (userToDelete) {
+      const res = await deleteUserAction(userToDelete);
       if (res.success) {
-        await loadPatients();
+        await loadUsers();
         showToast('Data siswi berhasil dihapus dari database.', 'success');
       } else {
         showToast(res.error || 'Gagal menghapus data siswi', 'error');
@@ -194,48 +196,49 @@ export default function UserManagementView() {
     handleCloseDelete();
   };
 
-  const handleOpenReminder = (patient: PatientUser) => {
+  const handleOpenReminder = (user: ManagedUser) => {
     setReminderData({
-      patientId: patient.id,
-      patientName: patient.name,
-      patientPhone: patient.phone,
+      userId: user.id,
+      userName: user.name,
+      userPhone: user.phone,
     });
     setReminderModalOpen(true);
   };
 
   const handleSendReminderSuccess = async (_channel: 'app' | 'whatsapp', messageSent: string) => {
-    if (reminderData.patientId) {
-      await sendPatientReminderAction(reminderData.patientId, messageSent);
-      await loadPatients();
+    if (reminderData.userId) {
+      await sendUserReminderAction(reminderData.userId, messageSent);
+      publishRealtimeEvent('NUDGE_SENT', { userId: reminderData.userId, patientId: reminderData.userId });
+      await loadUsers();
     }
   };
 
   // Streamlined 5 Essential Columns
-  const columns: Column<PatientUser>[] = [
+  const columns: Column<ManagedUser>[] = [
     {
-      id: 'patient',
+      id: 'user',
       label: 'Siswi (Pengguna)',
       width: '28%',
-      renderCell: patient => (
+      renderCell: user => (
         <div className='flex items-center gap-3'>
           <div className='w-9 h-9 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-pink-100 overflow-hidden relative shadow-2xs'>
-            {patient.avatarUrl ? (
+            {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={patient.avatarUrl}
-                alt={patient.name}
+                src={user.avatarUrl}
+                alt={user.name}
                 className='w-full h-full object-cover'
               />
             ) : (
-              <span>{patient.name.charAt(0)}</span>
+              <span>{user.name.charAt(0)}</span>
             )}
           </div>
           <div className='min-w-0'>
             <div className='font-bold text-slate-800 text-sm truncate'>
-              {patient.name}
+              {user.name}
             </div>
             <div className='text-xs text-slate-400 truncate'>
-              {patient.id} • {patient.age} th
+              {user.id} • {user.age} th
             </div>
           </div>
         </div>
@@ -245,14 +248,14 @@ export default function UserManagementView() {
       id: 'school',
       label: 'Sekolah & Kontak',
       width: '24%',
-      renderCell: patient => (
+      renderCell: user => (
         <div>
           <div className='font-semibold text-slate-800 text-xs sm:text-sm truncate'>
-            {patient.schoolOrOrg || 'SMA Negeri 1 Sehat'}
+            {user.schoolOrOrg || 'SMA Negeri 1 Sehat'}
           </div>
           <div className='text-xs text-slate-500 flex items-center gap-1 mt-0.5'>
             <Phone size={11} className='text-rose-500 shrink-0' />
-            <span>{patient.phone}</span>
+            <span>{user.phone}</span>
           </div>
         </div>
       ),
@@ -261,8 +264,8 @@ export default function UserManagementView() {
       id: 'adherence',
       label: 'Kepatuhan TTD',
       width: '18%',
-      renderCell: patient => {
-        const rate = patient.adherenceRate ?? 100;
+      renderCell: user => {
+        const rate = user.adherenceRate ?? 100;
         const color =
           rate >= 90
             ? 'text-emerald-600'
@@ -274,7 +277,7 @@ export default function UserManagementView() {
             <div className='flex items-center gap-1.5'>
               <span className={`font-bold text-sm ${color}`}>{rate}%</span>
               <span className='text-[11px] text-slate-400'>
-                ({patient.activeSchedulesCount || 0} Jadwal)
+                ({user.activeSchedulesCount || 0} Jadwal)
               </span>
             </div>
             <div className='w-24 bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden'>
@@ -293,14 +296,14 @@ export default function UserManagementView() {
       id: 'riskLevel',
       label: 'Tingkat Risiko',
       width: '18%',
-      renderCell: patient => {
-        const style = RISK_LEVEL_COLORS[patient.riskLevel] || RISK_LEVEL_COLORS.default;
+      renderCell: user => {
+        const style = RISK_LEVEL_COLORS[user.riskLevel] || RISK_LEVEL_COLORS.default;
         return (
           <span
             className='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold'
             style={{ backgroundColor: style.bg, color: style.text }}
           >
-            {patient.riskLevel}
+            {user.riskLevel}
           </span>
         );
       },
@@ -310,12 +313,12 @@ export default function UserManagementView() {
       label: 'Aksi',
       align: 'right',
       width: '12%',
-      renderCell: patient => (
+      renderCell: user => (
         <div className='flex items-center justify-end gap-1'>
           <button
             type='button'
             title='Kirim Pengingat'
-            onClick={() => handleOpenReminder(patient)}
+            onClick={() => handleOpenReminder(user)}
             className='p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer'
           >
             <BellRing size={16} />
@@ -323,7 +326,7 @@ export default function UserManagementView() {
           <button
             type='button'
             title='Edit Siswi'
-            onClick={() => onOpenEdit(patient)}
+            onClick={() => onOpenEdit(user)}
             className='p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer'
           >
             <Edit size={16} />
@@ -331,7 +334,7 @@ export default function UserManagementView() {
           <button
             type='button'
             title='Hapus Siswi'
-            onClick={() => handleDeleteRequest(patient.id)}
+            onClick={() => handleDeleteRequest(user.id)}
             className='p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer'
           >
             <Trash2 size={16} />
@@ -390,36 +393,36 @@ export default function UserManagementView() {
         </button>
       </div>
 
-      {/* Patients Table & Mobile Card View */}
+      {/* Users Table & Mobile Card View */}
       <DataTable
         columns={columns}
-        data={filteredPatients}
+        data={filteredUsers}
         emptyMessage='Tidak ada siswi yang ditemukan.'
-        renderMobileCard={patient => {
-          const style = RISK_LEVEL_COLORS[patient.riskLevel] || RISK_LEVEL_COLORS.default;
+        renderMobileCard={user => {
+          const style = RISK_LEVEL_COLORS[user.riskLevel] || RISK_LEVEL_COLORS.default;
           return (
             <div className='p-4 rounded-2xl border border-pink-100 bg-white shadow-sm flex flex-col gap-3'>
               {/* Header: Avatar + Name + Risk */}
               <div className='flex items-center justify-between gap-2'>
                 <div className='flex items-center gap-3 min-w-0'>
                   <div className='w-10 h-10 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-pink-100 overflow-hidden relative shadow-2xs'>
-                    {patient.avatarUrl ? (
+                    {user.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={patient.avatarUrl}
-                        alt={patient.name}
+                        src={user.avatarUrl}
+                        alt={user.name}
                         className='w-full h-full object-cover'
                       />
                     ) : (
-                      <span>{patient.name.charAt(0)}</span>
+                      <span>{user.name.charAt(0)}</span>
                     )}
                   </div>
                   <div className='min-w-0'>
                     <h4 className='font-bold text-slate-900 text-sm sm:text-base leading-tight truncate'>
-                      {patient.name}
+                      {user.name}
                     </h4>
                     <p className='text-xs text-slate-500 mt-0.5 truncate'>
-                      {patient.id} • {patient.age} th ({patient.schoolOrOrg || 'UKS Sekolah'})
+                      {user.id} • {user.age} th ({user.schoolOrOrg || 'UKS Sekolah'})
                     </p>
                   </div>
                 </div>
@@ -428,7 +431,7 @@ export default function UserManagementView() {
                   className='px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase shrink-0'
                   style={{ backgroundColor: style.bg, color: style.text }}
                 >
-                  {patient.riskLevel}
+                  {user.riskLevel}
                 </span>
               </div>
 
@@ -436,21 +439,21 @@ export default function UserManagementView() {
               <div className='grid grid-cols-2 gap-2 p-3 rounded-xl bg-[#fff5f7] border border-pink-100 text-xs'>
                 <div>
                   <span className='text-slate-500 block text-[11px]'>Kontak Telepon</span>
-                  <span className='font-semibold text-slate-800'>{patient.phone}</span>
+                  <span className='font-semibold text-slate-800'>{user.phone}</span>
                 </div>
 
                 <div>
                   <span className='text-slate-500 block text-[11px]'>Kepatuhan TTD</span>
                   <span
                     className={`font-bold ${
-                      patient.adherenceRate >= 90
+                      user.adherenceRate >= 90
                         ? 'text-emerald-600'
-                        : patient.adherenceRate >= 80
+                        : user.adherenceRate >= 80
                         ? 'text-amber-600'
                         : 'text-rose-600'
                     }`}
                   >
-                    {patient.adherenceRate}% ({patient.activeSchedulesCount || 0} Jadwal)
+                    {user.adherenceRate}% ({user.activeSchedulesCount || 0} Jadwal)
                   </span>
                 </div>
               </div>
@@ -459,7 +462,7 @@ export default function UserManagementView() {
               <div className='flex items-center justify-between gap-2 pt-1'>
                 <button
                   type='button'
-                  onClick={() => handleOpenReminder(patient)}
+                  onClick={() => handleOpenReminder(user)}
                   className='flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 shadow-sm transition-all cursor-pointer'
                 >
                   <BellRing size={14} />
@@ -470,7 +473,7 @@ export default function UserManagementView() {
                   <button
                     type='button'
                     title='Edit Data Siswi'
-                    onClick={() => onOpenEdit(patient)}
+                    onClick={() => onOpenEdit(user)}
                     className='p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer'
                   >
                     <Edit size={15} />
@@ -478,7 +481,7 @@ export default function UserManagementView() {
                   <button
                     type='button'
                     title='Hapus Siswi'
-                    onClick={() => handleDeleteRequest(patient.id)}
+                    onClick={() => handleDeleteRequest(user.id)}
                     className='p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer'
                   >
                     <Trash2 size={15} />
@@ -490,14 +493,14 @@ export default function UserManagementView() {
         }}
       />
 
-      {/* Add/Edit Patient Modal Component */}
+      {/* Add/Edit User Modal Component */}
       <UserFormModal
         open={openModal}
         editingId={editingId}
         formData={formData}
         submitting={submitting}
         onClose={handleCloseModal}
-        onSave={handleSavePatient}
+        onSave={handleSaveUser}
         onUpdateFormData={updateFormData}
       />
 
@@ -505,8 +508,8 @@ export default function UserManagementView() {
       <ConfirmDeleteDialog
         open={deleteConfirmOpen}
         title='Konfirmasi Hapus'
-        message='Apakah Anda yakin ingin menghapus pasien ini? Data tidak dapat dikembalikan.'
-        confirmText='Hapus Pasien'
+        message='Apakah Anda yakin ingin menghapus data siswi ini? Data tidak dapat dikembalikan.'
+        confirmText='Hapus Siswi'
         onClose={handleCloseDelete}
         onConfirm={handleConfirmDelete}
       />
@@ -515,8 +518,9 @@ export default function UserManagementView() {
       <SendReminderModal
         open={reminderModalOpen}
         onClose={() => setReminderModalOpen(false)}
-        patientName={reminderData.patientName}
-        patientPhone={reminderData.patientPhone}
+        userName={reminderData.userName}
+        userPhone={reminderData.userPhone}
+        userId={reminderData.userId}
         onSendSuccess={handleSendReminderSuccess}
       />
 

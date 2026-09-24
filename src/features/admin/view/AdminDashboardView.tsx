@@ -16,32 +16,33 @@ import StatCard from '@/src/shared/components/StatCard';
 import SendReminderModal from '../components/SendReminderModal';
 import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
 import { getAdminStatsAction } from '../api/adminStatsRepository';
-import { getPatientsAction } from '../api/patientRepository';
+import { getUsersAction, sendUserReminderAction } from '../api/userManagementRepository';
 import { getComplianceReportsAction } from '../api/complianceRepository';
-import { AdminStats, PatientUser, ComplianceReport } from '../types/admin.types';
+import { publishRealtimeEvent } from '@/src/shared/utils/realtimeSync';
+import { AdminStats, ManagedUser, ComplianceReport } from '../types/admin.types';
 
 export default function AdminDashboardView() {
   const [stats, setStats] = useState<AdminStats>({
-    totalPatients: 0,
+    totalUsers: 0,
     activeSchedules: 0,
     adherenceRate: 0,
     publishedArticles: 0,
     activePrograms: 0,
   });
-  const [patients, setPatients] = useState<PatientUser[]>([]);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
   const [reports, setReports] = useState<ComplianceReport[]>([]);
 
   React.useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
-      const [s, p, r] = await Promise.all([
+      const [s, u, r] = await Promise.all([
         getAdminStatsAction(),
-        getPatientsAction(),
+        getUsersAction(),
         getComplianceReportsAction(),
       ]);
       if (isMounted) {
         setStats(s);
-        setPatients(p);
+        setUsers(u);
         setReports(r);
       }
     };
@@ -51,18 +52,19 @@ export default function AdminDashboardView() {
     };
   }, []);
 
-  const highRiskPatients = patients.filter(p => p.riskLevel === 'Tinggi');
+  const highRiskUsers = users.filter(u => u.riskLevel === 'Tinggi');
 
   // Reminder Modal State
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
   const [reminderData, setReminderData] = useState<{
-    patientName: string;
-    patientPhone?: string;
+    userId?: string;
+    userName: string;
+    userPhone?: string;
     medicationName?: string;
     dosage?: string;
     timeSlot?: string;
   }>({
-    patientName: '',
+    userName: '',
   });
 
   // Toast Notification State
@@ -72,13 +74,15 @@ export default function AdminDashboardView() {
   const handleOpenReminder = (
     name: string,
     phone?: string,
+    userId?: string,
     medicationName?: string,
     dosage?: string,
     timeSlot?: string,
   ) => {
     setReminderData({
-      patientName: name,
-      patientPhone: phone || '0812-3456-7890',
+      userId: userId || 'usr_1',
+      userName: name,
+      userPhone: phone || '0812-3456-7890',
       medicationName: medicationName || 'Tablet Tambah Darah (TTD)',
       dosage: dosage || '1 Tablet (Setelah makan)',
       timeSlot: timeSlot || '08:00 WIB',
@@ -86,10 +90,14 @@ export default function AdminDashboardView() {
     setReminderModalOpen(true);
   };
 
-  const handleSendSuccess = (channel: 'app' | 'whatsapp') => {
+  const handleSendSuccess = async (channel: 'app' | 'whatsapp', messageSent: string) => {
+    if (reminderData.userId) {
+      await sendUserReminderAction(reminderData.userId, messageSent);
+      publishRealtimeEvent('NUDGE_SENT', { userId: reminderData.userId, patientId: reminderData.userId });
+    }
     const channelName = channel === 'whatsapp' ? 'WhatsApp' : 'Notifikasi App';
     setToastMsg(
-      `Pengingat obat berhasil dikirimkan ke ${reminderData.patientName} via ${channelName}!`,
+      `Pengingat tablet Fe berhasil dikirimkan ke ${reminderData.userName} via ${channelName}!`,
     );
     setToastOpen(true);
   };
@@ -98,7 +106,7 @@ export default function AdminDashboardView() {
     <div>
       <AdminHeader
         title='Dashboard Utama Admin'
-        subtitle='Pantau performa klinik, kepatuhan pengobatan pasien, dan aktivitas medis secara real-time.'
+        subtitle='Pantau capaian kepatuhan tablet Fe, aktivitas harian siswi, dan edukasi kesehatan secara real-time.'
       />
 
       {/* Entry Portal Banner */}
@@ -109,10 +117,10 @@ export default function AdminDashboardView() {
           </div>
           <div>
             <h3 className='font-bold text-slate-800 text-sm sm:text-base leading-tight'>
-              Pengelolaan Jadwal & Pengingat Obat Pasien
+              Pengelolaan Jadwal & Pengingat Tablet Fe
             </h3>
             <p className='text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed'>
-              Akses konfigurasi dosis, jam minum obat, dan pemantauan kepatuhan harian pasien.
+              Akses konfigurasi dosis, jam minum obat, dan pemantauan kepatuhan harian siswi/pengguna.
             </p>
           </div>
         </div>
@@ -129,8 +137,8 @@ export default function AdminDashboardView() {
       {/* KPI Cards Grid */}
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6'>
         <StatCard
-          title='Total Pasien'
-          value={stats.totalPatients}
+          title='Total Siswi (Pengguna)'
+          value={stats.totalUsers}
           icon={Users}
           iconBgColor='#ffe4e6'
           iconColor='#e11d48'
@@ -149,7 +157,7 @@ export default function AdminDashboardView() {
           icon={CalendarCheck}
           iconBgColor='#ffe4e6'
           iconColor='#e11d48'
-          subtitle={`${stats.totalPatients} pasien aktif`}
+          subtitle={`${stats.totalUsers} pengguna aktif`}
         />
 
         <StatCard
@@ -170,7 +178,7 @@ export default function AdminDashboardView() {
 
         <StatCard
           title='Risiko Tinggi'
-          value={highRiskPatients.length.toString()}
+          value={highRiskUsers.length.toString()}
           icon={AlertTriangle}
           iconBgColor='#fef3c7'
           iconColor='#d97706'
@@ -179,15 +187,15 @@ export default function AdminDashboardView() {
         />
       </div>
 
-      {/* Main Content Grid: Compliance Chart & High Risk Patients */}
+      {/* Main Content Grid: Compliance Chart & High Risk Users */}
       <div className='grid grid-cols-1 lg:grid-cols-12 gap-6'>
         {/* Compliance Trend Visualizer */}
         <div className='lg:col-span-7 xl:col-span-8 p-5 sm:p-6 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between'>
           <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4'>
             <div>
-              <h3 className='font-bold text-slate-800 text-base'>Tren Kepatuhan Obat (Mingguan)</h3>
+              <h3 className='font-bold text-slate-800 text-base'>Tren Kepatuhan Tablet Fe (Mingguan)</h3>
               <p className='text-xs text-slate-500 mt-0.5'>
-                Persentase jadwal obat yang diminum tepat waktu oleh pasien
+                Persentase jadwal TTD yang diminum tepat waktu oleh pengguna
               </p>
             </div>
             <Link
@@ -247,13 +255,13 @@ export default function AdminDashboardView() {
           </div>
         </div>
 
-        {/* High Risk Patients Alert Box */}
+        {/* High Risk Users Alert Box */}
         <div className='lg:col-span-5 xl:col-span-4 p-5 sm:p-6 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between'>
           <div>
             <div className='flex items-center justify-between mb-2'>
               <div className='flex items-center gap-2'>
                 <AlertTriangle size={18} className='text-amber-500' />
-                <h3 className='font-bold text-slate-800 text-base'>Pasien Perlu Perhatian</h3>
+                <h3 className='font-bold text-slate-800 text-base'>Siswi Perlu Perhatian</h3>
               </div>
               <Link
                 href='/admin/users'
@@ -265,37 +273,37 @@ export default function AdminDashboardView() {
             </div>
 
             <p className='text-xs text-slate-500 mb-4'>
-              Pasien dengan kepatuhan rendah atau membutuhkan dorongan pengingat:
+              Siswi dengan kepatuhan rendah atau membutuhkan dorongan pengingat:
             </p>
 
             <div className='space-y-3'>
-              {highRiskPatients.slice(0, 3).map(patient => (
+              {highRiskUsers.slice(0, 3).map(user => (
                 <div
-                  key={patient.id}
+                  key={user.id}
                   className='p-3.5 rounded-2xl border border-amber-200 bg-amber-50/60 flex items-center justify-between gap-2'
                 >
                   <div className='flex items-center gap-3 min-w-0'>
                     <div className='w-9 h-9 rounded-xl bg-amber-500 text-white font-bold text-sm flex items-center justify-center shrink-0'>
-                      {patient.name.charAt(0)}
+                      {user.name.charAt(0)}
                     </div>
                     <div className='min-w-0'>
                       <div className='font-bold text-xs sm:text-sm text-slate-900 truncate'>
-                        {patient.name}
+                        {user.name}
                       </div>
                       <div className='text-[11px] text-slate-500'>
-                        {patient.age} th • {patient.phone}
+                        {user.age} th • {user.phone}
                       </div>
                     </div>
                   </div>
 
                   <div className='flex items-center gap-2 shrink-0'>
                     <span className='px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs'>
-                      {patient.adherenceRate}%
+                      {user.adherenceRate}%
                     </span>
                     <button
                       type='button'
                       title='Kirim Pengingat'
-                      onClick={() => handleOpenReminder(patient.name, patient.phone)}
+                      onClick={() => handleOpenReminder(user.name, user.phone, user.id)}
                       className='p-1.5 rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors cursor-pointer'
                     >
                       <BellRing size={16} />
@@ -312,8 +320,9 @@ export default function AdminDashboardView() {
       <SendReminderModal
         open={reminderModalOpen}
         onClose={() => setReminderModalOpen(false)}
-        patientName={reminderData.patientName}
-        patientPhone={reminderData.patientPhone}
+        userName={reminderData.userName}
+        userPhone={reminderData.userPhone}
+        userId={reminderData.userId}
         medicationName={reminderData.medicationName}
         dosage={reminderData.dosage}
         timeSlot={reminderData.timeSlot}

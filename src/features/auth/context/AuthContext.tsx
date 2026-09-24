@@ -12,7 +12,7 @@ import {
 import {
   loginUserAction,
   quickLoginAction,
-  registerPatientAction,
+  registerUserAction,
 } from '../api/authRepository'
 
 export const AUTH_STORAGE_KEY = 'fe_tablet_auth_user'
@@ -183,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (data: RegisterCredentials): Promise<{ success: boolean; error?: string; redirectTo?: string }> => {
       setState((prev) => ({ ...prev, isLoading: true }))
       try {
-        const res = await registerPatientAction(data)
+        const res = await registerUserAction(data)
         if (res.success && res.user) {
           saveUserSession(res.user)
           return { success: true, redirectTo: res.redirectTo }

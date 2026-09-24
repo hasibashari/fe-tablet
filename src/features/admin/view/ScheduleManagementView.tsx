@@ -18,8 +18,8 @@ import {
   deleteScheduleAction,
   sendReminderNudgeAction,
 } from '../api/scheduleRepository';
-import { getPatientsAction } from '../api/patientRepository';
-import { MedicationSchedule, PatientUser } from '../types/admin.types';
+import { getUsersAction } from '../api/userManagementRepository';
+import { MedicationSchedule, ManagedUser } from '../types/admin.types';
 import {
   INITIAL_SCHEDULE_FORM_DATA,
   ScheduleFormData,
@@ -29,7 +29,7 @@ import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils
 
 export default function ScheduleManagementView() {
   const [schedules, setSchedules] = useState<MedicationSchedule[]>([]);
-  const [patients, setPatients] = useState<PatientUser[]>([]);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [frequencyFilter, setFrequencyFilter] = useState('Semua');
   const [submitting, setSubmitting] = useState(false);
@@ -65,30 +65,30 @@ export default function ScheduleManagementView() {
   // Reminder Modal State
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
   const [reminderData, setReminderData] = useState<{
-    patientId?: string;
-    patientName: string;
-    patientPhone?: string;
+    userId?: string;
+    userName: string;
+    userPhone?: string;
     scheduleId?: string;
     medicationName?: string;
     dosage?: string;
     timeSlot?: string;
   }>({
-    patientName: '',
+    userName: '',
   });
 
   const loadData = useCallback(async () => {
-    const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()]);
+    const [s, u] = await Promise.all([getSchedulesAction(), getUsersAction()]);
     setSchedules(s);
-    setPatients(p);
+    setUsers(u);
   }, []);
 
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
-      const [s, p] = await Promise.all([getSchedulesAction(), getPatientsAction()]);
+      const [s, u] = await Promise.all([getSchedulesAction(), getUsersAction()]);
       if (isMounted) {
         setSchedules(s);
-        setPatients(p);
+        setUsers(u);
       }
     };
 
@@ -125,18 +125,20 @@ export default function ScheduleManagementView() {
     };
   }, []);
 
-  // Quick lookup patient details for avatar & school
-  const patientMap = useMemo(() => {
-    const map = new Map<string, PatientUser>();
-    patients.forEach(p => map.set(p.id, p));
+  // Quick lookup user details for avatar & school
+  const userMap = useMemo(() => {
+    const map = new Map<string, ManagedUser>();
+    users.forEach(u => map.set(u.id, u));
     return map;
-  }, [patients]);
+  }, [users]);
 
   const filteredSchedules = schedules.filter(s => {
+    const name = s.userName || s.patientName || '';
+    const id = s.userId || s.patientId || '';
     const matchesSearch =
-      s.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.medicationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.patientId.toLowerCase().includes(searchQuery.toLowerCase());
+      id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFrequency =
       frequencyFilter === 'Semua' ||
       (frequencyFilter === 'Harian' && s.frequency === 'Harian') ||
@@ -146,13 +148,15 @@ export default function ScheduleManagementView() {
 
   const onOpenAdd = () => {
     handleOpenAdd({
-      patientId: patients[0]?.id || 'usr_1',
+      userId: users[0]?.id || 'usr_1',
+      patientId: users[0]?.id || 'usr_1',
     });
   };
 
   const onOpenEdit = (schedule: MedicationSchedule) => {
     handleOpenEdit(schedule.id, {
-      patientId: schedule.patientId,
+      userId: schedule.userId || schedule.patientId || 'usr_1',
+      patientId: schedule.userId || schedule.patientId || 'usr_1',
       medicationName: schedule.medicationName,
       dosage: schedule.dosage,
       frequency: schedule.frequency === 'Harian' ? 'Harian' : '1x Seminggu',
@@ -180,11 +184,13 @@ export default function ScheduleManagementView() {
     setSubmitting(true);
     const isDaily = formData.frequency === 'Harian';
     const cleanDayOfWeek = isDaily ? 'Setiap Hari' : formData.dayOfWeek || 'Sabtu';
+    const targetUserId = formData.userId || formData.patientId || users[0]?.id || 'usr_1';
 
     try {
       if (editingId) {
         const res = await updateScheduleAction(editingId, {
-          patientId: formData.patientId,
+          userId: targetUserId,
+          patientId: targetUserId,
           medicationName: formData.medicationName,
           dosage: formData.dosage,
           frequency: formData.frequency,
@@ -197,7 +203,8 @@ export default function ScheduleManagementView() {
         if (res.success) {
           await loadData();
           publishRealtimeEvent('SCHEDULE_UPDATED', {
-            patientId: formData.patientId,
+            userId: targetUserId,
+            patientId: targetUserId,
             scheduleId: editingId,
           });
           handleCloseModal();
@@ -207,7 +214,8 @@ export default function ScheduleManagementView() {
         }
       } else {
         const res = await createScheduleAction({
-          patientId: formData.patientId || patients[0]?.id || 'usr_1',
+          userId: targetUserId,
+          patientId: targetUserId,
           medicationName: formData.medicationName,
           dosage: formData.dosage,
           frequency: formData.frequency,
@@ -223,7 +231,10 @@ export default function ScheduleManagementView() {
 
         if (res.success) {
           await loadData();
-          publishRealtimeEvent('SCHEDULE_UPDATED', { patientId: formData.patientId });
+          publishRealtimeEvent('SCHEDULE_UPDATED', {
+            userId: targetUserId,
+            patientId: targetUserId,
+          });
           handleCloseModal();
           showToast('Jadwal baru berhasil disimpan ke database!', 'success');
         } else {
@@ -250,11 +261,13 @@ export default function ScheduleManagementView() {
   };
 
   const handleOpenReminder = (schedule: MedicationSchedule) => {
-    const patientObj = patients.find(p => p.id === schedule.patientId);
+    const targetUserId = schedule.userId || schedule.patientId || '';
+    const userObj = users.find(u => u.id === targetUserId);
+    const name = schedule.userName || schedule.patientName || userObj?.name || 'Siswi';
     setReminderData({
-      patientId: schedule.patientId,
-      patientName: schedule.patientName,
-      patientPhone: patientObj?.phone || '0812-3456-7890',
+      userId: targetUserId,
+      userName: name,
+      userPhone: userObj?.phone || '0812-3456-7890',
       scheduleId: schedule.id,
       medicationName: schedule.medicationName,
       dosage: schedule.dosage,
@@ -264,11 +277,12 @@ export default function ScheduleManagementView() {
   };
 
   const handleSendSuccess = async (channel: 'app' | 'whatsapp', messageSent: string) => {
-    if (reminderData.patientId) {
+    if (reminderData.userId) {
       await sendReminderNudgeAction({
-        patientId: reminderData.patientId,
-        senderName: 'Administrator MediCore',
-        senderRole: 'Administrator',
+        userId: reminderData.userId,
+        patientId: reminderData.userId,
+        senderName: 'Pembina UKS Fe-Tablet',
+        senderRole: 'Pembina UKS',
         scheduleId: reminderData.scheduleId,
         medicationName: reminderData.medicationName,
         dosage: reminderData.dosage,
@@ -278,7 +292,8 @@ export default function ScheduleManagementView() {
       });
       await loadData();
       publishRealtimeEvent('NUDGE_SENT', {
-        patientId: reminderData.patientId,
+        userId: reminderData.userId,
+        patientId: reminderData.userId,
       });
     }
   };
@@ -286,31 +301,27 @@ export default function ScheduleManagementView() {
   // Streamlined 5 Essential Columns (Direct to the point)
   const columns: Column<MedicationSchedule>[] = [
     {
-      id: 'patient',
-      label: 'Siswi (Pasien)',
+      id: 'user',
+      label: 'Siswi (Pengguna)',
       width: '30%',
       renderCell: schedule => {
-        const patient = patientMap.get(schedule.patientId);
+        const targetUserId = schedule.userId || schedule.patientId || '';
+        const user = userMap.get(targetUserId);
+        const name = schedule.userName || schedule.patientName || user?.name || 'Siswi';
         return (
           <div className='flex items-center gap-3'>
             <div className='w-9 h-9 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-pink-100 overflow-hidden relative shadow-2xs'>
-              {patient?.avatarUrl ? (
+              {user?.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={patient.avatarUrl}
-                  alt={schedule.patientName}
-                  className='w-full h-full object-cover'
-                />
+                <img src={user.avatarUrl} alt={name} className='w-full h-full object-cover' />
               ) : (
-                <span>{schedule.patientName.charAt(0)}</span>
+                <span>{name.charAt(0)}</span>
               )}
             </div>
             <div className='min-w-0'>
-              <div className='font-bold text-slate-800 text-sm truncate'>
-                {schedule.patientName}
-              </div>
+              <div className='font-bold text-slate-800 text-sm truncate'>{name}</div>
               <div className='text-xs text-slate-400 truncate'>
-                {schedule.patientId} • {patient?.schoolOrOrg || 'UKS Sekolah'}
+                {targetUserId} • {user?.schoolOrOrg || 'UKS Sekolah'}
               </div>
             </div>
           </div>
@@ -388,7 +399,7 @@ export default function ScheduleManagementView() {
         <div className='flex items-center justify-end gap-1'>
           <button
             type='button'
-            title='Ingatkan Pasien'
+            title='Ingatkan Siswi'
             onClick={() => handleOpenReminder(schedule)}
             className='p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer'
           >
@@ -419,7 +430,7 @@ export default function ScheduleManagementView() {
     <div>
       <AdminHeader
         title='Manajemen Jadwal Obat'
-        subtitle='Tetapkan instruksi dosis, frekuensi, serta jadwal pengingat otomatis untuk setiap pasien.'
+        subtitle='Tetapkan instruksi dosis, frekuensi, serta jadwal pengingat otomatis untuk setiap siswi/pengguna.'
       />
 
       {/* Filter Bar */}
@@ -467,30 +478,28 @@ export default function ScheduleManagementView() {
         data={filteredSchedules}
         emptyMessage='Tidak ada jadwal yang ditemukan.'
         renderMobileCard={schedule => {
-          const patient = patientMap.get(schedule.patientId);
+          const targetUserId = schedule.userId || schedule.patientId || '';
+          const user = userMap.get(targetUserId);
+          const name = schedule.userName || schedule.patientName || user?.name || 'Siswi';
           return (
             <div className='p-4 rounded-2xl border border-pink-100 bg-white shadow-sm flex flex-col gap-3'>
-              {/* Header: Patient Avatar + Name + Status */}
+              {/* Header: User Avatar + Name + Status */}
               <div className='flex items-center justify-between gap-2'>
                 <div className='flex items-center gap-3 min-w-0'>
                   <div className='w-10 h-10 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border border-pink-100 overflow-hidden relative shadow-2xs'>
-                    {patient?.avatarUrl ? (
+                    {user?.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={patient.avatarUrl}
-                        alt={schedule.patientName}
-                        className='w-full h-full object-cover'
-                      />
+                      <img src={user.avatarUrl} alt={name} className='w-full h-full object-cover' />
                     ) : (
-                      <span>{schedule.patientName.charAt(0)}</span>
+                      <span>{name.charAt(0)}</span>
                     )}
                   </div>
                   <div className='min-w-0'>
                     <h4 className='font-bold text-slate-900 text-sm sm:text-base leading-tight truncate'>
-                      {schedule.patientName}
+                      {name}
                     </h4>
                     <p className='text-xs text-slate-500 mt-0.5 truncate'>
-                      {schedule.patientId} • {patient?.schoolOrOrg || 'UKS Sekolah'}
+                      {targetUserId} • {user?.schoolOrOrg || 'UKS Sekolah'}
                     </p>
                   </div>
                 </div>
@@ -541,7 +550,7 @@ export default function ScheduleManagementView() {
                   className='flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 shadow-sm transition-all cursor-pointer'
                 >
                   <BellRing size={14} />
-                  <span>Ingatkan Pasien</span>
+                  <span>Ingatkan Siswi</span>
                 </button>
 
                 <div className='flex gap-1'>
@@ -573,7 +582,7 @@ export default function ScheduleManagementView() {
         open={openModal}
         editingId={editingId}
         formData={formData}
-        patients={patients}
+        users={users}
         submitting={submitting}
         onClose={handleCloseModal}
         onSave={handleSaveSchedule}
@@ -594,8 +603,9 @@ export default function ScheduleManagementView() {
       <SendReminderModal
         open={reminderModalOpen}
         onClose={() => setReminderModalOpen(false)}
-        patientName={reminderData.patientName}
-        patientPhone={reminderData.patientPhone}
+        userName={reminderData.userName}
+        userPhone={reminderData.userPhone}
+        userId={reminderData.userId}
         medicationName={reminderData.medicationName}
         dosage={reminderData.dosage}
         timeSlot={reminderData.timeSlot}

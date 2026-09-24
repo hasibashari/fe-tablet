@@ -156,13 +156,15 @@ export async function getConsumptionStatsAction(
 }
 
 export async function logManualConsumptionAction(data: {
-  patientId: string;
+  userId?: string;
+  patientId?: string;
   title: string;
   category: ConsumptionCategory;
   dosage?: string;
   notes?: string;
 }): Promise<{ success: boolean; logId?: string; error?: string }> {
   try {
+    const targetUserId = data.userId || data.patientId || 'usr_1';
     const id = `log_${Date.now().toString().slice(-6)}`;
     const today = new Date().toISOString().split('T')[0];
     const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
@@ -173,7 +175,7 @@ export async function logManualConsumptionAction(data: {
       ) VALUES ($1, $2, $3, 'TTD', $4, $5, '08:00', $6, 'ON_TIME', $7, 'Self')`,
       [
         id,
-        data.patientId,
+        targetUserId,
         data.title || 'Tablet Tambah Darah (TTD)',
         data.dosage || '1 Tablet',
         today,
@@ -187,7 +189,7 @@ export async function logManualConsumptionAction(data: {
       `UPDATE user_profiles 
        SET streak_count = streak_count + 1, last_active_at = CURRENT_TIMESTAMP 
        WHERE user_id = $1`,
-      [data.patientId],
+      [targetUserId],
     );
 
     return { success: true, logId: id };

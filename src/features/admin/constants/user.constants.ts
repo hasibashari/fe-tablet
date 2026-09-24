@@ -1,6 +1,6 @@
 /**
- * User & Patient Constants
- * Centralized static options and metadata for Siswi / Patient Management.
+ * User Constants
+ * Centralized static options and metadata for Siswi / User Management.
  */
 
 export const GENDER_OPTIONS = [
@@ -27,24 +27,26 @@ export const RISK_LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
 
 export const DEFAULT_SCHOOL_ORG = 'SMA Negeri 1 Sehat';
 
-export interface PatientFormData {
+export interface UserFormData {
   name: string;
   age: string;
   gender: UserGender;
   phone: string;
   email: string;
   riskLevel: RiskLevel;
-  assignedDoctor: string;
+  schoolOrOrg?: string;
+  assignedDoctor?: string;
   medicalNotes: string;
 }
 
-export const INITIAL_PATIENT_FORM_DATA: PatientFormData = {
+export const INITIAL_USER_FORM_DATA: UserFormData = {
   name: '',
   age: '',
   gender: 'Perempuan',
   phone: '',
   email: '',
   riskLevel: 'Rendah',
+  schoolOrOrg: DEFAULT_SCHOOL_ORG,
   assignedDoctor: DEFAULT_SCHOOL_ORG,
   medicalNotes: '',
 };

@@ -73,19 +73,19 @@ export default function HistoryView() {
     setTodayStatus('recorded');
     setRecordedTime(timeStr);
     await recordUserConsumptionAction(user?.id || 'usr_1', 'recorded');
-    publishRealtimeEvent('MEDICATION_TAKEN', { patientId: user?.id || 'usr_1' });
+    publishRealtimeEvent('MEDICATION_TAKEN', { userId: user?.id || 'usr_1', patientId: user?.id || 'usr_1' });
   };
 
   const handleMissToday = async () => {
     setTodayStatus('missed');
     await recordUserConsumptionAction(user?.id || 'usr_1', 'missed');
-    publishRealtimeEvent('MEDICATION_TAKEN', { patientId: user?.id || 'usr_1' });
+    publishRealtimeEvent('MEDICATION_TAKEN', { userId: user?.id || 'usr_1', patientId: user?.id || 'usr_1' });
   };
 
   const handleResetToday = async () => {
     setTodayStatus('pending');
     await recordUserConsumptionAction(user?.id || 'usr_1', 'pending');
-    publishRealtimeEvent('MEDICATION_TAKEN', { patientId: user?.id || 'usr_1' });
+    publishRealtimeEvent('MEDICATION_TAKEN', { userId: user?.id || 'usr_1', patientId: user?.id || 'usr_1' });
   };
 
   return (

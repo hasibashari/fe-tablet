@@ -139,7 +139,7 @@ export async function quickLoginAction(
   }
 }
 
-export async function registerPatientAction(
+export async function registerUserAction(
   data: RegisterCredentials,
 ): Promise<{ success: boolean; user?: AuthUser; error?: string; redirectTo?: string }> {
   try {
@@ -224,3 +224,6 @@ export async function registerPatientAction(
     return { success: false, error: 'Gagal mendaftarkan akun baru.' };
   }
 }
+
+export const registerPatientAction = registerUserAction;
+

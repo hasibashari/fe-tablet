@@ -11,13 +11,13 @@ import {
   ScheduleCategory,
   ScheduleFrequency,
 } from '../constants/schedule.constants';
-import { PatientUser } from '../types/admin.types';
+import { ManagedUser } from '../types/admin.types';
 
 interface ScheduleFormModalProps {
   open: boolean;
   editingId: string | null;
   formData: ScheduleFormData;
-  patients: PatientUser[];
+  users: ManagedUser[];
   submitting: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -28,7 +28,7 @@ export default function ScheduleFormModal({
   open,
   editingId,
   formData,
-  patients,
+  users,
   submitting,
   onClose,
   onSave,
@@ -55,16 +55,21 @@ export default function ScheduleFormModal({
     >
       <div>
         <label className='block text-xs font-bold text-slate-700 mb-1'>
-          Pasien (Siswi) <span className='text-rose-500'>*</span>
+          Siswi (Pengguna) <span className='text-rose-500'>*</span>
         </label>
         <select
-          value={formData.patientId}
-          onChange={e => onUpdateFormData({ patientId: e.target.value })}
+          value={formData.userId || formData.patientId || ''}
+          onChange={e =>
+            onUpdateFormData({
+              userId: e.target.value,
+              patientId: e.target.value,
+            })
+          }
           className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
         >
-          {patients.map(p => (
-            <option key={p.id} value={p.id}>
-              {p.name} ({p.schoolOrOrg || p.id})
+          {users.map(u => (
+            <option key={u.id} value={u.id}>
+              {u.name} ({u.schoolOrOrg || u.id})
             </option>
           ))}
         </select>

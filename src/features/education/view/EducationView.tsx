@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { Search, BookOpen, Sparkles, Clock, User, ArrowRight, X } from 'lucide-react';
+import Link from 'next/link';
+import { Search, BookOpen, Sparkles, Clock, ArrowRight, X } from 'lucide-react';
 import { Card } from '@/src/shared/components/ui/Card';
 import { Chip } from '@/src/shared/components/ui/Chip';
-import { Button } from '@/src/shared/components/ui/Button';
-import { MarkdownRenderer } from '@/src/shared/components/markdown';
 import { getArticlesAction } from '../api/educationRepository';
 import { Article } from '../types';
 
@@ -24,7 +23,6 @@ export default function EducationView() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -115,45 +113,46 @@ export default function EducationView() {
 
       {/* Featured Article Banner */}
       {!searchQuery && selectedCategory === 'Semua' && featuredArticle && (
-        <Card
-          padding='none'
-          className='overflow-hidden cursor-pointer hover:shadow-md transition-shadow'
-          onClick={() => setSelectedArticle(featuredArticle)}
-        >
-          <div className='relative h-44 sm:h-60 w-full'>
-            <Image
-              src={featuredArticle.imageUrl}
-              alt={featuredArticle.title}
-              fill
-              className='object-cover'
-              sizes='(max-width: 1024px) 100vw, 1200px'
-            />
-            <div className='absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex flex-col justify-end p-4 sm:p-6'>
-              <span className='text-[10px] sm:text-xs font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1'>
-                <Sparkles size={13} />
-                <span>Featured Article • {featuredArticle.readTime}</span>
-              </span>
-              <h3 className='text-base sm:text-2xl font-bold text-white leading-snug mt-1 max-w-2xl'>
-                {featuredArticle.title}
-              </h3>
+        <Link href={`/user/education/${featuredArticle.id}`} className='block group'>
+          <Card
+            padding='none'
+            className='overflow-hidden hover:shadow-md transition-shadow'
+          >
+            <div className='relative h-44 sm:h-60 w-full overflow-hidden'>
+              <Image
+                src={featuredArticle.imageUrl}
+                alt={featuredArticle.title}
+                fill
+                className='object-cover group-hover:scale-[1.02] transition-transform duration-500'
+                sizes='(max-width: 1024px) 100vw, 1200px'
+              />
+              <div className='absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex flex-col justify-end p-4 sm:p-6'>
+                <span className='text-[10px] sm:text-xs font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1'>
+                  <Sparkles size={13} />
+                  <span>Featured Article • {featuredArticle.readTime}</span>
+                </span>
+                <h3 className='text-base sm:text-2xl font-bold text-white leading-snug mt-1 max-w-2xl'>
+                  {featuredArticle.title}
+                </h3>
+              </div>
             </div>
-          </div>
-          <div className='p-4 sm:p-5 bg-white'>
-            <p className='text-xs sm:text-sm text-[#475569] line-clamp-2 leading-relaxed'>
-              {featuredArticle.summary}
-            </p>
-            <div className='flex items-center justify-between mt-3 pt-3 border-t border-[#fce7f3]'>
-              <span className='text-xs text-[#94a3b8]'>
-                Oleh <strong>{featuredArticle.author?.name || 'Tim Medis Fe-Tablet'}</strong> •{' '}
-                {featuredArticle.publishedAt}
-              </span>
-              <span className='text-xs sm:text-sm font-bold text-[#e11d48] flex items-center gap-1'>
-                <span>Baca Lengkap</span>
-                <ArrowRight size={14} />
-              </span>
+            <div className='p-4 sm:p-5 bg-white'>
+              <p className='text-xs sm:text-sm text-[#475569] line-clamp-2 leading-relaxed'>
+                {featuredArticle.summary}
+              </p>
+              <div className='flex items-center justify-between mt-3 pt-3 border-t border-[#fce7f3]'>
+                <span className='text-xs text-[#94a3b8]'>
+                  Oleh <strong>{featuredArticle.author?.name || 'Tim Medis Fe-Tablet'}</strong> •{' '}
+                  {featuredArticle.publishedAt}
+                </span>
+                <span className='text-xs sm:text-sm font-bold text-[#e11d48] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform'>
+                  <span>Baca Lengkap</span>
+                  <ArrowRight size={14} />
+                </span>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
       )}
 
       {/* Responsive Articles Grid: 1 col (mobile) -> 2 col (tablet) -> 3 col (desktop) */}
@@ -180,131 +179,59 @@ export default function EducationView() {
         ) : (
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5'>
             {filteredArticles.map(article => (
-              <Card
+              <Link
                 key={article.id}
-                padding='none'
-                hoverable
-                className='overflow-hidden cursor-pointer flex flex-col justify-between'
-                onClick={() => setSelectedArticle(article)}
+                href={`/user/education/${article.id}`}
+                className='block h-full group'
               >
-                {/* Thumbnail */}
-                <div className='relative h-40 w-full shrink-0'>
-                  <Image
-                    src={article.imageUrl}
-                    alt={article.title}
-                    fill
-                    className='object-cover'
-                    sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
-                  />
-                  <span className='absolute top-3 left-3 text-[10px] font-bold text-white bg-slate-950/70 backdrop-blur-xs px-2.5 py-0.5 rounded-full'>
-                    {article.category}
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div className='p-4 flex-1 flex flex-col justify-between'>
-                  <div>
-                    <span className='text-[10px] text-[#94a3b8] flex items-center gap-1 mb-1'>
-                      <Clock size={11} />
-                      {article.readTime}
-                    </span>
-                    <h4 className='text-xs sm:text-sm font-bold text-[#1e293b] line-clamp-2 leading-snug'>
-                      {article.title}
-                    </h4>
-                    <p className='text-xs text-[#64748b] line-clamp-2 mt-1.5 leading-relaxed'>
-                      {article.summary}
-                    </p>
-                  </div>
-
-                  <div className='mt-4 pt-2.5 border-t border-[#fce7f3] flex items-center justify-between text-[11px] text-[#94a3b8]'>
-                    <span>{article.publishedAt}</span>
-                    <span className='text-[#e11d48] font-bold flex items-center gap-0.5'>
-                      <span>Baca</span>
-                      <ArrowRight size={12} />
+                <Card
+                  padding='none'
+                  hoverable
+                  className='overflow-hidden h-full flex flex-col justify-between'
+                >
+                  {/* Thumbnail */}
+                  <div className='relative h-40 w-full shrink-0 overflow-hidden'>
+                    <Image
+                      src={article.imageUrl}
+                      alt={article.title}
+                      fill
+                      className='object-cover group-hover:scale-105 transition-transform duration-500'
+                      sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                    />
+                    <span className='absolute top-3 left-3 text-[10px] font-bold text-white bg-slate-950/70 backdrop-blur-xs px-2.5 py-0.5 rounded-full'>
+                      {article.category}
                     </span>
                   </div>
-                </div>
-              </Card>
+
+                  {/* Content */}
+                  <div className='p-4 flex-1 flex flex-col justify-between'>
+                    <div>
+                      <span className='text-[10px] text-[#94a3b8] flex items-center gap-1 mb-1'>
+                        <Clock size={11} />
+                        {article.readTime}
+                      </span>
+                      <h4 className='text-xs sm:text-sm font-bold text-[#1e293b] group-hover:text-[#e11d48] transition-colors line-clamp-2 leading-snug'>
+                        {article.title}
+                      </h4>
+                      <p className='text-xs text-[#64748b] line-clamp-2 mt-1.5 leading-relaxed'>
+                        {article.summary}
+                      </p>
+                    </div>
+
+                    <div className='mt-4 pt-2.5 border-t border-[#fce7f3] flex items-center justify-between text-[11px] text-[#94a3b8]'>
+                      <span>{article.publishedAt}</span>
+                      <span className='text-[#e11d48] font-bold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform'>
+                        <span>Baca</span>
+                        <ArrowRight size={12} />
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
       </div>
-
-      {/* Article Detail Reader Modal (Responsive max-w-2xl) */}
-      {selectedArticle && (
-        <div className='fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
-          <div className='w-full max-w-2xl bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-[#fce7f3] max-h-[90vh] overflow-y-auto'>
-            {/* Modal Header */}
-            <div className='flex items-center justify-between pb-3 border-b border-[#fce7f3] mb-4'>
-              <span className='text-xs font-bold text-[#e11d48] bg-[#ffe4e6] px-3 py-1 rounded-full'>
-                {selectedArticle.category}
-              </span>
-              <button
-                type='button'
-                onClick={() => setSelectedArticle(null)}
-                className='w-8 h-8 rounded-full bg-[#f1f5f9] text-[#64748b] hover:text-[#1e293b] flex items-center justify-center cursor-pointer'
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Article Image */}
-            <div className='relative h-56 sm:h-72 w-full rounded-2xl overflow-hidden mb-4'>
-              <Image
-                src={selectedArticle.imageUrl}
-                alt={selectedArticle.title}
-                fill
-                className='object-cover'
-              />
-            </div>
-
-            <h3 className='text-lg sm:text-2xl font-extrabold text-[#1e293b] leading-tight mb-2'>
-              {selectedArticle.title}
-            </h3>
-
-            <div className='flex items-center gap-3 text-xs text-[#94a3b8] mb-5 pb-3 border-b border-[#fce7f3]'>
-              <div className='flex items-center gap-1'>
-                <User size={13} />
-                <span>{selectedArticle.author?.name || 'Tim Medis Fe-Tablet'}</span>
-              </div>
-              <span>•</span>
-              <div className='flex items-center gap-1'>
-                <Clock size={13} />
-                <span>{selectedArticle.readTime}</span>
-              </div>
-              <span>•</span>
-              <span>{selectedArticle.publishedAt}</span>
-            </div>
-
-            <div className='text-xs sm:text-sm text-[#475569] leading-relaxed'>
-              {selectedArticle.summary && (
-                <p className='text-sm sm:text-base font-semibold text-[#1e293b] mb-4 pb-3 border-b border-[#fce7f3] leading-relaxed'>
-                  {selectedArticle.summary}
-                </p>
-              )}
-              <MarkdownRenderer
-                content={
-                  selectedArticle.content ||
-                  selectedArticle.leadParagraph ||
-                  selectedArticle.summary
-                }
-              />
-            </div>
-
-            <div className='mt-6 pt-4 border-t border-[#fce7f3]'>
-              <Button
-                variant='primary'
-                size='md'
-                shape='pill'
-                fullWidth
-                onClick={() => setSelectedArticle(null)}
-              >
-                Tutup Bacaan
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

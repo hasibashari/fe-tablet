@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'MediCore Patient Portal',
-    short_name: 'MediCore',
-    description: 'Portal Pasien & Jadwal Pengobatan Terpadu MediCore',
+    name: 'Fe-Tablet Siswi & Monitoring Portal',
+    short_name: 'Fe-Tablet',
+    description: 'Aplikasi Pencegahan Anemia & Monitoring Suplementasi Tablet Tambah Darah (TTD) Remaja Putri',
     start_url: '/user/dashboard',
     display: 'standalone',
     background_color: '#ffffff',

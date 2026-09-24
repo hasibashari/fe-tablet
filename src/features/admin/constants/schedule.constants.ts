@@ -29,7 +29,8 @@ export const FREQUENCY_OPTIONS = [
 export type ScheduleFrequency = (typeof FREQUENCY_OPTIONS)[number]['value'];
 
 export interface ScheduleFormData {
-  patientId: string;
+  userId: string;
+  patientId?: string;
   medicationName: string;
   dosage: string;
   frequency: ScheduleFrequency;
@@ -40,6 +41,7 @@ export interface ScheduleFormData {
 }
 
 export const INITIAL_SCHEDULE_FORM_DATA: ScheduleFormData = {
+  userId: '',
   patientId: '',
   medicationName: 'Tablet Tambah Darah (TTD)',
   dosage: '1 Tablet',
