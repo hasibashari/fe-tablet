@@ -267,8 +267,13 @@ export default function ScheduleView() {
 
       {/* Edit Schedule Modal */}
       {isModalOpen && (
-        <div className='fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
-          <div className='w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-[#fce7f3] max-h-[90vh] overflow-y-auto'>
+        <div className='fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
+          {/* Backdrop Click Dismiss */}
+          <div
+            className='absolute inset-0'
+            onClick={() => setIsModalOpen(false)}
+          />
+          <div className='relative z-10 w-full max-w-lg bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#fce7f3] max-h-[90vh] overflow-y-auto'>
             <div className='flex items-center justify-between pb-3 border-b border-[#fce7f3] mb-4'>
               <div className='flex items-center gap-2'>
                 <div className='w-8 h-8 rounded-full bg-rose-100 text-[#e11d48] flex items-center justify-center'>
@@ -279,7 +284,7 @@ export default function ScheduleView() {
               <button
                 type='button'
                 onClick={() => setIsModalOpen(false)}
-                className='w-8 h-8 rounded-full bg-[#f1f5f9] text-[#64748b] hover:text-[#1e293b] flex items-center justify-center'
+                className='w-8 h-8 rounded-full bg-[#f1f5f9] text-[#64748b] hover:bg-slate-200 hover:text-[#1e293b] flex items-center justify-center transition-colors cursor-pointer'
               >
                 <X size={16} />
               </button>

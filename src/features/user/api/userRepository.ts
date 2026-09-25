@@ -1,122 +1,74 @@
 'use server';
 
 import db from '@/src/db/client';
-import { UserProfile } from '../types';
+import { UserProfile, UserScheduleData, UserDashboardData, StreakResult } from '../types';
+import { calculateNextSchedule } from '../utils/scheduleHelpers';
+import { calculateChronologicalStreak as calcChronStreak } from '../utils/streakCalculator';
+import {
+  getUserProfileAction as getProfile,
+  updateUserProfileAction as updateProfile,
+} from './profileRepository';
+import {
+  getUserScheduleAction as getSchedule,
+  updateUserScheduleSettingsAction as updateSchedule,
+} from './scheduleRepository';
+import { calculateAndSyncUserStreak as syncStreak } from './streakRepository';
 
-export interface UserDashboardData {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    avatarUrl: string;
-    streakCount: number;
-    hbLevel: number;
-    schoolOrOrg: string;
-    riskLevel: string;
-    friendCode?: string;
-  };
-  todayStatus: 'recorded' | 'missed' | 'pending';
-  todayRecordedTime?: string;
-  activeSchedule: {
-    id: string;
-    dayOfWeek: string;
-    time: string;
-    tabletName: string;
-    dosage: string;
-    frequency: string;
-    category?: string;
-    isEnabled: boolean;
-    remind15MinBefore: boolean;
-    nextDate: string;
-    daysRemaining: number;
-    instructions: string;
-  };
-  featuredArticle: {
-    id: string;
-    title: string;
-    category: string;
-    readTime: string;
-    summary: string;
-    imageUrl: string;
-  } | null;
-  activeBuddy: {
-    connectionId: string;
-    buddyId: string;
-    buddyName: string;
-    buddyAvatarUrl: string;
-    sharedStreakCount: number;
-    userStatusThisWeek: 'recorded' | 'missed' | 'pending';
-    buddyStatusThisWeek: 'recorded' | 'missed' | 'pending';
-  } | null;
+export type { UserProfile, UserScheduleData, UserDashboardData, StreakResult } from '../types';
+
+export async function calculateChronologicalStreak(
+  completedDates: (string | Date)[],
+  frequency: 'daily' | 'weekly' = 'weekly',
+  now: Date = new Date(),
+): Promise<StreakResult> {
+  return calcChronStreak(completedDates, frequency, now);
 }
 
-export interface UserScheduleData {
-  id: string;
-  patientId: string;
-  dayOfWeek: string;
-  time: string;
-  tabletName: string;
-  dosage: string;
-  frequency: string;
-  category?: string;
-  isEnabled: boolean;
-  remind15MinBefore: boolean;
-  nextDate: string;
-  daysRemaining: number;
-  instructions: string;
+export async function calculateAndSyncUserStreak(
+  userId: string,
+  scheduleFrequency: 'daily' | 'weekly' = 'weekly',
+): Promise<StreakResult> {
+  return syncStreak(userId, scheduleFrequency);
 }
 
-// ------------------------------------------------------------
-// Helper: Calculate Day Of Week & Days Remaining
-// ------------------------------------------------------------
-const INDO_DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+export async function getUserScheduleAction(userId?: string): Promise<UserScheduleData> {
+  return getSchedule(userId);
+}
 
-function calculateNextSchedule(targetDayName: string, targetTime: string) {
-  const now = new Date();
-  const currentDayIndex = now.getDay();
-  let targetDayIndex = INDO_DAYS.indexOf(targetDayName);
-  if (targetDayIndex === -1) targetDayIndex = 6; // Default Sabtu
+export async function updateUserScheduleSettingsAction(
+  scheduleId: string,
+  data: {
+    dayOfWeek?: string;
+    time?: string;
+    frequency?: string;
+    isEnabled?: boolean;
+    remind15MinBefore?: boolean;
+  },
+): Promise<{ success: boolean; error?: string }> {
+  return updateSchedule(scheduleId, data);
+}
 
-  let diff = targetDayIndex - currentDayIndex;
-  if (diff < 0) diff += 7;
-  if (diff === 0) {
-    const [h, m] = targetTime.split(':').map(Number);
-    const scheduleDate = new Date(now);
-    scheduleDate.setHours(h || 8, m || 0, 0, 0);
-    if (now.getTime() > scheduleDate.getTime()) {
-      diff = 7;
-    }
-  }
+export async function getUserProfileAction(userId: string = 'usr_1'): Promise<UserProfile | null> {
+  return getProfile(userId);
+}
 
-  const nextDateObj = new Date(now);
-  nextDateObj.setDate(now.getDate() + diff);
-
-  const months = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-  ];
-
-  const formattedNextDate = `${targetDayName}, ${nextDateObj.getDate()} ${months[nextDateObj.getMonth()]} ${nextDateObj.getFullYear()}`;
-
-  return {
-    nextDate: formattedNextDate,
-    daysRemaining: diff,
-  };
+export async function updateUserProfileAction(
+  userId: string,
+  data: {
+    name?: string;
+    phone?: string;
+    schoolOrOrg?: string;
+    hbLevel?: number;
+    bloodType?: string;
+    height?: number;
+    weight?: number;
+  },
+): Promise<{ success: boolean; error?: string }> {
+  return updateProfile(userId, data);
 }
 
 // ============================================================
-// 1. GET USER DASHBOARD DATA
+// 1. GET USER DASHBOARD DATA (Aggregator Action)
 // ============================================================
 export async function getUserDashboardDataAction(userId?: string): Promise<UserDashboardData> {
   try {
@@ -159,41 +111,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
       userRow?.avatar_url ||
       `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`;
 
-    // 2. Streak count from user_profiles or logs
-    let streakCount = Number(userRow?.streak_count) || 0;
-    if (streakCount === 0) {
-      const streakRes = await db.query<{ c: string | number }>(
-        `SELECT count(DISTINCT scheduled_date) as c 
-         FROM consumption_logs 
-         WHERE user_id = $1 AND status IN ('ON_TIME', 'LATE')`,
-        [effectiveUserId],
-      );
-      streakCount = Math.max(1, Number(streakRes.rows[0]?.c) || 6);
-    }
-
-    // 3. Today's consumption status
-    const todayLogRes = await db.query<{ status: string; taken_at: string | null }>(
-      `SELECT status, taken_at 
-       FROM consumption_logs 
-       WHERE user_id = $1 AND scheduled_date = $2
-       ORDER BY created_at DESC LIMIT 1`,
-      [effectiveUserId, todayStr],
-    );
-
-    let todayStatus: 'recorded' | 'missed' | 'pending' = 'pending';
-    let todayRecordedTime: string | undefined;
-
-    if (todayLogRes.rows.length > 0) {
-      const log = todayLogRes.rows[0];
-      if (log.status === 'ON_TIME' || log.status === 'LATE') {
-        todayStatus = 'recorded';
-        todayRecordedTime = log.taken_at || '08:00 WIB';
-      } else if (log.status === 'MISSED' || log.status === 'SKIPPED') {
-        todayStatus = 'missed';
-      }
-    }
-
-    // 4. Active schedule
+    // 2. Active schedule
     const scheduleRes = await db.query<{
       id: string;
       tablet_name: string;
@@ -219,6 +137,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
     let dosage = '1 tablet, 1x seminggu';
     let tabletName = 'Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)';
     let frequency = 'Mingguan';
+    let schedFrequencyType: 'daily' | 'weekly' = 'weekly';
     let remind15MinBefore = true;
     let instructions =
       'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.';
@@ -228,12 +147,38 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
       scheduleId = sch.id;
       tabletName = sch.tablet_name || tabletName;
       dosage = sch.dosage ? `${sch.dosage}, 1x seminggu` : dosage;
-      frequency = sch.frequency === 'weekly' ? 'Mingguan' : 'Harian';
+      schedFrequencyType = sch.frequency === 'daily' ? 'daily' : 'weekly';
+      frequency = sch.frequency === 'daily' ? 'Harian' : 'Mingguan';
       dayOfWeek = sch.day_of_week || 'Sabtu';
       timeSlot = sch.time_slot || '08:00';
       isEnabled = sch.is_enabled;
       remind15MinBefore = sch.remind_15min_before;
       instructions = sch.instructions || instructions;
+    }
+
+    // 3. Dynamic chronological streak calculation from database
+    const streakResult = await calculateAndSyncUserStreak(effectiveUserId, schedFrequencyType);
+
+    // 4. Today's consumption status
+    const todayLogRes = await db.query<{ status: string; taken_at: string | null }>(
+      `SELECT status, taken_at 
+       FROM consumption_logs 
+       WHERE user_id = $1 AND scheduled_date = $2
+       ORDER BY created_at DESC LIMIT 1`,
+      [effectiveUserId, todayStr],
+    );
+
+    let todayStatus: 'recorded' | 'missed' | 'pending' = 'pending';
+    let todayRecordedTime: string | undefined;
+
+    if (todayLogRes.rows.length > 0) {
+      const log = todayLogRes.rows[0];
+      if (log.status === 'ON_TIME' || log.status === 'LATE') {
+        todayStatus = 'recorded';
+        todayRecordedTime = log.taken_at || '08:00 WIB';
+      } else if (log.status === 'MISSED' || log.status === 'SKIPPED') {
+        todayStatus = 'missed';
+      }
     }
 
     const { nextDate, daysRemaining } = calculateNextSchedule(dayOfWeek, timeSlot);
@@ -319,7 +264,9 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         email: userEmail,
         phone: userPhone,
         avatarUrl: userAvatarUrl,
-        streakCount,
+        streakCount: streakResult.streakCount,
+        streakUnit: streakResult.streakUnit,
+        consecutiveDates: streakResult.consecutiveDates,
         hbLevel: Number(userRow?.hb_level) || 12.4,
         schoolOrOrg: userRow?.school_or_org || 'SMA Negeri 1 Sehat',
         riskLevel: userRow?.risk_level || 'Rendah',
@@ -355,7 +302,9 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         phone: '0812-3456-7890',
         avatarUrl:
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        streakCount: 6,
+        streakCount: 0,
+        streakUnit: 'Minggu',
+        consecutiveDates: [],
         hbLevel: 12.4,
         schoolOrOrg: 'SMA Negeri 1 Sehat',
         riskLevel: 'Rendah',
@@ -384,12 +333,17 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
 }
 
 // ============================================================
-// 2. RECORD USER CONSUMPTION
+// 2. RECORD USER CONSUMPTION (Today's Quick Action)
 // ============================================================
 export async function recordUserConsumptionAction(
   userId: string,
   status: 'recorded' | 'missed' | 'pending' = 'recorded',
-): Promise<{ success: boolean; status: 'recorded' | 'missed' | 'pending'; error?: string }> {
+): Promise<{
+  success: boolean;
+  status: 'recorded' | 'missed' | 'pending';
+  newStreak?: number;
+  error?: string;
+}> {
   try {
     const now = new Date();
     const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
@@ -401,270 +355,83 @@ export async function recordUserConsumptionAction(
     });
     const nowTimeStr = timeFormatter.format(now) + ' WIB';
 
-    if (status === 'pending') {
-      await db.query(`DELETE FROM consumption_logs WHERE user_id = $1 AND scheduled_date = $2`, [
-        userId,
-        todayStr,
-      ]);
-      return { success: true, status: 'pending' };
-    }
-
-    const dbStatus = status === 'recorded' ? 'ON_TIME' : 'MISSED';
-
     // Get user active schedule details
-    const schedRes = await db.query<{ id: string; tablet_name: string; dosage: string }>(
-      `SELECT id, tablet_name, dosage FROM reminder_schedules WHERE user_id = $1 AND status = 'Aktif' LIMIT 1`,
+    const schedRes = await db.query<{
+      id: string;
+      tablet_name: string;
+      dosage: string;
+      frequency: string;
+    }>(
+      `SELECT id, tablet_name, dosage, frequency FROM reminder_schedules WHERE user_id = $1 AND status = 'Aktif' LIMIT 1`,
       [userId],
     );
     const activeSched = schedRes.rows[0];
     const schedId = activeSched?.id || null;
     const title = activeSched?.tablet_name || 'Tablet Tambah Darah (TTD)';
     const dosage = activeSched?.dosage || '1 Tablet';
+    const schedFreq = (activeSched?.frequency as 'daily' | 'weekly') || 'weekly';
 
-    // Check existing log for today
-    const existingLogRes = await db.query<{ id: string }>(
-      `SELECT id FROM consumption_logs WHERE user_id = $1 AND scheduled_date = $2 ORDER BY created_at DESC LIMIT 1`,
-      [userId, todayStr],
+    if (status === 'pending') {
+      await db.query(`DELETE FROM consumption_logs WHERE user_id = $1 AND scheduled_date = $2`, [
+        userId,
+        todayStr,
+      ]);
+    } else {
+      const dbStatus = status === 'recorded' ? 'ON_TIME' : 'MISSED';
+
+      // Check existing log for today
+      const existingLogRes = await db.query<{ id: string }>(
+        `SELECT id FROM consumption_logs WHERE user_id = $1 AND scheduled_date = $2 ORDER BY created_at DESC LIMIT 1`,
+        [userId, todayStr],
+      );
+
+      if (existingLogRes.rows.length > 0) {
+        await db.query(
+          `UPDATE consumption_logs 
+           SET status = $1, taken_at = $2, taken_by = 'Self', schedule_id = COALESCE($3, schedule_id)
+           WHERE id = $4`,
+          [dbStatus, status === 'recorded' ? nowTimeStr : null, schedId, existingLogRes.rows[0].id],
+        );
+      } else {
+        const logId = `log_${Date.now().toString().slice(-6)}`;
+        await db.query(
+          `INSERT INTO consumption_logs (
+            id, user_id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
+          ) VALUES ($1, $2, $3, $4, 'TTD', $5, $6, '08:00', $7, $8, 'Self')`,
+          [
+            logId,
+            userId,
+            schedId,
+            title,
+            dosage,
+            todayStr,
+            status === 'recorded' ? nowTimeStr : null,
+            dbStatus,
+          ],
+        );
+      }
+    }
+
+    // Dynamic streak calculation & synchronization in PostgreSQL
+    const streakResult = await calculateAndSyncUserStreak(userId, schedFreq);
+
+    // Sync buddy_connections
+    await db.query(
+      `UPDATE buddy_connections 
+       SET this_week_user_status = $1, shared_streak_count = $2, last_synced_at = CURRENT_TIMESTAMP 
+       WHERE user_id = $3`,
+      [status, streakResult.streakCount, userId],
+    );
+    await db.query(
+      `UPDATE buddy_connections 
+       SET this_week_buddy_status = $1, shared_streak_count = $2, last_synced_at = CURRENT_TIMESTAMP 
+       WHERE buddy_user_id = $3`,
+      [status, streakResult.streakCount, userId],
     );
 
-    if (existingLogRes.rows.length > 0) {
-      await db.query(
-        `UPDATE consumption_logs 
-         SET status = $1, taken_at = $2, taken_by = 'Self', schedule_id = COALESCE($3, schedule_id)
-         WHERE id = $4`,
-        [dbStatus, status === 'recorded' ? nowTimeStr : null, schedId, existingLogRes.rows[0].id],
-      );
-    } else {
-      const logId = `log_${Date.now().toString().slice(-6)}`;
-      await db.query(
-        `INSERT INTO consumption_logs (
-          id, user_id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
-        ) VALUES ($1, $2, $3, $4, 'TTD', $5, $6, '08:00', $7, $8, 'Self')`,
-        [
-          logId,
-          userId,
-          schedId,
-          title,
-          dosage,
-          todayStr,
-          status === 'recorded' ? nowTimeStr : null,
-          dbStatus,
-        ],
-      );
-    }
-
-    // Sync streak in user_profiles
-    if (status === 'recorded') {
-      await db.query(
-        `UPDATE user_profiles 
-         SET streak_count = streak_count + 1, last_active_at = CURRENT_TIMESTAMP 
-         WHERE user_id = $1`,
-        [userId],
-      );
-
-      // Sync buddy_connections
-      await db.query(
-        `UPDATE buddy_connections 
-         SET this_week_user_status = 'recorded', last_synced_at = CURRENT_TIMESTAMP 
-         WHERE user_id = $1`,
-        [userId],
-      );
-      await db.query(
-        `UPDATE buddy_connections 
-         SET this_week_buddy_status = 'recorded', last_synced_at = CURRENT_TIMESTAMP 
-         WHERE buddy_user_id = $1`,
-        [userId],
-      );
-    }
-
-    return { success: true, status };
+    return { success: true, status, newStreak: streakResult.streakCount };
   } catch (error) {
     console.error('Error in recordUserConsumptionAction:', error);
     return { success: false, status: 'pending', error: 'Gagal mencatat status konsumsi.' };
-  }
-}
-
-// ============================================================
-// 3. GET USER SCHEDULE
-// ============================================================
-export async function getUserScheduleAction(userId?: string): Promise<UserScheduleData> {
-  const dashboard = await getUserDashboardDataAction(userId);
-  return {
-    ...dashboard.activeSchedule,
-    patientId: dashboard.user.id,
-    instructions:
-      dashboard.activeSchedule.instructions ||
-      'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
-  };
-}
-
-// ============================================================
-// 4. UPDATE USER SCHEDULE SETTINGS
-// ============================================================
-export async function updateUserScheduleSettingsAction(
-  scheduleId: string,
-  data: {
-    dayOfWeek?: string;
-    time?: string;
-    frequency?: string;
-    isEnabled?: boolean;
-    remind15MinBefore?: boolean;
-  },
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const updates: string[] = [];
-    const params: unknown[] = [];
-    let paramIndex = 1;
-
-    if (data.isEnabled !== undefined) {
-      updates.push(`is_enabled = $${paramIndex++}`);
-      params.push(data.isEnabled);
-      updates.push(`status = $${paramIndex++}`);
-      params.push(data.isEnabled ? 'Aktif' : 'Diberhentikan');
-    }
-
-    if (data.dayOfWeek) {
-      updates.push(`day_of_week = $${paramIndex++}`);
-      params.push(data.dayOfWeek);
-    }
-
-    if (data.time) {
-      updates.push(`time_slot = $${paramIndex++}`);
-      params.push(data.time);
-    }
-
-    if (data.remind15MinBefore !== undefined) {
-      updates.push(`remind_15min_before = $${paramIndex++}`);
-      params.push(data.remind15MinBefore);
-    }
-
-    if (data.frequency) {
-      updates.push(`frequency = $${paramIndex++}`);
-      params.push(data.frequency === 'Harian' ? 'daily' : 'weekly');
-    }
-
-    if (updates.length > 0) {
-      updates.push(`updated_at = CURRENT_TIMESTAMP`);
-      params.push(scheduleId);
-      await db.query(
-        `UPDATE reminder_schedules SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
-        params,
-      );
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error in updateUserScheduleSettingsAction:', error);
-    return { success: false, error: 'Gagal memperbarui jadwal.' };
-  }
-}
-
-// ============================================================
-// 5. GET USER PROFILE
-// ============================================================
-export async function getUserProfileAction(userId: string = 'usr_1'): Promise<UserProfile | null> {
-  try {
-    const res = await db.query<{
-      id: string;
-      name: string;
-      email: string;
-      phone: string | null;
-      avatar_url: string | null;
-      date_of_birth: string | null;
-      blood_type: string | null;
-      height: number | null;
-      weight: number | null;
-      school_or_org: string | null;
-      hb_level: number | null;
-      friend_code: string | null;
-      streak_count: number | null;
-    }>(
-      `SELECT u.id, u.name, u.email, u.phone, u.avatar_url, u.date_of_birth,
-              p.blood_type, p.height, p.weight, p.school_or_org, p.hb_level, p.friend_code, p.streak_count
-       FROM users u
-       LEFT JOIN user_profiles p ON u.id = p.user_id
-       WHERE u.id = $1`,
-      [userId],
-    );
-    const row = res.rows[0];
-
-    if (!row) return null;
-
-    return {
-      id: row.id,
-      name: row.name,
-      email: row.email,
-      phone: row.phone || '-',
-      avatarUrl:
-        row.avatar_url ||
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(row.name)}`,
-      dateOfBirth: row.date_of_birth ? String(row.date_of_birth) : '2008-04-12',
-      bloodType: row.blood_type || 'O+',
-      height: Number(row.height) || 158,
-      weight: Number(row.weight) || 48,
-    };
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
-    return null;
-  }
-}
-
-// ============================================================
-// 6. UPDATE USER PROFILE
-// ============================================================
-export async function updateUserProfileAction(
-  userId: string,
-  data: {
-    name?: string;
-    phone?: string;
-    schoolOrOrg?: string;
-    hbLevel?: number;
-    bloodType?: string;
-    height?: number;
-    weight?: number;
-  },
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    await db.transaction(async client => {
-      // 1. Update users
-      if (data.name || data.phone) {
-        await client.query(
-          `UPDATE users 
-           SET 
-             name = COALESCE($1, name),
-             phone = COALESCE($2, phone),
-             updated_at = CURRENT_TIMESTAMP
-           WHERE id = $3`,
-          [data.name ?? null, data.phone ?? null, userId],
-        );
-      }
-
-      // 2. Update user_profiles
-      await client.query(
-        `UPDATE user_profiles 
-         SET 
-           school_or_org = COALESCE($1, school_or_org),
-           hb_level = COALESCE($2, hb_level),
-           blood_type = COALESCE($3, blood_type),
-           height = COALESCE($4, height),
-           weight = COALESCE($5, weight),
-           last_active_at = CURRENT_TIMESTAMP
-         WHERE user_id = $6`,
-        [
-          data.schoolOrOrg ?? null,
-          data.hbLevel ?? null,
-          data.bloodType ?? null,
-          data.height ?? null,
-          data.weight ?? null,
-          userId,
-        ],
-      );
-    });
-
-    return { success: true };
-  } catch (error: unknown) {
-    console.error('Error updating user profile:', error);
-    const errMsg = error instanceof Error ? error.message : 'Gagal memperbarui profil.';
-    return { success: false, error: errMsg };
   }
 }

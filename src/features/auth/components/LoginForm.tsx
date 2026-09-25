@@ -3,7 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types/auth.types';
 
@@ -46,7 +54,8 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
 
       if (res.success && res.redirectTo) {
         const target = redirectParam || res.redirectTo;
-        setSuccessRole(res.redirectTo.includes('admin') ? 'Administrator' : 'User / Pasien');
+        const roleLabel = res.user?.role === 'admin' ? 'Administrator' : 'Siswi / Pengguna';
+        setSuccessRole(roleLabel);
         setTimeout(() => {
           router.push(target);
         }, 400);
@@ -67,7 +76,7 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
         <div className='mb-6 text-left'>
           <h2 className='text-2xl font-extrabold text-[#1e293b] tracking-tight mb-1'>Masuk</h2>
           <p className='text-xs sm:text-sm text-[#64748b]'>
-            Masukkan kredensial akun Anda untuk mengakses layanan.
+            Masukkan kredensial akun Siswi atau Administrator Anda.
           </p>
         </div>
       )}

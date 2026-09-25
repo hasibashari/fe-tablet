@@ -12,7 +12,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   const avatarUrl = user?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=FeTablet';
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole='user'>
       <div className='min-h-screen bg-[#fff5f7] flex flex-col md:flex-row selection:bg-rose-200 selection:text-rose-900'>
         {/* Mobile Top Header (< md) */}
         <div className='block md:hidden'>

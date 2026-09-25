@@ -136,13 +136,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = useCallback(
-    async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string; redirectTo?: string }> => {
+    async (credentials: LoginCredentials): Promise<{ success: boolean; user?: AuthUser; error?: string; redirectTo?: string }> => {
       setState((prev) => ({ ...prev, isLoading: true }))
       try {
         const res = await loginUserAction(credentials)
         if (res.success && res.user) {
           saveUserSession(res.user)
-          return { success: true, redirectTo: res.redirectTo }
+          return { success: true, user: res.user, redirectTo: res.redirectTo }
         }
         setState((prev) => ({ ...prev, isLoading: false }))
         return {

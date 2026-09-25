@@ -40,7 +40,7 @@ export interface AuthState {
 export interface AuthContextValue extends AuthState {
   login: (
     credentials: LoginCredentials,
-  ) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
+  ) => Promise<{ success: boolean; user?: AuthUser; error?: string; redirectTo?: string }>;
   quickLogin: (role: UserRole) => Promise<{ success: boolean; redirectTo: string }>;
   register: (
     data: RegisterCredentials,

@@ -30,8 +30,10 @@ export default function AddBuddyModal({
   if (!open) return null;
 
   return (
-    <div className='fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
-      <div className='w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-[#fce7f3]'>
+    <div className='fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
+      {/* Backdrop Click Dismiss */}
+      <div className='absolute inset-0' onClick={onClose} />
+      <div className='relative z-10 w-full max-w-md bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#fce7f3]'>
         <div className='flex items-center justify-between pb-3 border-b border-[#fce7f3] mb-4'>
           <h3 className='text-base font-bold text-[#1e293b] flex items-center gap-2'>
             <UserPlus size={18} className='text-[#e11d48]' />
@@ -40,7 +42,7 @@ export default function AddBuddyModal({
           <button
             type='button'
             onClick={onClose}
-            className='w-8 h-8 rounded-full bg-[#f1f5f9] text-[#64748b] flex items-center justify-center cursor-pointer hover:bg-slate-200'
+            className='w-8 h-8 rounded-full bg-[#f1f5f9] text-[#64748b] flex items-center justify-center cursor-pointer hover:bg-slate-200 transition-colors'
           >
             <X size={16} />
           </button>

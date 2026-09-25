@@ -17,17 +17,12 @@ import {
 import { StatusCard } from '@/src/shared/components/domain/StatusCard';
 import { QuickAction } from '@/src/shared/components/domain/QuickAction';
 import { BuddyCard } from '@/src/shared/components/domain/BuddyCard';
+import { StreakProgressCard } from '@/src/shared/components/domain/StreakProgressCard';
 import { Card } from '@/src/shared/components/ui/Card';
 import { Button } from '@/src/shared/components/ui/Button';
 import { useAuth } from '@/src/features/auth/context/AuthContext';
-import {
-  publishRealtimeEvent,
-  subscribeRealtimeEvent,
-} from '@/src/shared/utils/realtimeSync';
-import {
-  playNotificationTone,
-  showSystemNotification,
-} from '@/src/shared/utils/notifications';
+import { publishRealtimeEvent, subscribeRealtimeEvent } from '@/src/shared/utils/realtimeSync';
+import { playNotificationTone, showSystemNotification } from '@/src/shared/utils/notifications';
 import {
   getUserDashboardDataAction,
   recordUserConsumptionAction,
@@ -119,6 +114,11 @@ export default function DashboardView() {
       // Revert if error
       setDashboardData(prev => (prev ? { ...prev, todayStatus: prevStatus } : null));
     } else {
+      // Fetch fresh synchronized data
+      const freshData = await getUserDashboardDataAction(currentUid);
+      if (freshData) {
+        setDashboardData(freshData);
+      }
       publishRealtimeEvent('MEDICATION_TAKEN', { patientId: currentUid });
     }
   };
@@ -143,12 +143,15 @@ export default function DashboardView() {
   const currentUser = dashboardData?.user || {
     id: authUser?.id || 'usr_1',
     name: authUser?.name || 'Pasien Fe-Tablet',
-    streakCount: 4,
+    streakCount: 0,
+    streakUnit: 'Minggu' as const,
+    consecutiveDates: [],
     hbLevel: 12.4,
     avatarUrl: authUser?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=FeTablet',
   };
 
   const featuredArticle = dashboardData?.featuredArticle;
+  const streakUnit = currentUser.streakUnit || 'Minggu';
 
   // Dynamic milestone level calculation based on real streak count
   const getMilestoneInfo = (streak: number) => {
@@ -156,7 +159,7 @@ export default function DashboardView() {
       return {
         level: 4,
         title: 'Duta Remaja Sehat (Level 4 - Champion)',
-        desc: `Luar biasa! Kamu telah konsisten selama ${streak} minggu berturut-turut. Kadar hemoglobin dan kebugaranmu terjaga maksimal!`,
+        desc: `Luar biasa! Kamu telah konsisten selama ${streak} ${streakUnit.toLowerCase()} berturut-turut. Kadar hemoglobin dan kebugaranmu terjaga maksimal!`,
       };
     }
     if (streak >= 6) {
@@ -170,12 +173,19 @@ export default function DashboardView() {
       return {
         level: 2,
         title: 'Pejuang Konsisten (Level 2)',
-        desc: `Keren! ${streak} minggu konsumsi TTD berturut-turut. Terus jaga kebiasaan baik ini setiap minggu!`,
+        desc: `Keren! ${streak} ${streakUnit.toLowerCase()} konsumsi TTD berturut-turut. Terus jaga kebiasaan baik ini setiap minggu!`,
+      };
+    }
+    if (streak >= 1) {
+      return {
+        level: 1,
+        title: 'Pemula Sehat (Level 1)',
+        desc: `Langkah awal yang hebat! ${streak} ${streakUnit.toLowerCase()} konsumsi tercatat. Lanjutkan kebiasaan baik ini secara teratur!`,
       };
     }
     return {
-      level: 1,
-      title: 'Pemula Sehat (Level 1)',
+      level: 0,
+      title: 'Mulai Program Sehat (Level 1)',
       desc: `Langkah awal yang hebat! Minum tablet tambah darah secara teratur untuk mencegah anemia sejak dini.`,
     };
   };
@@ -201,7 +211,7 @@ export default function DashboardView() {
           <div>
             <span className='text-[10px] text-[#64748b] block leading-tight'>Streak Minum</span>
             <span className='text-xs font-extrabold text-[#1e293b]'>
-              {currentUser.streakCount} Minggu
+              {currentUser.streakCount} {streakUnit}
             </span>
           </div>
         </div>
@@ -244,7 +254,7 @@ export default function DashboardView() {
           <div className='flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-full border border-[#fce7f3] shadow-2xs'>
             <Flame size={18} className='text-amber-500 fill-amber-500' />
             <span className='text-xs font-bold text-[#1e293b]'>
-              {currentUser.streakCount} Minggu Streak
+              {currentUser.streakCount} {streakUnit} Streak
             </span>
           </div>
           <div className='flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-full border border-[#fce7f3] shadow-2xs'>
@@ -322,7 +332,17 @@ export default function DashboardView() {
             />
           </section>
 
-          {/* 2. Edukasi Pilihan (Featured Article Banner) */}
+          {/* 2. Visual Streak Progression Card (100% Dynamic & Elongating) */}
+          <section aria-label='Progres Streak Kepatuhan Konsumsi'>
+            <StreakProgressCard
+              streakCount={currentUser.streakCount}
+              streakUnit={currentUser.streakUnit || 'Minggu'}
+              consecutiveDates={currentUser.consecutiveDates}
+              todayStatus={dashboardData?.todayStatus || 'pending'}
+            />
+          </section>
+
+          {/* 3. Edukasi Pilihan (Featured Article Banner) */}
           {featuredArticle && (
             <section aria-label='Materi Edukasi Pilihan'>
               <Card padding='none' className='overflow-hidden'>
@@ -408,14 +428,10 @@ export default function DashboardView() {
               </div>
               <div>
                 <h4 className='text-xs font-bold text-[#1e293b]'>Tingkat Kepatuhan</h4>
-                <span className='text-[11px] font-semibold text-[#e11d48]'>
-                  {milestone.title}
-                </span>
+                <span className='text-[11px] font-semibold text-[#e11d48]'>{milestone.title}</span>
               </div>
             </div>
-            <p className='text-xs text-[#475569] leading-relaxed'>
-              {milestone.desc}
-            </p>
+            <p className='text-xs text-[#475569] leading-relaxed'>{milestone.desc}</p>
           </Card>
         </div>
       </div>
