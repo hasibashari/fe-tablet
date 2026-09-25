@@ -20,7 +20,7 @@ export function CrudModalDialog({
   onClose,
   title,
   onSubmit,
-  submitText = 'Simpan Perubahan',
+  submitText = 'Simpan',
   cancelText = 'Batal',
   submitting = false,
   maxWidth = 'sm',
@@ -52,7 +52,7 @@ export function CrudModalDialog({
   };
 
   return (
-    <div className='fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
+    <div className='fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in'>
       {/* Click outside backdrop */}
       <div
         className='absolute inset-0'
@@ -65,7 +65,7 @@ export function CrudModalDialog({
       <div
         className={`relative z-10 w-full ${
           maxWidthClasses[maxWidth] || 'max-w-lg'
-        } bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-[#fce7f3] flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden`}
+        } bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-[#fce7f3] flex flex-col max-h-[85dvh] sm:max-h-[85vh] overflow-hidden`}
       >
         {/* Header */}
         <div className='flex items-center justify-between px-5 py-4 border-b border-[#fce7f3] bg-[#fff5f7]/50'>
@@ -84,7 +84,12 @@ export function CrudModalDialog({
         <div className='p-5 overflow-y-auto flex-1 flex flex-col gap-4'>{children}</div>
 
         {/* Footer Actions */}
-        <div className='flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 px-5 py-3.5 border-t border-[#fce7f3] bg-[#fff5f7]/30'>
+        <div
+          className='flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 px-5 py-3.5 border-t border-[#fce7f3] bg-[#fff5f7]/30'
+          style={{
+            paddingBottom: 'max(0.875rem, env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           <button
             type='button'
             onClick={onClose}

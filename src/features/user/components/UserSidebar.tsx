@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Home,
@@ -16,6 +15,7 @@ import {
   Heart,
   ShieldCheck,
 } from 'lucide-react';
+import { Avatar } from '@/src/shared/components/ui/Avatar';
 import { useAuth } from '@/src/features/auth';
 
 export const USER_NAV_ITEMS = [
@@ -32,7 +32,7 @@ export default function UserSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const userName = user?.name || 'Sarah Azzahra';
-  const avatarUrl = user?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah';
+  const avatarUrl = user?.avatarUrl || '';
 
   return (
     <aside className='w-64 h-screen sticky top-0 bg-white border-r border-[#fce7f3] flex flex-col justify-between p-4 z-40 select-none shadow-xs'>
@@ -59,22 +59,20 @@ export default function UserSidebar() {
         {/* Navigation List */}
         <nav className='flex flex-col gap-1'>
           {USER_NAV_ITEMS.map(item => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== '/user/dashboard' && pathname?.startsWith(item.href));
             const Icon = item.icon;
+            const isActive = pathname === item.href;
 
             return (
               <Link
-                key={item.name}
+                key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-150 ${
                   isActive
-                    ? 'bg-[#ffe4e6] text-[#e11d48] shadow-xs'
-                    : 'text-[#475569] hover:bg-[#fff5f7] hover:text-[#e11d48]'
+                    ? 'bg-[#e11d48] text-white shadow-sm shadow-rose-500/20'
+                    : 'text-[#64748b] hover:text-[#e11d48] hover:bg-[#fff5f7]'
                 }`}
               >
-                <Icon size={18} className={isActive ? 'text-[#e11d48]' : 'text-[#64748b]'} />
+                <Icon size={18} className={isActive ? 'text-white' : 'text-[#64748b]'} />
                 <span>{item.name}</span>
               </Link>
             );
@@ -89,14 +87,17 @@ export default function UserSidebar() {
           href='/user/profile'
           className='flex items-center gap-2.5 p-2 rounded-xl bg-[#fff5f7] border border-[#fce7f3] hover:border-rose-300 transition-colors'
         >
-          <div className='w-9 h-9 rounded-full ring-2 ring-rose-200 overflow-hidden relative shrink-0'>
-            <Image src={avatarUrl} alt={userName} fill className='object-cover' sizes='36px' />
-          </div>
+          <Avatar
+            src={avatarUrl}
+            name={userName}
+            size='sm'
+            ringClassName='ring-2 ring-rose-200 shrink-0'
+          />
           <div className='min-w-0 flex-1'>
             <span className='text-xs font-bold text-[#1e293b] truncate block'>{userName}</span>
             <span className='text-[10px] text-[#059669] font-semibold flex items-center gap-1'>
               <ShieldCheck size={11} />
-              <span>4 Minggu Streak</span>
+              <span>Profil Aktif</span>
             </span>
           </div>
         </Link>

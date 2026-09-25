@@ -36,9 +36,7 @@ export async function getUserProfileAction(userId: string = 'usr_1'): Promise<Us
       name: row.name,
       email: row.email,
       phone: row.phone || '-',
-      avatarUrl:
-        row.avatar_url ||
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(row.name)}`,
+      avatarUrl: row.avatar_url || '',
       dateOfBirth: row.date_of_birth ? String(row.date_of_birth) : '2008-04-12',
       bloodType: row.blood_type || 'O+',
       height: Number(row.height) || 158,
@@ -55,6 +53,7 @@ export async function updateUserProfileAction(
   data: {
     name?: string;
     phone?: string;
+    avatarUrl?: string | null;
     schoolOrOrg?: string;
     hbLevel?: number;
     bloodType?: string;
@@ -65,15 +64,29 @@ export async function updateUserProfileAction(
   try {
     await db.transaction(async client => {
       // 1. Update users
-      if (data.name || data.phone) {
+      const userFields: string[] = [];
+      const userParams: unknown[] = [];
+      let pIdx = 1;
+
+      if (data.name !== undefined) {
+        userFields.push(`name = $${pIdx++}`);
+        userParams.push(data.name);
+      }
+      if (data.phone !== undefined) {
+        userFields.push(`phone = $${pIdx++}`);
+        userParams.push(data.phone);
+      }
+      if (data.avatarUrl !== undefined) {
+        userFields.push(`avatar_url = $${pIdx++}`);
+        userParams.push(data.avatarUrl);
+      }
+
+      if (userFields.length > 0) {
+        userFields.push(`updated_at = CURRENT_TIMESTAMP`);
+        userParams.push(userId);
         await client.query(
-          `UPDATE users 
-           SET 
-             name = COALESCE($1, name),
-             phone = COALESCE($2, phone),
-             updated_at = CURRENT_TIMESTAMP
-           WHERE id = $3`,
-          [data.name ?? null, data.phone ?? null, userId],
+          `UPDATE users SET ${userFields.join(', ')} WHERE id = $${pIdx}`,
+          userParams,
         );
       }
 

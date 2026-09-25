@@ -50,7 +50,7 @@ export default function ScheduleFormModal({
       onClose={onClose}
       title={editingId ? 'Edit Jadwal Obat & Terapi' : 'Buat Jadwal TTD Baru'}
       onSubmit={onSave}
-      submitText={editingId ? 'Simpan Perubahan' : 'Simpan Jadwal'}
+      submitText={editingId ? 'Update' : 'Simpan Jadwal'}
       submitting={submitting}
     >
       <div>

@@ -6,6 +6,7 @@ import AdminHeader from '../components/AdminHeader';
 import { getComplianceReportsAction } from '../api/complianceRepository';
 import { getUsersAction } from '../api/userManagementRepository';
 import { ComplianceReport, ManagedUser } from '../types/admin.types';
+import { Avatar } from '@/src/shared/components/ui/Avatar';
 
 export default function ReportAnalyticsView() {
   const [period, setPeriod] = useState('7-hari');
@@ -211,15 +212,23 @@ export default function ReportAnalyticsView() {
               return (
                 <div
                   key={u.id}
-                  className='flex justify-between items-center p-3 rounded-xl bg-rose-50/30 border border-pink-50 hover:bg-rose-50/60 transition-colors'
+                  className='flex justify-between items-center p-3 rounded-2xl bg-rose-50/30 border border-pink-50 hover:bg-rose-50/60 transition-colors gap-2.5'
                 >
-                  <div className='min-w-0 pr-2'>
-                    <p className='text-xs sm:text-sm font-bold text-slate-900 truncate'>
-                      {u.name}
-                    </p>
-                    <p className='text-[11px] text-slate-500 truncate'>
-                      {org.split(',')[0]}
-                    </p>
+                  <div className='flex items-center gap-2.5 min-w-0 flex-1'>
+                    <Avatar
+                      src={u.avatarUrl}
+                      name={u.name}
+                      size='sm'
+                      ringClassName='ring-1 ring-pink-100 shadow-2xs'
+                    />
+                    <div className='min-w-0 flex-1'>
+                      <p className='text-xs sm:text-sm font-bold text-slate-900 truncate'>
+                        {u.name}
+                      </p>
+                      <p className='text-[11px] text-slate-500 truncate'>
+                        {org.split(',')[0]}
+                      </p>
+                    </div>
                   </div>
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${

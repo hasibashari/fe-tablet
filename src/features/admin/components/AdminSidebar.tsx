@@ -1,30 +1,20 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
-import {
-  LayoutDashboard,
-  Users,
-  CalendarCheck,
-  FileText,
-  BarChart3,
-  LogOut,
-  Heart,
-  User,
-} from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, FileText, BookOpen, LogOut, User } from 'lucide-react';
 import AppSidebar, { NavItem } from '@/src/shared/components/AppSidebar';
+import { Avatar } from '@/src/shared/components/ui/Avatar';
 import { useAuth } from '@/src/features/auth';
 
-const adminNavItems: NavItem[] = [
+const ADMIN_NAVIGATION_ITEMS: NavItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'Data Siswi & User', href: '/admin/users', icon: Users },
-  { name: 'Jadwal & Pengingat', href: '/admin/schedules', icon: CalendarCheck },
-  { name: 'Artikel Edukasi', href: '/admin/articles', icon: FileText },
-  { name: 'Laporan & Analitik', href: '/admin/reports', icon: BarChart3 },
+  { name: 'Data Siswi', href: '/admin/users', icon: Users },
+  { name: 'Jadwal & Pengingat', href: '/admin/schedules', icon: Calendar },
+  { name: 'Laporan & Screening', href: '/admin/reports', icon: FileText },
+  { name: 'Artikel Edukasi', href: '/admin/articles', icon: BookOpen },
   { name: 'Profil Admin', href: '/admin/profile', icon: User },
 ];
 
-interface AdminSidebarProps {
+export interface AdminSidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
 }
@@ -42,13 +32,12 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
     <div className='flex flex-col gap-2'>
       {user && (
         <div className='p-2.5 rounded-2xl bg-[#fff5f7] border border-pink-100 flex items-center gap-2.5'>
-          <div className='relative w-8 h-8 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center shrink-0 border-2 border-rose-400 overflow-hidden'>
-            {user.avatarUrl ? (
-              <Image src={user.avatarUrl} alt={user.name} fill sizes='32px' className='object-cover' />
-            ) : (
-              <span>{user.name.charAt(0)}</span>
-            )}
-          </div>
+          <Avatar
+            src={user.avatarUrl}
+            name={user.name}
+            size='sm'
+            ringClassName='ring-1.5 ring-rose-300 shrink-0'
+          />
           <div className='min-w-0 flex-1'>
             <div className='font-bold text-xs text-slate-800 truncate leading-tight'>
               {user.name}
@@ -60,23 +49,21 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
 
       <button
         type='button'
-        onClick={logout}
-        className='w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 font-semibold text-xs hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer'
+        onClick={() => logout()}
+        className='flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer w-full text-left'
       >
         <LogOut size={16} />
-        <span>Keluar (Sign Out)</span>
+        <span>Keluar dari Admin</span>
       </button>
     </div>
   );
 
   return (
     <AppSidebar
-      navItems={adminNavItems}
-      brandTitle='Fe-Tablet'
-      brandSubtitle='Pusat Kontrol Admin'
-      brandIcon={Heart}
-      brandHref='/admin/dashboard'
+      brandSubtitle='Administrator'
       badge={adminBadge}
+      brandHref='/admin/dashboard'
+      navItems={ADMIN_NAVIGATION_ITEMS}
       footerAction={signOutFooter}
       mobileOpen={mobileOpen}
       onMobileClose={onMobileClose}

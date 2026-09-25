@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Bell, Heart, Menu } from 'lucide-react';
+import { Avatar } from './ui/Avatar';
 
 export interface MobileTopBarProps {
   onOpenSidebar?: () => void;
@@ -13,7 +13,7 @@ export interface MobileTopBarProps {
   badge?: React.ReactNode;
   rightAction?: React.ReactNode;
   userName?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 }
 
 export default function MobileTopBar({
@@ -24,7 +24,7 @@ export default function MobileTopBar({
   badge,
   rightAction,
   userName = 'Sarah',
-  avatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  avatarUrl,
 }: MobileTopBarProps) {
   return (
     <header className='sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#fce7f3] shadow-2xs'>
@@ -67,7 +67,7 @@ export default function MobileTopBar({
           </Link>
         </div>
 
-        {/* Right: Notification & Profile avatarUrl */}
+        {/* Right: Notification & Profile Avatar */}
         {rightAction ? (
           rightAction
         ) : (
@@ -82,18 +82,17 @@ export default function MobileTopBar({
               <span className='absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#e11d48] ring-2 ring-white' />
             </Link>
 
-            {/* Profile avatarUrl */}
+            {/* Profile Avatar with initials fallback */}
             <Link
               href={brandHref.includes('admin') ? '/admin/profile' : '/user/profile'}
-              className='w-9 h-9 rounded-full ring-2 ring-[#fce7f3] hover:ring-[#e11d48] overflow-hidden relative transition-all'
+              className='block transition-transform hover:scale-105 active:scale-95'
               aria-label='Profil Pengguna'
             >
-              <Image
+              <Avatar
                 src={avatarUrl}
-                alt={typeof userName === 'string' ? userName : 'User'}
-                fill
-                className='object-cover'
-                sizes='36px'
+                name={userName}
+                size='sm'
+                ringClassName='ring-2 ring-rose-200 hover:ring-[#e11d48]'
               />
             </Link>
           </div>

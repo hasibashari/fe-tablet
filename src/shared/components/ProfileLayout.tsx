@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { Edit2 } from 'lucide-react';
+import { Avatar } from '@/src/shared/components/ui/Avatar';
 
 export interface ProfileContactItem {
   icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
@@ -25,7 +25,8 @@ export interface ProfileLayoutProps {
   onEditClick?: () => void;
   editButtonText?: string;
   name: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
+  customAvatarNode?: React.ReactNode;
   badges?: React.ReactNode;
   secondaryText?: React.ReactNode;
   contactItems: ProfileContactItem[];
@@ -42,6 +43,7 @@ export default function ProfileLayout({
   editButtonText = 'Edit Profile',
   name,
   avatarUrl,
+  customAvatarNode,
   badges,
   secondaryText,
   contactItems,
@@ -90,18 +92,14 @@ export default function ProfileLayout({
 
       {/* 2. Main Profile Card */}
       <div className='p-6 bg-white rounded-2xl border border-[#fce7f3] shadow-xs flex flex-col md:flex-row items-center md:items-start gap-6'>
-        <div className='relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden ring-4 ring-rose-200 shrink-0 shadow-md'>
-          <Image
-            src={
-              avatarUrl ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'Admin')}`
-            }
-            alt={name}
-            fill
-            className='object-cover'
-            sizes='112px'
+        {customAvatarNode || (
+          <Avatar
+            src={avatarUrl}
+            name={name}
+            size='3xl'
+            ringClassName='ring-4 ring-rose-200 shrink-0 shadow-md'
           />
-        </div>
+        )}
 
         <div className='flex-1 text-center md:text-left min-w-0'>
           <div className='flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1.5'>

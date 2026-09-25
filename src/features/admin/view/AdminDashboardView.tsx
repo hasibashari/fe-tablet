@@ -15,6 +15,7 @@ import AdminHeader from '../components/AdminHeader';
 import StatCard from '@/src/shared/components/StatCard';
 import SendReminderModal from '../components/SendReminderModal';
 import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
+import { Avatar } from '@/src/shared/components/ui/Avatar';
 import { getAdminStatsAction } from '../api/adminStatsRepository';
 import { getUsersAction, sendUserReminderAction } from '../api/userManagementRepository';
 import { getComplianceReportsAction } from '../api/complianceRepository';
@@ -277,34 +278,37 @@ export default function AdminDashboardView() {
             </p>
 
             <div className='space-y-3'>
-              {highRiskUsers.slice(0, 3).map(user => (
+              {highRiskUsers.slice(0, 4).map(user => (
                 <div
                   key={user.id}
-                  className='p-3.5 rounded-2xl border border-amber-200 bg-amber-50/60 flex items-center justify-between gap-2'
+                  className='p-3.5 rounded-2xl border border-amber-200 bg-amber-50/60 flex items-center justify-between gap-3'
                 >
-                  <div className='flex items-center gap-3 min-w-0'>
-                    <div className='w-9 h-9 rounded-xl bg-amber-500 text-white font-bold text-sm flex items-center justify-center shrink-0'>
-                      {user.name.charAt(0)}
-                    </div>
-                    <div className='min-w-0'>
+                  <div className='flex items-center gap-3 min-w-0 flex-1'>
+                    <Avatar
+                      src={user.avatarUrl}
+                      name={user.name}
+                      size='md'
+                      ringClassName='ring-1 ring-amber-200 shadow-2xs'
+                    />
+                    <div className='min-w-0 flex-1'>
                       <div className='font-bold text-xs sm:text-sm text-slate-900 truncate'>
                         {user.name}
                       </div>
-                      <div className='text-[11px] text-slate-500'>
+                      <div className='text-[11px] text-slate-500 truncate'>
                         {user.age} th • {user.phone}
                       </div>
                     </div>
                   </div>
 
                   <div className='flex items-center gap-2 shrink-0'>
-                    <span className='px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs'>
+                    <span className='px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-extrabold text-[11px]'>
                       {user.adherenceRate}%
                     </span>
                     <button
                       type='button'
                       title='Kirim Pengingat'
                       onClick={() => handleOpenReminder(user.name, user.phone, user.id)}
-                      className='p-1.5 rounded-xl bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors cursor-pointer'
+                      className='w-11 h-11 rounded-xl bg-amber-200/80 text-amber-800 hover:bg-amber-300 flex items-center justify-center transition-colors cursor-pointer'
                     >
                       <BellRing size={16} />
                     </button>

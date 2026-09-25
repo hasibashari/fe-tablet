@@ -57,6 +57,7 @@ export async function updateUserProfileAction(
   data: {
     name?: string;
     phone?: string;
+    avatarUrl?: string | null;
     schoolOrOrg?: string;
     hbLevel?: number;
     bloodType?: string;
@@ -107,9 +108,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
     const userName = userRow?.name || 'Sarah Azzahra';
     const userEmail = userRow?.email || 'sarah@email.com';
     const userPhone = userRow?.phone || '0812-3456-7890';
-    const userAvatarUrl =
-      userRow?.avatar_url ||
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`;
+    const userAvatarUrl = userRow?.avatar_url || '';
 
     // 2. Active schedule
     const scheduleRes = await db.query<{
@@ -248,9 +247,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         connectionId: bRow.connection_id,
         buddyId: bRow.buddy_id,
         buddyName: bRow.buddy_name || 'Sahabat Sehat',
-        buddyAvatarUrl:
-          bRow.buddy_avatar_url ||
-          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(bRow.buddy_name || 'Buddy')}`,
+        buddyAvatarUrl: bRow.buddy_avatar_url || '',
         sharedStreakCount: Number(bRow.shared_streak_count) || 0,
         userStatusThisWeek: uStatus || 'pending',
         buddyStatusThisWeek: bStatus || 'pending',
@@ -300,8 +297,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         name: 'Sarah Azzahra',
         email: 'sarah@email.com',
         phone: '0812-3456-7890',
-        avatarUrl:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        avatarUrl: '',
         streakCount: 0,
         streakUnit: 'Minggu',
         consecutiveDates: [],

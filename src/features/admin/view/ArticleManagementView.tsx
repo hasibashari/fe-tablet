@@ -8,6 +8,7 @@ import ArticleFormModal, { ArticleFormData } from '../components/ArticleFormModa
 import { DataTable, Column } from '@/src/shared/components/DataTable';
 import { ConfirmDeleteDialog } from '@/src/shared/components/ConfirmDeleteDialog';
 import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
+import { MobileFilterChips } from '@/src/shared/components/ui/MobileFilterChips';
 import { useCrudModal } from '@/src/shared/hooks/useCrudModal';
 import { useDeleteConfirm } from '@/src/shared/hooks/useDeleteConfirm';
 import { useToast } from '@/src/shared/hooks/useToast';
@@ -262,7 +263,7 @@ export default function ArticleManagementView() {
   const renderMobileCard = (article: HealthArticle) => (
     <div
       key={article.id}
-      className='p-4 rounded-2xl border border-pink-100 bg-white shadow-sm flex flex-col gap-3'
+      className='p-4 rounded-2xl border border-pink-100 bg-white shadow-xs flex flex-col gap-3.5'
     >
       <div className='flex gap-3'>
         {article.imageUrl ? (
@@ -280,7 +281,7 @@ export default function ArticleManagementView() {
 
         <div className='flex-1 min-w-0'>
           <div className='flex items-center gap-1.5 mb-1 flex-wrap'>
-            <span className='px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-pink-100 font-bold text-[11px]'>
+            <span className='px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-pink-100 font-extrabold text-[10px] uppercase tracking-wider'>
               {article.category}
             </span>
           </div>
@@ -291,34 +292,36 @@ export default function ArticleManagementView() {
       </div>
 
       <div className='flex items-center justify-between bg-slate-50 rounded-xl p-2.5 text-xs'>
-        <span className='font-semibold text-slate-700'>✍️ {article.author}</span>
-        <span className='flex items-center gap-1 text-slate-400'>
+        <span className='font-bold text-slate-700 truncate max-w-[60%]'>✍️ {article.author}</span>
+        <span className='flex items-center gap-1 text-slate-400 font-medium shrink-0'>
           <Clock size={12} /> {article.readTime}
         </span>
       </div>
 
-      <div className='flex items-center justify-between pt-2 border-t border-slate-100'>
+      <div className='flex items-center justify-between pt-2.5 border-t border-slate-100 gap-2'>
         <button
           type='button'
           onClick={() => handlePreviewArticle(article.id)}
-          className='inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 text-xs font-semibold hover:bg-rose-50 transition-colors cursor-pointer'
+          className='flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-50 transition-colors cursor-pointer min-h-[44px]'
         >
-          <Eye size={14} />
-          <span>Pratinjau</span>
+          <Eye size={16} />
+          <span>Lihat Artikel</span>
         </button>
 
-        <div className='flex gap-1'>
+        <div className='flex gap-1.5'>
           <button
             type='button'
+            title='Edit Artikel'
             onClick={() => onOpenEdit(article)}
-            className='p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer'
+            className='w-11 h-11 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center transition-colors cursor-pointer'
           >
             <Edit size={16} />
           </button>
           <button
             type='button'
+            title='Hapus Artikel'
             onClick={() => handleDeleteRequest(article.id)}
-            className='p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer'
+            className='w-11 h-11 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-colors cursor-pointer'
           >
             <Trash2 size={16} />
           </button>
@@ -334,45 +337,60 @@ export default function ArticleManagementView() {
         subtitle='Publikasikan konten medis interaktif untuk meningkatkan kepatuhan dan pemahaman siswi.'
       />
 
-      {/* Filter Bar */}
-      <div className='p-4 sm:p-5 mb-6 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'>
-        <div className='flex flex-col sm:flex-row gap-3 flex-1'>
-          <div className='relative flex-1'>
-            <span className='absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400'>
-              <Search size={18} />
-            </span>
-            <input
-              type='text'
-              placeholder='Cari judul artikel atau nama penulis...'
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className='w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
-            />
+      {/* Filter Bar with MobileFilterChips */}
+      <div className='p-4 sm:p-5 mb-6 rounded-2xl sm:rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col gap-3.5'>
+        <div className='flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'>
+          <div className='flex flex-col sm:flex-row gap-3 flex-1'>
+            <div className='relative flex-1'>
+              <span className='absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400'>
+                <Search size={18} />
+              </span>
+              <input
+                type='text'
+                placeholder='Cari judul artikel atau nama penulis...'
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className='w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all min-h-[44px]'
+              />
+            </div>
+
+            <div className='hidden sm:block sm:min-w-[180px]'>
+              <select
+                value={categoryFilter}
+                onChange={e => setCategoryFilter(e.target.value)}
+                className='w-full px-3.5 py-2.5 rounded-xl border border-pink-100 bg-slate-50 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all cursor-pointer min-h-[44px]'
+              >
+                {ARTICLE_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>
+                    {cat === 'Semua' ? 'Semua Kategori' : cat}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className='min-w-full sm:min-w-[180px]'>
-            <select
-              value={categoryFilter}
-              onChange={e => setCategoryFilter(e.target.value)}
-              className='w-full px-3.5 py-2.5 rounded-xl border border-pink-100 bg-slate-50 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all cursor-pointer'
-            >
-              {ARTICLE_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat === 'Semua' ? 'Semua Kategori' : cat}
-                </option>
-              ))}
-            </select>
-          </div>
+          <button
+            type='button'
+            onClick={() => handleOpenAdd()}
+            className='inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs sm:text-sm hover:bg-rose-700 shadow-md shadow-rose-200 transition-all cursor-pointer whitespace-nowrap min-h-[44px]'
+          >
+            <Plus size={18} />
+            <span>Tulis Artikel Baru</span>
+          </button>
         </div>
 
-        <button
-          type='button'
-          onClick={() => handleOpenAdd()}
-          className='inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-200 transition-all cursor-pointer whitespace-nowrap'
-        >
-          <Plus size={18} />
-          <span>Tulis Artikel Baru</span>
-        </button>
+        {/* Mobile Horizontal Filter Chips (< sm: 640px) */}
+        <div className='block sm:hidden border-t border-slate-100 pt-2.5'>
+          <p className='text-[11px] font-bold text-slate-400 mb-1.5'>Filter Kategori:</p>
+          <MobileFilterChips
+            selectedValue={categoryFilter}
+            onSelect={setCategoryFilter}
+            options={ARTICLE_CATEGORIES.map(cat => ({
+              label: cat === 'Semua' ? 'Semua Kategori' : cat,
+              value: cat,
+            }))}
+          />
+        </div>
       </div>
 
       {/* Articles Table & Mobile Card View */}

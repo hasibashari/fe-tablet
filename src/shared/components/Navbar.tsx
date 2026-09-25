@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Menu, X, Heart, LogOut, LayoutDashboard, Sparkles, ChevronDown } from 'lucide-react';
+import { Avatar } from './ui/Avatar';
 import { cn } from '../utils/cn';
 import { useAuth } from '@/src/features/auth';
 
@@ -101,18 +101,12 @@ export default function Navbar() {
                 aria-haspopup='true'
                 className='flex items-center gap-2 bg-white/90 hover:bg-white border border-slate-200/80 hover:border-rose-200 rounded-full py-1.5 pl-1.5 pr-3 shadow-xs hover:shadow-sm transition-all cursor-pointer group'
               >
-                <div className='relative w-7 h-7 rounded-full overflow-hidden ring-1.5 ring-[#e11d48] shrink-0'>
-                  <Image
-                    src={
-                      user.avatarUrl ||
-                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`
-                    }
-                    alt={user.name}
-                    fill
-                    className='object-cover'
-                    sizes='28px'
-                  />
-                </div>
+                <Avatar
+                  src={user.avatarUrl}
+                  name={user.name}
+                  size='sm'
+                  ringClassName='ring-1.5 ring-[#e11d48]'
+                />
                 <div className='flex items-center gap-1.5 text-left'>
                   <span className='text-xs font-bold text-slate-800 leading-none truncate max-w-28 group-hover:text-[#e11d48] transition-colors'>
                     {user.name.split(',')[0]}
@@ -221,18 +215,12 @@ export default function Navbar() {
               <div className='flex flex-col gap-2 bg-rose-50/50 p-3.5 rounded-2xl border border-rose-100'>
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
-                    <div className='relative w-8 h-8 rounded-full overflow-hidden ring-1.5 ring-[#e11d48]'>
-                      <Image
-                        src={
-                          user.avatarUrl ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`
-                        }
-                        alt={user.name}
-                        fill
-                        className='object-cover'
-                        sizes='32px'
-                      />
-                    </div>
+                    <Avatar
+                      src={user.avatarUrl}
+                      name={user.name}
+                      size='sm'
+                      ringClassName='ring-1.5 ring-[#e11d48]'
+                    />
                     <div>
                       <div className='text-sm font-bold text-slate-800'>{user.name}</div>
                       <div className='text-xs text-slate-500'>{user.email}</div>

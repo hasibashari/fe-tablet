@@ -100,7 +100,7 @@ export default function ArticleFormModal({
       onClose={onClose}
       title={editingId ? 'Edit Artikel Edukasi' : 'Tulis Artikel Edukasi Baru'}
       onSubmit={onSubmit}
-      submitText={editingId ? 'Simpan Perubahan' : 'Publikasikan Artikel'}
+      submitText={editingId ? 'Update' : 'Publikasikan Artikel'}
       submitting={submitting}
       maxWidth='md'
     >

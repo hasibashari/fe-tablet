@@ -110,7 +110,7 @@ function SendReminderModalContent({
   };
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+    <div className='fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in'>
       {/* Backdrop */}
       <div
         className='fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300'
@@ -121,7 +121,7 @@ function SendReminderModalContent({
       {/* Modal Dialog Content */}
       <div
         ref={modalRef}
-        className='relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-pink-100 flex flex-col max-h-[90vh] overflow-hidden'
+        className='relative z-10 w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-pink-100 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden animate-scale-up'
         role='dialog'
         aria-modal='true'
       >

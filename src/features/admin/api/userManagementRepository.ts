@@ -61,7 +61,9 @@ export async function getUsersAction(): Promise<ManagedUser[]> {
         gender: r.gender || 'Perempuan',
         phone: r.phone || '-',
         email: r.email,
-        avatarUrl: r.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.name)}`,
+        avatarUrl:
+          r.avatar_url ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.name)}`,
         riskLevel: r.risk_level || 'Rendah',
         status: r.status || 'Aktif',
         schoolOrOrg,
@@ -94,7 +96,11 @@ export async function createUserAction(data: {
   try {
     const newId = `usr_${Date.now().toString().slice(-6)}`;
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.name)}`;
-    const cleanTag = data.name.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5) || 'USER';
+    const cleanTag =
+      data.name
+        .toUpperCase()
+        .replace(/[^A-Z]/g, '')
+        .slice(0, 5) || 'USER';
     const friendCode = `FE-${cleanTag}-${Math.floor(1000 + Math.random() * 9000)}`;
     const school = data.schoolOrOrg || data.assignedDoctor || 'SMA Negeri 1 Sehat';
 
@@ -173,7 +179,13 @@ export async function updateUserAction(
              notes = COALESCE($4, notes),
              last_active_at = CURRENT_TIMESTAMP
            WHERE user_id = $5`,
-          [data.riskLevel ?? null, data.status ?? null, school ?? null, data.medicalNotes ?? null, userId],
+          [
+            data.riskLevel ?? null,
+            data.status ?? null,
+            school ?? null,
+            data.medicalNotes ?? null,
+            userId,
+          ],
         );
       }
     });
@@ -217,6 +229,51 @@ export async function sendUserReminderAction(
   } catch (error) {
     console.error('Error sending user reminder nudge:', error);
     return { success: false };
+  }
+}
+
+export async function updateAdminProfileAction(
+  adminId: string,
+  data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    avatarUrl?: string | null;
+  },
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const fields: string[] = [];
+    const params: unknown[] = [];
+    let pIdx = 1;
+
+    if (data.name !== undefined) {
+      fields.push(`name = $${pIdx++}`);
+      params.push(data.name);
+    }
+    if (data.email !== undefined) {
+      fields.push(`email = $${pIdx++}`);
+      params.push(data.email);
+    }
+    if (data.phone !== undefined) {
+      fields.push(`phone = $${pIdx++}`);
+      params.push(data.phone);
+    }
+    if (data.avatarUrl !== undefined) {
+      fields.push(`avatar_url = $${pIdx++}`);
+      params.push(data.avatarUrl);
+    }
+
+    if (fields.length > 0) {
+      fields.push(`updated_at = CURRENT_TIMESTAMP`);
+      params.push(adminId);
+      await db.query(`UPDATE users SET ${fields.join(', ')} WHERE id = $${pIdx}`, params);
+    }
+
+    return { success: true };
+  } catch (error: unknown) {
+    console.error('Error updating admin profile:', error);
+    const errMsg = error instanceof Error ? error.message : 'Gagal memperbarui profil admin';
+    return { success: false, error: errMsg };
   }
 }
 

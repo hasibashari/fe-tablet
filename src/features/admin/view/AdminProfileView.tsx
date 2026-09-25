@@ -1,14 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Phone, Shield, Building, CheckCircle2, Award } from 'lucide-react';
-import ProfileLayout from '@/src/shared/components/ProfileLayout';
+import { useRouter } from 'next/navigation';
+import {
+  Mail,
+  Phone,
+  Shield,
+  Building,
+  CheckCircle2,
+  Check,
+} from 'lucide-react';
+import {
+  ProfileHeaderCard,
+  ProfileContactCard,
+  ProfileMetricsGrid,
+  ProfileEditModal,
+  ProfileSecuritySection,
+} from '@/src/shared/components/profile';
 import { useAuth } from '@/src/features/auth';
-import { CrudModalDialog } from '@/src/shared/components/CrudModalDialog';
-import { ToastFeedback } from '@/src/shared/components/ToastFeedback';
+import { updateAdminProfileAction } from '../api/userManagementRepository';
 
 export default function AdminProfileView() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, logout, updateUser } = useAuth();
+  const adminId = user?.id || 'usr_admin_1';
 
   // Profile State
   const [profileData, setProfileData] = useState({
@@ -19,162 +34,236 @@ export default function AdminProfileView() {
     department: 'Manajemen Program TTD & Anemia Remaja',
     clinicName: 'Fe-Tablet Puskesmas / UKS Sekolah',
     roleLabel: 'Administrator',
+    avatarUrl: user?.avatarUrl || '',
   });
 
   // Edit Modal State
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState(profileData);
-  const [toastOpen, setToastOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
 
   const handleOpenEdit = () => {
     setEditForm(profileData);
     setEditOpen(true);
   };
 
-  const handleSaveEdit = () => {
-    setProfileData(editForm);
-    setEditOpen(false);
-    setToastOpen(true);
+  const handleSaveAvatar = async (newAvatarUrl: string | null) => {
+    try {
+      const res = await updateAdminProfileAction(adminId, {
+        avatarUrl: newAvatarUrl || '',
+      });
+      if (res.success) {
+        setProfileData(prev => ({
+          ...prev,
+          avatarUrl: newAvatarUrl || '',
+        }));
+        updateUser({ avatarUrl: newAvatarUrl || '' });
+        showToast(
+          newAvatarUrl
+            ? 'Foto profil admin berhasil diperbarui! ✨'
+            : 'Foto profil dihapus, menggunakan inisial nama.',
+        );
+      } else {
+        showToast(res.error || 'Gagal memperbarui foto profil admin.');
+      }
+    } catch (err) {
+      console.error('Error saving admin avatar:', err);
+      showToast('Gagal menyimpan foto profil.');
+    }
   };
 
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const res = await updateAdminProfileAction(adminId, {
+        name: editForm.name,
+        email: editForm.email,
+        phone: editForm.phone,
+      });
+
+      if (res.success) {
+        setProfileData(editForm);
+        updateUser({
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+        });
+        setEditOpen(false);
+        showToast('Profil admin berhasil diperbarui! ✨');
+      } else {
+        showToast(res.error || 'Gagal menyimpan perubahan.');
+      }
+    } catch (err) {
+      console.error('Error saving admin profile:', err);
+      showToast('Terjadi kesalahan saat menyimpan.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleConfirmLogout = async () => {
+    await logout();
+    router.push('/auth/login');
+  };
+
+  const adminMetrics = [
+    {
+      id: 'access',
+      label: 'Level Hak Akses',
+      value: 'Full Control',
+      subtitle: 'Pengguna, Jadwal, Edukasi, Laporan',
+      icon: Shield,
+      iconBgColor: 'bg-rose-100',
+      iconColor: 'text-rose-600',
+      badgeText: 'Root Admin',
+      badgeColor: 'bg-rose-100 text-rose-700',
+    },
+    {
+      id: 'system',
+      label: 'Sistem Pengelola',
+      value: 'UKS / Puskesmas',
+      subtitle: 'Portal Terpadu TTD Remaja',
+      icon: Building,
+      iconBgColor: 'bg-indigo-100',
+      iconColor: 'text-indigo-600',
+      badgeText: 'Aktif',
+      badgeColor: 'bg-indigo-100 text-indigo-700',
+    },
+    {
+      id: 'status',
+      label: 'Status Kredensial',
+      value: 'Valid & Aman',
+      subtitle: 'Autentikasi tingkat lanjut aktif',
+      icon: CheckCircle2,
+      iconBgColor: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
+      badgeText: 'Terverifikasi',
+      badgeColor: 'bg-emerald-100 text-emerald-700',
+    },
+  ];
+
+  const contactItems = [
+    {
+      icon: Mail,
+      label: 'Email Dinas',
+      value: profileData.email,
+    },
+    {
+      icon: Phone,
+      label: 'Nomor Kontak',
+      value: profileData.phone,
+    },
+    {
+      icon: Building,
+      label: 'Unit Kerja / Fasilitas',
+      value: profileData.department,
+      fallbackValue: 'Manajemen Program TTD & UKS',
+    },
+  ];
+
   return (
-    <>
-      <ProfileLayout
-        title='Profil Admin'
-        subtitle='Informasi identitas, kontak dinas, serta kredensial akun administrator sistem.'
-        name={profileData.name}
-        avatarUrl={user?.avatarUrl}
-        badges={
-          <>
-            <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white'>
-              ADMINISTRATOR
-            </span>
-            <span className='inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200'>
-              <CheckCircle2 size={13} className='text-emerald-600' />
-              Terverifikasi
-            </span>
-          </>
-        }
-        secondaryText={`${profileData.title} • ${profileData.clinicName}`}
-        onEditClick={handleOpenEdit}
-        contactItems={[
-          { icon: Mail, label: 'Email Dinas', value: profileData.email },
-          { icon: Phone, label: 'Nomor Telepon', value: profileData.phone },
-          { icon: Building, label: 'Unit Kerja', value: profileData.department },
-        ]}
-        metricsTitle='Kredensial & Hak Akses'
-        metrics={[
-          {
-            label: 'Hak Akses',
-            value: 'Full Control',
-            subtitle: 'Pengguna, Obat, Jadwal, Laporan',
-            icon: Shield,
-            iconBgColor: 'bg-rose-50',
-            iconColor: 'text-rose-600',
-          },
-          {
-            label: 'Sistem Pengelola',
-            value: 'MediCore Central',
-            subtitle: 'Portal Manajemen Terpadu',
-            icon: Building,
-            iconBgColor: 'bg-emerald-50',
-            iconColor: 'text-emerald-600',
-          },
-          {
-            label: 'Status Akun',
-            value: 'Aktif & Valid',
-            subtitle: 'Role Administrator Tunggal',
-            icon: Award,
-            iconBgColor: 'bg-amber-50',
-            iconColor: 'text-amber-600',
-          },
-        ]}
-      />
-
-      {/* Edit Profile Dialog Modal */}
-      <CrudModalDialog
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        title='Edit Profil Admin'
-        onSubmit={handleSaveEdit}
-        submitText='Simpan Perubahan'
-        maxWidth='sm'
-      >
-        <div className='space-y-4'>
-          <div>
-            <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5'>
-              Nama Lengkap Administrator
-            </label>
-            <input
-              type='text'
-              value={editForm.name}
-              onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-              className='w-full px-3.5 py-2 bg-slate-50 border border-pink-100 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all'
-              required
-            />
-          </div>
-
-          <div>
-            <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5'>
-              Email Kedinasan
-            </label>
-            <input
-              type='email'
-              value={editForm.email}
-              onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-              className='w-full px-3.5 py-2 bg-slate-50 border border-pink-100 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all'
-              required
-            />
-          </div>
-
-          <div>
-            <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5'>
-              Nomor Telepon / WhatsApp
-            </label>
-            <input
-              type='tel'
-              value={editForm.phone}
-              onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
-              className='w-full px-3.5 py-2 bg-slate-50 border border-pink-100 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all'
-              required
-            />
-          </div>
-
-          <div>
-            <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5'>
-              Jabatan & Peran
-            </label>
-            <input
-              type='text'
-              value={editForm.title}
-              onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-              className='w-full px-3.5 py-2 bg-slate-50 border border-pink-100 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all'
-              required
-            />
-          </div>
-
-          <div>
-            <label className='block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5'>
-              Unit / Divisi Kerja
-            </label>
-            <input
-              type='text'
-              value={editForm.department}
-              onChange={e => setEditForm({ ...editForm, department: e.target.value })}
-              className='w-full px-3.5 py-2 bg-slate-50 border border-pink-100 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all'
-              required
-            />
-          </div>
+    <div className='flex flex-col gap-6 w-full max-w-5xl mx-auto'>
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className='fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 animate-fade-in'>
+          <Check size={14} className='text-emerald-400' />
+          <span>{toastMsg}</span>
         </div>
-      </CrudModalDialog>
+      )}
 
-      {/* Success Toast */}
-      <ToastFeedback
-        open={toastOpen}
-        message='Profil admin berhasil diperbarui!'
-        severity='success'
-        onClose={() => setToastOpen(false)}
+      {/* Screen Title */}
+      <div>
+        <h1 className='text-xl sm:text-2xl font-black text-slate-800 tracking-tight'>
+          Profil Administrator
+        </h1>
+        <p className='text-xs sm:text-sm text-slate-500 mt-0.5'>
+          Informasi identitas, kontak dinas, serta kredensial akun administrator sistem.
+        </p>
+      </div>
+
+      {/* 1. Header Card */}
+      <ProfileHeaderCard
+        name={profileData.name}
+        avatarUrl={profileData.avatarUrl}
+        roleBadgeText='ADMINISTRATOR'
+        roleBadgeColor='admin'
+        subtitle={`${profileData.title} • ${profileData.clinicName}`}
+        verified={true}
+        verifiedText='Terverifikasi Dinas'
+        onEditClick={handleOpenEdit}
+        onSaveAvatar={handleSaveAvatar}
       />
-    </>
+
+      {/* 2. Admin Operational Metrics */}
+      <ProfileMetricsGrid
+        title='Kredensial & Otoritas Sistem'
+        subtitle='Parameter hak akses dan modul operasional administrator'
+        metrics={adminMetrics}
+        columns={3}
+      />
+
+      {/* 3. Contact Card */}
+      <ProfileContactCard
+        title='Informasi Kontak Dinas'
+        subtitle='Saluran komunikasi resmi koordinator program Fe-Tablet'
+        items={contactItems}
+      />
+
+      {/* 4. Security & Logout */}
+      <ProfileSecuritySection
+        onLogoutClick={handleConfirmLogout}
+        onChangePasswordClick={() => showToast('Ubah password admin dapat dilakukan via pengaturan master.')}
+      />
+
+      {/* 5. Edit Modal */}
+      <ProfileEditModal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        onSave={handleSaveEdit}
+        title='Edit Profil Admin'
+        subtitle='Perbarui informasi identitas dan kontak dinas'
+        isSaving={isSaving}
+      >
+        <div>
+          <label className='block text-xs font-bold text-slate-700 mb-1.5'>Nama Lengkap & Gelar</label>
+          <input
+            type='text'
+            value={editForm.name}
+            onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+            required
+            className='w-full px-3.5 py-2.5 rounded-xl border border-rose-200 bg-slate-50 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white'
+          />
+        </div>
+
+        <div>
+          <label className='block text-xs font-bold text-slate-700 mb-1.5'>Email Dinas</label>
+          <input
+            type='email'
+            value={editForm.email}
+            onChange={e => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+            required
+            className='w-full px-3.5 py-2.5 rounded-xl border border-rose-200 bg-slate-50 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white'
+          />
+        </div>
+
+        <div>
+          <label className='block text-xs font-bold text-slate-700 mb-1.5'>Nomor Telepon Dinas</label>
+          <input
+            type='tel'
+            value={editForm.phone}
+            onChange={e => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+            required
+            className='w-full px-3.5 py-2.5 rounded-xl border border-rose-200 bg-slate-50 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white'
+          />
+        </div>
+      </ProfileEditModal>
+    </div>
   );
 }
