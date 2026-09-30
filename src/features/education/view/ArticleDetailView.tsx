@@ -226,7 +226,7 @@ export default function ArticleDetailView({
             </div>
             <div>
               <div className='text-sm font-bold text-slate-900'>
-                {article.author?.name || 'Tim Medis Fe-Tablet'}
+                {article.author?.name || 'Tim Medis FEMORY'}
               </div>
               <div className='text-xs text-slate-500'>
                 {article.author?.role || 'UKS & Fasilitator Kesehatan Remaja'}

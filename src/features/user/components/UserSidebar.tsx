@@ -23,7 +23,7 @@ export const USER_NAV_ITEMS = [
   { name: 'Pengingat', href: '/user/schedule', icon: Clock },
   { name: 'Monitoring', href: '/user/history', icon: CalendarCheck },
   { name: 'Edukasi', href: '/user/education', icon: BookOpen },
-  { name: 'Buddy Streak', href: '/user/buddy', icon: Flame },
+  { name: 'Group Buddy', href: '/user/buddy', icon: Flame },
   { name: 'Konsultasi AI', href: '/user/consultation', icon: Bot },
   { name: 'Profil & Akun', href: '/user/profile', icon: User },
 ];
@@ -31,7 +31,7 @@ export const USER_NAV_ITEMS = [
 export default function UserSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const userName = user?.name || 'Sarah Azzahra';
+  const userName = user?.name || 'Siswi FEMORY';
   const avatarUrl = user?.avatarUrl || '';
 
   return (
@@ -48,7 +48,7 @@ export default function UserSidebar() {
           <div>
             <div className='flex items-center gap-1'>
               <span className='text-base font-extrabold text-[#1e293b] tracking-tight'>
-                Fe-Tablet
+                FEMORY
               </span>
               <span className='text-sm'>🌸</span>
             </div>

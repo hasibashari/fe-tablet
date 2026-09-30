@@ -42,7 +42,7 @@ export function ProfileEditModal({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in'>
+    <div className='fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in'>
       {/* Backdrop overlay */}
       <div
         className='fixed inset-0 bg-transparent'
@@ -52,18 +52,13 @@ export function ProfileEditModal({
         aria-hidden='true'
       />
 
-      {/* Modal Dialog Content */}
+      {/* Modal Dialog Content (Centered) */}
       <div
-        className='relative z-10 bg-white rounded-t-[28px] sm:rounded-3xl shadow-2xl border border-rose-100/80 max-w-lg w-full max-h-[85dvh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-scale-up'
+        className='relative z-10 bg-white rounded-3xl shadow-2xl border border-rose-100/80 max-w-lg w-full max-h-[88dvh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-scale-up'
         onClick={e => e.stopPropagation()}
         role='dialog'
         aria-modal='true'
       >
-        {/* Mobile Swipe / Sheet Handle Indicator (< sm) */}
-        <div className='pt-2.5 pb-1 flex justify-center sm:hidden bg-slate-50/60'>
-          <div className='w-10 h-1 rounded-full bg-slate-300/80' />
-        </div>
-
         {/* Header */}
         <div className='flex items-center justify-between px-5 py-3 sm:px-6 sm:py-4 border-b border-slate-100 bg-white'>
           <div className='min-w-0 pr-3'>

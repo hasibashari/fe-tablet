@@ -12,6 +12,7 @@ export interface AuthUser {
   friendCode?: string;
   hbLevel?: number;
   streakCount?: number;
+  isProfileComplete?: boolean;
 }
 
 export interface LoginCredentials {
@@ -21,12 +22,11 @@ export interface LoginCredentials {
 }
 
 export interface RegisterCredentials {
+  name: string;
   email: string;
   password?: string;
-  name?: string;
   phone?: string;
   gender?: 'Perempuan' | 'Laki-laki';
-  schoolOrOrg?: string;
 }
 
 export interface AuthState {
@@ -40,11 +40,17 @@ export interface AuthState {
 export interface AuthContextValue extends AuthState {
   login: (
     credentials: LoginCredentials,
-  ) => Promise<{ success: boolean; user?: AuthUser; error?: string; redirectTo?: string }>;
+  ) => Promise<{
+    success: boolean;
+    user?: AuthUser;
+    error?: string;
+    redirectTo?: string;
+    isProfileComplete?: boolean;
+  }>;
   quickLogin: (role: UserRole) => Promise<{ success: boolean; redirectTo: string }>;
   register: (
     data: RegisterCredentials,
-  ) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
+  ) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: () => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;

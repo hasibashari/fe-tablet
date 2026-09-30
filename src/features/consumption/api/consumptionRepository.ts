@@ -143,7 +143,7 @@ export async function getConsumptionActivityCalendarAction(
         category: r.category || 'TTD',
         dosage: r.dosage || '1 Tablet',
         scheduledDate: dateKey,
-        scheduledTime: r.scheduled_time || '08:00',
+        scheduledTime: r.scheduled_time || '20:00',
         takenAt: r.taken_at || undefined,
         notes: r.notes || undefined,
       };
@@ -153,6 +153,135 @@ export async function getConsumptionActivityCalendarAction(
   } catch (error) {
     console.error('Error in getConsumptionActivityCalendarAction:', error);
     return {};
+  }
+}
+
+export interface MonitoringSummaryResult {
+  logs: ConsumptionLog[];
+  activityMap: Record<string, ActivityDateInfo>;
+  stats: ConsumptionStats;
+}
+
+/**
+ * Consolidated action to fetch logs, calendar activity map, and stats in a single DB fetch.
+ */
+export async function getMonitoringSummaryAction(
+  userId: string = 'usr_1',
+): Promise<MonitoringSummaryResult> {
+  try {
+    const [schedRes, logsRes] = await Promise.all([
+      db.query<{ frequency: string }>(
+        `SELECT frequency FROM reminder_schedules WHERE user_id = $1 AND status = 'Aktif' LIMIT 1`,
+        [userId],
+      ),
+      db.query<ConsumptionLogRow>(
+        `SELECT id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, notes, taken_by 
+         FROM consumption_logs 
+         WHERE user_id = $1
+         ORDER BY scheduled_date DESC, scheduled_time DESC`,
+        [userId],
+      ),
+    ]);
+
+    const schedFreq = (schedRes.rows[0]?.frequency as 'daily' | 'weekly') || 'weekly';
+    const rows = logsRes.rows;
+
+    const logs: ConsumptionLog[] = [];
+    const activityMap: Record<string, ActivityDateInfo> = {};
+    const completedDates: (string | Date)[] = [];
+
+    let onTimeCount = 0;
+    let lateCount = 0;
+    let missedCount = 0;
+
+    for (const r of rows) {
+      const dateKey =
+        typeof r.scheduled_date === 'string'
+          ? r.scheduled_date.split('T')[0]
+          : new Date(r.scheduled_date).toISOString().split('T')[0];
+
+      const isCompleted = r.status === 'ON_TIME' || r.status === 'LATE';
+      const isMissed = r.status === 'MISSED' || r.status === 'SKIPPED';
+      const uiStatus: 'recorded' | 'missed' | 'pending' = isCompleted
+        ? 'recorded'
+        : isMissed
+          ? 'missed'
+          : 'pending';
+
+      if (r.status === 'ON_TIME') onTimeCount++;
+      else if (r.status === 'LATE') lateCount++;
+      else if (isMissed) missedCount++;
+
+      if (isCompleted) {
+        completedDates.push(r.scheduled_date);
+      }
+
+      logs.push({
+        id: r.id,
+        reminderId: r.schedule_id || undefined,
+        title: r.title,
+        category: (r.category as ConsumptionCategory) || 'MEDICATION',
+        dosage: r.dosage || undefined,
+        scheduledDate: dateKey,
+        scheduledTime: r.scheduled_time,
+        takenAt: r.taken_at || undefined,
+        status: (r.status as ConsumptionStatus) || 'ON_TIME',
+        notes: r.notes || undefined,
+        takenBy: r.taken_by || 'Self',
+      });
+
+      if (!activityMap[dateKey]) {
+        activityMap[dateKey] = {
+          id: r.id,
+          status: uiStatus,
+          rawStatus: (r.status as ConsumptionStatus) || 'ON_TIME',
+          title: r.title || 'Tablet Tambah Darah (TTD)',
+          category: r.category || 'TTD',
+          dosage: r.dosage || '1 Tablet',
+          scheduledDate: dateKey,
+          scheduledTime: r.scheduled_time || '20:00',
+          takenAt: r.taken_at || undefined,
+          notes: r.notes || undefined,
+        };
+      }
+    }
+
+    const total = rows.length;
+    const completedCount = onTimeCount + lateCount;
+    const adherenceRate = total > 0 ? Math.round((completedCount / total) * 100) : 100;
+
+    const streakResult = await calculateChronologicalStreak(completedDates, schedFreq);
+
+    const stats: ConsumptionStats = {
+      adherenceRate,
+      currentStreakDays: streakResult.streakCount,
+      totalCompleted: completedCount,
+      totalOnTime: onTimeCount,
+      totalLate: lateCount,
+      totalMissed: missedCount,
+      totalScheduled: total,
+    };
+
+    return {
+      logs,
+      activityMap,
+      stats,
+    };
+  } catch (error) {
+    console.error('Error in getMonitoringSummaryAction:', error);
+    return {
+      logs: [],
+      activityMap: {},
+      stats: {
+        adherenceRate: 100,
+        currentStreakDays: 0,
+        totalCompleted: 0,
+        totalOnTime: 0,
+        totalLate: 0,
+        totalMissed: 0,
+        totalScheduled: 0,
+      },
+    };
   }
 }
 
@@ -218,7 +347,7 @@ export async function recordConsumptionForDateAction(
         await db.query(
           `INSERT INTO consumption_logs (
             id, user_id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, notes, taken_by
-          ) VALUES ($1, $2, $3, $4, 'TTD', $5, $6, '08:00', $7, $8, $9, 'Self')`,
+          ) VALUES ($1, $2, $3, $4, 'TTD', $5, $6, '20:00', $7, $8, $9, 'Self')`,
           [
             logId,
             userId,
@@ -236,14 +365,6 @@ export async function recordConsumptionForDateAction(
 
     // Dynamic chronological streak recalculation
     const streakResult = await calculateAndSyncUserStreak(userId, schedFreq);
-
-    // Sync buddy connections
-    await db.query(
-      `UPDATE buddy_connections 
-       SET shared_streak_count = $1, last_synced_at = CURRENT_TIMESTAMP 
-       WHERE user_id = $2 OR buddy_user_id = $2`,
-      [streakResult.streakCount, userId],
-    );
 
     return { success: true, newStreak: streakResult.streakCount };
   } catch (error) {
@@ -339,7 +460,7 @@ export async function logManualConsumptionAction(data: {
     await db.query(
       `INSERT INTO consumption_logs (
         id, user_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, notes, taken_by
-      ) VALUES ($1, $2, $3, 'TTD', $4, $5, '08:00', $6, 'ON_TIME', $7, 'Self')`,
+      ) VALUES ($1, $2, $3, 'TTD', $4, $5, '20:00', $6, 'ON_TIME', $7, 'Self')`,
       [
         id,
         targetUserId,

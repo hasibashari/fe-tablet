@@ -180,7 +180,7 @@ export default function ScheduleManagementView() {
       .map(s => s.trim().replace('.', ':'))
       .filter(s => s.length > 0);
 
-    const timeSlotsArray = rawSlots.length > 0 ? rawSlots : ['08:00'];
+    const timeSlotsArray = rawSlots.length > 0 ? rawSlots : ['20:00'];
     const today = new Date().toISOString().split('T')[0];
 
     setSubmitting(true);
@@ -283,7 +283,7 @@ export default function ScheduleManagementView() {
       await sendReminderNudgeAction({
         userId: reminderData.userId,
         patientId: reminderData.userId,
-        senderName: 'Pembina UKS Fe-Tablet',
+        senderName: 'Pembina UKS FEMORY',
         senderRole: 'Pembina UKS',
         scheduleId: reminderData.scheduleId,
         medicationName: reminderData.medicationName,
@@ -363,7 +363,7 @@ export default function ScheduleManagementView() {
                 </span>
               ))
             ) : (
-              <span className='text-xs text-slate-400'>08:00 WIB</span>
+              <span className='text-xs text-slate-400'>20:00 WIB</span>
             )}
           </div>
         </div>

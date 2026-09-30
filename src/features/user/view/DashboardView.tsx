@@ -13,6 +13,7 @@ import {
   BellRing,
   X,
   CheckCircle2,
+  CalendarClock,
 } from 'lucide-react';
 import { StatusCard } from '@/src/shared/components/domain/StatusCard';
 import { QuickAction } from '@/src/shared/components/domain/QuickAction';
@@ -28,7 +29,6 @@ import {
   recordUserConsumptionAction,
   UserDashboardData,
 } from '../api/userRepository';
-import { sendBuddyCheerAction } from '@/src/features/buddy/api/buddyRepository';
 import {
   getActiveNudgeAction,
   dismissNudgeAction,
@@ -141,13 +141,14 @@ export default function DashboardView() {
   };
 
   const currentUser = dashboardData?.user || {
-    id: authUser?.id || 'usr_1',
-    name: authUser?.name || 'Pasien Fe-Tablet',
+    id: authUser?.id || '',
+    name: authUser?.name || 'Siswi FEMORY',
     streakCount: 0,
     streakUnit: 'Minggu' as const,
     consecutiveDates: [],
-    hbLevel: 12.4,
-    avatarUrl: authUser?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=FeTablet',
+    hbLevel: authUser?.hbLevel || null,
+    schoolOrOrg: authUser?.schoolOrOrg || null,
+    avatarUrl: authUser?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=FEMORY',
   };
 
   const featuredArticle = dashboardData?.featuredArticle;
@@ -158,35 +159,35 @@ export default function DashboardView() {
     if (streak >= 12) {
       return {
         level: 4,
-        title: 'Duta Remaja Sehat (Level 4 - Champion)',
-        desc: `Luar biasa! Kamu telah konsisten selama ${streak} ${streakUnit.toLowerCase()} berturut-turut. Kadar hemoglobin dan kebugaranmu terjaga maksimal!`,
+        title: 'Champion (Level 4)',
+        desc: `Konsisten ${streak} ${streakUnit.toLowerCase()} berturut-turut. Hb dan kebugaran optimal!`,
       };
     }
     if (streak >= 6) {
       return {
         level: 3,
-        title: 'Pejuang Bebas Anemia (Level 3)',
-        desc: `Kamu telah meminum ${streak} tablet berturut-turut. Pertahankan konsistensimu agar kadar hemoglobin tetap optimal!`,
+        title: 'Bebas Anemia (Level 3)',
+        desc: `${streak} tablet berturut-turut. Pertahankan konsistensi mingguanmu!`,
       };
     }
     if (streak >= 3) {
       return {
         level: 2,
-        title: 'Pejuang Konsisten (Level 2)',
-        desc: `Keren! ${streak} ${streakUnit.toLowerCase()} konsumsi TTD berturut-turut. Terus jaga kebiasaan baik ini setiap minggu!`,
+        title: 'Konsisten (Level 2)',
+        desc: `${streak} ${streakUnit.toLowerCase()} berturut-turut. Terus jaga kebiasaan baik ini!`,
       };
     }
     if (streak >= 1) {
       return {
         level: 1,
         title: 'Pemula Sehat (Level 1)',
-        desc: `Langkah awal yang hebat! ${streak} ${streakUnit.toLowerCase()} konsumsi tercatat. Lanjutkan kebiasaan baik ini secara teratur!`,
+        desc: `${streak} ${streakUnit.toLowerCase()} tercatat. Lanjutkan secara teratur!`,
       };
     }
     return {
       level: 0,
-      title: 'Mulai Program Sehat (Level 1)',
-      desc: `Langkah awal yang hebat! Minum tablet tambah darah secara teratur untuk mencegah anemia sejak dini.`,
+      title: 'Mulai Program Sehat',
+      desc: 'Minum tablet tambah darah teratur untuk mencegah anemia.',
     };
   };
 
@@ -201,7 +202,7 @@ export default function DashboardView() {
   }
 
   return (
-    <div className='flex flex-col gap-5 sm:gap-6 w-full'>
+    <div className='flex flex-col gap-4 sm:gap-5 w-full'>
       {/* Mobile Health Stats Bar (< md) */}
       <div className='flex md:hidden items-center justify-between gap-2 p-3 bg-white rounded-2xl border border-[#fce7f3] shadow-2xs'>
         <div className='flex items-center gap-2'>
@@ -224,8 +225,10 @@ export default function DashboardView() {
           </div>
           <div>
             <span className='text-[10px] text-[#64748b] block leading-tight'>Kadar Hb</span>
-            <span className='text-xs font-extrabold text-[#10b981]'>
-              {currentUser.hbLevel} g/dL
+            <span
+              className={`text-xs font-extrabold ${currentUser.hbLevel ? 'text-[#10b981]' : 'text-slate-500'}`}
+            >
+              {currentUser.hbLevel ? `${currentUser.hbLevel} g/dL` : 'Belum Ada'}
             </span>
           </div>
         </div>
@@ -242,11 +245,10 @@ export default function DashboardView() {
       <div className='hidden md:flex items-center justify-between pb-2 border-b border-[#fce7f3]'>
         <div>
           <h1 className='text-2xl font-extrabold text-[#1e293b] tracking-tight'>
-            Dashboard Pasien Fe-Tablet 🌸
+            Dashboard Siswi FEMORY 🌸
           </h1>
           <p className='text-sm text-[#64748b] mt-0.5'>
-            Selamat datang kembali, <strong>{currentUser.name}</strong>! Pantau jadwal minum TTD dan
-            pertahankan streak-mu.
+            Selamat datang kembali, <strong>{currentUser.name}</strong>! Pertahankan konsistensi minum TTD pekan ini.
           </p>
         </div>
 
@@ -258,8 +260,15 @@ export default function DashboardView() {
             </span>
           </div>
           <div className='flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-full border border-[#fce7f3] shadow-2xs'>
-            <Activity size={18} className='text-emerald-500' />
-            <span className='text-xs font-bold text-[#10b981]'>Hb {currentUser.hbLevel} g/dL</span>
+            <Activity
+              size={18}
+              className={currentUser.hbLevel ? 'text-emerald-500' : 'text-slate-400'}
+            />
+            <span
+              className={`text-xs font-bold ${currentUser.hbLevel ? 'text-[#10b981]' : 'text-slate-500'}`}
+            >
+              {currentUser.hbLevel ? `Hb ${currentUser.hbLevel} g/dL` : 'Belum Ada Data Hb'}
+            </span>
           </div>
         </div>
       </div>
@@ -296,23 +305,23 @@ export default function DashboardView() {
               </button>
             </div>
 
-            <div className='mt-4 pt-3.5 border-t border-white/20 flex items-center gap-3 flex-wrap'>
+            <div className='mt-3.5 pt-3 border-t border-white/20 flex items-center gap-2.5 flex-wrap'>
               <Button
                 variant='primary'
                 size='sm'
                 shape='pill'
-                icon={<CheckCircle2 size={15} />}
-                className='bg-white text-rose-600 hover:bg-rose-50 font-extrabold shadow-sm'
+                icon={<CheckCircle2 size={14} />}
+                className='bg-white text-rose-600 hover:bg-rose-50 font-extrabold shadow-sm text-xs'
                 onClick={handleTakeFromNudge}
               >
-                Minum & Catat Sekarang
+                Catat Minum
               </Button>
               <button
                 type='button'
                 onClick={handleDismissNudge}
                 className='text-xs font-semibold text-rose-100 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors cursor-pointer'
               >
-                Saya Sudah Mengerti
+                Sudah Mengerti
               </button>
             </div>
           </div>
@@ -323,6 +332,35 @@ export default function DashboardView() {
       <div className='grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 items-start'>
         {/* LEFT COLUMN: Main Health Actions & Hero (md:col-span-7 lg:col-span-8) */}
         <div className='md:col-span-7 lg:col-span-8 flex flex-col gap-5'>
+          {/* Missing Schedule Setup Prompt Banner */}
+          {dashboardData && !dashboardData.activeSchedule && (
+            <section aria-label='Pengingat Atur Jadwal Konsumsi'>
+              <div className='p-4 sm:p-4.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs'>
+                <div className='flex items-start gap-3'>
+                  <div className='w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5'>
+                    <CalendarClock size={20} />
+                  </div>
+                  <div>
+                    <h4 className='text-xs sm:text-sm font-bold text-amber-900'>
+                      Jadwal Minum TTD Belum Dikonfigurasi
+                    </h4>
+                    <p className='text-[11px] sm:text-xs text-amber-800/80 mt-0.5 leading-relaxed'>
+                      Tentukan hari dan jam rutin minum Tablet Tambah Darah agar FEMORY dapat
+                      mengingatkanmu tepat waktu.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href='/user/schedule'
+                  className='inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-colors shadow-2xs shrink-0 self-start sm:self-auto'
+                >
+                  <span>Atur Jadwal</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+            </section>
+          )}
+
           {/* 1. Status Hari Ini Card */}
           <section aria-label='Status Konsumsi Hari Ini'>
             <StatusCard
@@ -394,29 +432,11 @@ export default function DashboardView() {
             </Card>
           </section>
 
-          {/* Buddy Streak Card (100% Dynamic from PostgreSQL) */}
-          <section aria-label='Buddy Streak & Komunitas'>
+          {/* Group Buddy Card (100% Dynamic from PostgreSQL) */}
+          <section aria-label='Group Buddy & Komunitas'>
             <BuddyCard
-              buddyData={
-                dashboardData?.activeBuddy
-                  ? {
-                      connectionId: dashboardData.activeBuddy.connectionId,
-                      buddyId: dashboardData.activeBuddy.buddyId,
-                      buddyName: dashboardData.activeBuddy.buddyName,
-                      buddyavatarUrl: dashboardData.activeBuddy.buddyAvatarUrl,
-                      streakCount: dashboardData.activeBuddy.sharedStreakCount,
-                      userStatusThisWeek: dashboardData.activeBuddy.userStatusThisWeek,
-                      buddyStatusThisWeek: dashboardData.activeBuddy.buddyStatusThisWeek,
-                    }
-                  : null
-              }
+              groupData={dashboardData?.primaryGroup}
               userName={currentUser.name.split(' ')[0]}
-              useravatarUrl={currentUser.avatarUrl}
-              userStatusThisWeek={dashboardData?.todayStatus}
-              onCheer={async (connId, bId) => {
-                const senderId = authUser?.id || currentUser.id;
-                await sendBuddyCheerAction(connId, senderId, bId, 'HEART');
-              }}
             />
           </section>
 
@@ -440,7 +460,7 @@ export default function DashboardView() {
       <footer className='pt-2 pb-4 text-center'>
         <div className='inline-flex items-center gap-1.5 text-[11px] text-[#94a3b8]'>
           <ShieldCheck size={14} className='text-emerald-500' />
-          <span>Program Pencegahan Anemia • Fe-Tablet v2.0</span>
+          <span>Program Pencegahan Anemia • FEMORY v2.0</span>
         </div>
       </footer>
     </div>

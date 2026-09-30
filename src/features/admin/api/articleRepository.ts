@@ -49,31 +49,39 @@ export async function getAdminArticlesAction(): Promise<HealthArticle[]> {
       `SELECT * FROM articles ORDER BY published_at DESC, created_at DESC`,
     );
     const rows = res.rows;
+    if (rows.length === 0) return [];
 
-    const result: HealthArticle[] = [];
+    const articleIds = rows.map(r => r.id);
 
-    for (const r of rows) {
-      let content = r.lead_paragraph || '';
-      try {
-        const sectionsRes = await db.query<{ paragraphs: string }>(
-          `SELECT paragraphs FROM article_sections WHERE article_id = $1 ORDER BY order_index ASC`,
-          [r.id],
-        );
-        if (sectionsRes.rows.length > 0) {
-          const allParagraphs: string[] = [];
-          for (const s of sectionsRes.rows) {
-            if (s.paragraphs) {
-              const parsed = JSON.parse(s.paragraphs);
-              if (Array.isArray(parsed)) allParagraphs.push(...parsed);
+    // Single batch query for all article sections
+    const sectionsRes = await db.query<{ article_id: string; paragraphs: string }>(
+      `SELECT article_id, paragraphs FROM article_sections WHERE article_id = ANY($1) ORDER BY order_index ASC`,
+      [articleIds],
+    );
+
+    const sectionsByArticle = new Map<string, string[]>();
+    for (const s of sectionsRes.rows) {
+      if (s.paragraphs) {
+        try {
+          const parsed = JSON.parse(s.paragraphs);
+          if (Array.isArray(parsed)) {
+            if (!sectionsByArticle.has(s.article_id)) {
+              sectionsByArticle.set(s.article_id, []);
             }
+            sectionsByArticle.get(s.article_id)!.push(...parsed);
           }
-          if (allParagraphs.length > 0) {
-            content = allParagraphs.join('\n\n');
-          }
+        } catch {
+          // ignore json parse error
         }
-      } catch {
-        // fallback to lead_paragraph
       }
+    }
+
+    return rows.map(r => {
+      const allParagraphs = sectionsByArticle.get(r.id);
+      const content =
+        allParagraphs && allParagraphs.length > 0
+          ? allParagraphs.join('\n\n')
+          : r.lead_paragraph || r.summary;
 
       let publishDateStr = '2026-09-01';
       if (typeof r.published_at === 'string') {
@@ -90,7 +98,7 @@ export async function getAdminArticlesAction(): Promise<HealthArticle[]> {
           : '2026-09-01';
       }
 
-      result.push({
+      return {
         id: r.id,
         title: r.title,
         category: normalizeArticleCategory(r.category),
@@ -101,11 +109,9 @@ export async function getAdminArticlesAction(): Promise<HealthArticle[]> {
         summary: r.summary,
         readTime: r.read_time,
         imageUrl: r.image_url,
-        content: content || r.summary,
-      });
-    }
-
-    return result;
+        content,
+      };
+    });
   } catch (error) {
     console.error('Error in getAdminArticlesAction:', error);
     return [];

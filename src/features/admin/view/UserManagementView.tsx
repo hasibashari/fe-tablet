@@ -210,7 +210,10 @@ export default function UserManagementView() {
   const handleSendReminderSuccess = async (_channel: 'app' | 'whatsapp', messageSent: string) => {
     if (reminderData.userId) {
       await sendUserReminderAction(reminderData.userId, messageSent);
-      publishRealtimeEvent('NUDGE_SENT', { userId: reminderData.userId, patientId: reminderData.userId });
+      publishRealtimeEvent('NUDGE_SENT', {
+        userId: reminderData.userId,
+        patientId: reminderData.userId,
+      });
       await loadUsers();
     }
   };
@@ -230,9 +233,7 @@ export default function UserManagementView() {
             ringClassName='ring-1 ring-pink-100 shadow-2xs'
           />
           <div className='min-w-0'>
-            <div className='font-bold text-slate-800 text-sm truncate'>
-              {user.name}
-            </div>
+            <div className='font-bold text-slate-800 text-sm truncate'>{user.name}</div>
             <div className='text-xs text-slate-400 truncate'>
               {user.id} • {user.age} th
             </div>
@@ -263,11 +264,7 @@ export default function UserManagementView() {
       renderCell: user => {
         const rate = user.adherenceRate ?? 100;
         const color =
-          rate >= 90
-            ? 'text-emerald-600'
-            : rate >= 80
-            ? 'text-amber-600'
-            : 'text-rose-600';
+          rate >= 90 ? 'text-emerald-600' : rate >= 80 ? 'text-amber-600' : 'text-rose-600';
         return (
           <div>
             <div className='flex items-center gap-1.5'>
@@ -445,19 +442,25 @@ export default function UserManagementView() {
               {/* Info Row: Phone + Schedules + Adherence */}
               <div className='grid grid-cols-2 gap-2 p-3 rounded-xl bg-[#fff5f7] border border-pink-100 text-xs'>
                 <div>
-                  <span className='text-slate-500 block text-[11px] font-medium'>Kontak Telepon</span>
-                  <span className='font-bold text-slate-800 truncate block mt-0.5'>{user.phone}</span>
+                  <span className='text-slate-500 block text-[11px] font-medium'>
+                    Kontak Telepon
+                  </span>
+                  <span className='font-bold text-slate-800 truncate block mt-0.5'>
+                    {user.phone}
+                  </span>
                 </div>
 
                 <div>
-                  <span className='text-slate-500 block text-[11px] font-medium'>Kepatuhan TTD</span>
+                  <span className='text-slate-500 block text-[11px] font-medium'>
+                    Kepatuhan TTD
+                  </span>
                   <span
                     className={`font-bold block mt-0.5 ${
                       user.adherenceRate >= 90
                         ? 'text-emerald-600'
                         : user.adherenceRate >= 80
-                        ? 'text-amber-600'
-                        : 'text-rose-600'
+                          ? 'text-amber-600'
+                          : 'text-rose-600'
                     }`}
                   >
                     {user.adherenceRate}% ({user.activeSchedulesCount || 0} Jadwal)

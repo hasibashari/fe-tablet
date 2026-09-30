@@ -64,7 +64,7 @@ export async function getArticlesAction(category?: string): Promise<Article[]> {
       if (r.author_name) {
         author = {
           name: r.author_name,
-          role: r.author_role || 'Tim Medis Fe-Tablet',
+          role: r.author_role || 'Tim Medis FEMORY',
           avatarUrl: r.author_avatar_url || '',
           bio: r.author_bio || undefined,
         };
@@ -135,7 +135,7 @@ export async function getArticleByIdAction(id: string): Promise<Article | null> 
     if (row.author_name) {
       author = {
         name: row.author_name,
-        role: row.author_role || 'Tim Medis Fe-Tablet',
+        role: row.author_role || 'Tim Medis FEMORY',
         avatarUrl: row.author_avatar_url || '',
         bio: row.author_bio || undefined,
       };

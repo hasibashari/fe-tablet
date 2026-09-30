@@ -1,15 +1,21 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import MobileTopBar from '@/src/shared/components/MobileTopBar';
 import MobileBottomBar from '@/src/shared/components/MobileBottomBar';
 import UserSidebar from '@/src/features/user/components/UserSidebar';
 import { AuthGuard, useAuth } from '@/src/features/auth';
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { user } = useAuth();
-  const displayName = user?.name ? user.name.split(' ')[0] : 'Sarah';
-  const avatarUrl = user?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=FeTablet';
+  const displayName = user?.name ? user.name.split(' ')[0] : 'Siswi';
+  const avatarUrl = user?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=FEMORY';
+
+  if (pathname === '/user/setup') {
+    return <AuthGuard requiredRole='user'>{children}</AuthGuard>;
+  }
 
   return (
     <AuthGuard requiredRole='user'>
@@ -35,3 +41,4 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     </AuthGuard>
   );
 }
+

@@ -5,7 +5,8 @@ import { CheckCircle2, XCircle, Clock, Sparkles } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { ConsumptionStatus } from '../../mock/feTabletData';
+
+export type ConsumptionStatus = 'recorded' | 'missed' | 'pending';
 
 export interface StatusCardProps {
   initialStatus?: ConsumptionStatus;
@@ -70,9 +71,8 @@ export function StatusCard({
 
       {status === 'pending' && (
         <div>
-          <p className='text-xs sm:text-sm text-[#475569] mb-3.5 leading-relaxed'>
-            Yuk, catat konsumsi Tablet Tambah Darah (TTD)-mu hari ini untuk menjaga streak
-            kesehatanmu!
+          <p className='text-xs sm:text-sm text-[#475569] mb-3 leading-relaxed'>
+            Catat konsumsi TTD hari ini untuk menjaga streak kesehatanmu.
           </p>
 
           <div className='flex items-center gap-2'>

@@ -2,10 +2,15 @@
 
 import React from 'react';
 import { Card } from '../ui/Card';
-import { MonthlyTrendMock } from '../../mock/feTabletData';
+
+export interface MonthlyTrendItem {
+  month: string;
+  count: number;
+  target: number;
+}
 
 export interface ConsumptionChartProps {
-  data: MonthlyTrendMock[];
+  data: MonthlyTrendItem[];
   totalCount?: number;
   compliancePercent?: number;
 }

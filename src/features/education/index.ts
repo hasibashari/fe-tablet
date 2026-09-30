@@ -4,4 +4,3 @@ export { default as ArticleDetailView } from './view/ArticleDetailView';
 export * from './types';
 export * from './constants/education.constants';
 export * from './api/educationRepository';
-export * from './api/getArticles';

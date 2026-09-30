@@ -68,7 +68,7 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
 
     for (const r of rows) {
       const customSlots = slotsByScheduleId[r.id];
-      const slots = customSlots && customSlots.length > 0 ? customSlots : [r.time_slot || '08:00'];
+      const slots = customSlots && customSlots.length > 0 ? customSlots : [r.time_slot || '20:00'];
 
       const isDaily =
         r.frequency === 'daily' ||
@@ -104,9 +104,9 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
       result.push({
         id: r.id,
         userId: r.user_id,
-        userName: r.user_name || 'Siswi Fe-Tablet',
+        userName: r.user_name || 'Siswi FEMORY',
         patientId: r.user_id,
-        patientName: r.user_name || 'Siswi Fe-Tablet',
+        patientName: r.user_name || 'Siswi FEMORY',
         medicationName: r.tablet_name || 'Tablet Tambah Darah (TTD)',
         dosage: r.dosage || '1 tablet',
         frequency: isDaily ? 'Harian' : '1x Seminggu',
@@ -118,7 +118,7 @@ export async function getSchedulesAction(): Promise<MedicationSchedule[]> {
         category,
         instructions:
           r.instructions || 'Minum setelah makan malam atau sebelum tidur dengan air putih.',
-        lastReminderSent: `${r.day_of_week || 'Sabtu'}, ${r.time_slot || '08:00'} WIB`,
+        lastReminderSent: `${r.day_of_week || 'Sabtu'}, ${r.time_slot || '20:00'} WIB`,
         todayStatus,
       });
     }
@@ -173,6 +173,70 @@ export async function sendReminderNudgeAction(data: {
   }
 }
 
+export async function getScheduleByIdAction(
+  scheduleId: string,
+): Promise<MedicationSchedule | null> {
+  try {
+    const res = await db.query<ScheduleDbRow>(
+      `SELECT 
+        s.id, s.user_id, s.tablet_name, s.dosage, s.frequency, s.day_of_week, s.time_slot, s.status, s.instructions, s.created_at,
+        u.name as user_name
+      FROM reminder_schedules s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.id = $1
+      LIMIT 1`,
+      [scheduleId],
+    );
+    if (res.rows.length === 0) return null;
+    const r = res.rows[0];
+
+    const slotsRes = await db.query<{ time: string }>(
+      `SELECT time FROM schedule_time_slots WHERE schedule_id = $1 ORDER BY time ASC`,
+      [scheduleId],
+    );
+    const slots =
+      slotsRes.rows.length > 0 ? slotsRes.rows.map(s => s.time) : [r.time_slot || '20:00'];
+
+    const isDaily =
+      r.frequency === 'daily' ||
+      r.frequency === 'Harian' ||
+      (r.day_of_week || '').toLowerCase().includes('setiap hari') ||
+      (r.day_of_week || '').toLowerCase().includes('harian');
+    const isSupplement =
+      (r.tablet_name || '').toLowerCase().includes('vitamin') ||
+      (r.tablet_name || '').toLowerCase().includes('suplemen');
+    const category: ScheduleCategory = isSupplement
+      ? 'Suplemen Tambahan'
+      : isDaily
+        ? 'Terapi Anemia'
+        : 'TTD Rutin';
+
+    return {
+      id: r.id,
+      userId: r.user_id,
+      userName: r.user_name || 'Siswi FEMORY',
+      patientId: r.user_id,
+      patientName: r.user_name || 'Siswi FEMORY',
+      medicationName: r.tablet_name || 'Tablet Tambah Darah (TTD)',
+      dosage: r.dosage || '1 tablet',
+      frequency: isDaily ? 'Harian' : '1x Seminggu',
+      dayOfWeek: r.day_of_week || 'Sabtu',
+      timeSlots: slots,
+      startDate: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : '2026-09-01',
+      endDate: '2026-12-31',
+      status: r.status,
+      category,
+      instructions:
+        r.instructions || 'Minum setelah makan malam atau sebelum tidur dengan air putih.',
+      lastReminderSent: `${r.day_of_week || 'Sabtu'}, ${r.time_slot || '20:00'} WIB`,
+      todayStatus: 'PENDING',
+    };
+  } catch (error) {
+    console.error('Error in getScheduleByIdAction:', error);
+    return null;
+  }
+}
+
 export async function createScheduleAction(data: {
   userId?: string;
   patientId?: string;
@@ -189,7 +253,7 @@ export async function createScheduleAction(data: {
   try {
     const targetUserId = data.userId || data.patientId || 'usr_1';
     const newId = `sch_${Date.now().toString().slice(-6)}`;
-    const mainSlot = data.timeSlots[0] || '08:00';
+    const mainSlot = data.timeSlots[0] || '20:00';
     const dayOfWeek = data.dayOfWeek || 'Sabtu';
     const dbFrequency =
       data.frequency === 'Harian' || data.category === 'Terapi Anemia' ? 'daily' : 'weekly';
@@ -221,9 +285,8 @@ export async function createScheduleAction(data: {
       }
     });
 
-    const schedules = await getSchedulesAction();
-    const created = schedules.find(s => s.id === newId);
-    return { success: true, schedule: created };
+    const created = await getScheduleByIdAction(newId);
+    return { success: true, schedule: created || undefined };
   } catch (error: unknown) {
     console.error('Error creating schedule:', error);
     const errMsg = error instanceof Error ? error.message : 'Gagal membuat jadwal';

@@ -14,7 +14,7 @@
     {
       "id": "adm_2",
       "name": "dr. Siti Rahma, Sp.PD",
-      "email": "siti.rahma@fe-tablet.com",
+      "email": "siti.rahma@femory.com",
       "passwordHash": null,
       "role": "admin",
       "phone": "0812-9988-7766",
@@ -173,10 +173,10 @@
       "dosage": "1 tablet",
       "frequency": "weekly",
       "dayOfWeek": "Sabtu",
-      "timeSlot": "08:00",
+      "timeSlot": "20:00",
       "isEnabled": true,
       "remind15MinBefore": true,
-      "instructions": "Minum setelah sarapan atau sebelum tidur bersama segelas air jeruk/air putih.",
+      "instructions": "Minum setelah makan malam atau sebelum tidur bersama segelas air jeruk/air putih.",
       "status": "Aktif"
     },
     {
@@ -187,10 +187,10 @@
       "dosage": "1 tablet",
       "frequency": "weekly",
       "dayOfWeek": "Sabtu",
-      "timeSlot": "08:00",
+      "timeSlot": "20:00",
       "isEnabled": true,
       "remind15MinBefore": true,
-      "instructions": "Minum setelah makan malam.",
+      "instructions": "Minum setelah makan malam atau sebelum tidur.",
       "status": "Aktif"
     },
     {
@@ -201,7 +201,7 @@
       "dosage": "1 tablet",
       "frequency": "weekly",
       "dayOfWeek": "Sabtu",
-      "timeSlot": "08:30",
+      "timeSlot": "20:30",
       "isEnabled": true,
       "remind15MinBefore": true,
       "instructions": "Hindari konsumsi bersama teh atau susu.",
@@ -215,7 +215,7 @@
       "dosage": "1 tablet",
       "frequency": "weekly",
       "dayOfWeek": "Minggu",
-      "timeSlot": "08:00",
+      "timeSlot": "20:00",
       "isEnabled": true,
       "remind15MinBefore": true,
       "instructions": "Konsumsi rutin akhir pekan.",
@@ -231,10 +231,10 @@
       "category": "TTD",
       "dosage": "1 Tablet",
       "scheduledDate": "2026-09-05",
-      "scheduledTime": "08:00",
-      "takenAt": "08:15 WIB",
+      "scheduledTime": "20:00",
+      "takenAt": "20:15 WIB",
       "status": "ON_TIME",
-      "notes": "Diminum dengan segelas jus jeruk segar.",
+      "notes": "Diminum dengan segelas jus jeruk segar setelah makan malam.",
       "takenBy": "Self"
     },
     {
@@ -245,10 +245,10 @@
       "category": "TTD",
       "dosage": "1 Tablet",
       "scheduledDate": "2026-09-12",
-      "scheduledTime": "08:00",
-      "takenAt": "08:05 WIB",
+      "scheduledTime": "20:00",
+      "takenAt": "20:05 WIB",
       "status": "ON_TIME",
-      "notes": "Tepat waktu sebelum kegiatan sekolah.",
+      "notes": "Tepat waktu sebelum istirahat malam.",
       "takenBy": "Self"
     },
     {
@@ -259,8 +259,8 @@
       "category": "TTD",
       "dosage": "1 Tablet",
       "scheduledDate": "2026-09-19",
-      "scheduledTime": "08:00",
-      "takenAt": "08:20 WIB",
+      "scheduledTime": "20:00",
+      "takenAt": "20:20 WIB",
       "status": "ON_TIME",
       "notes": "Streak minggu ke-5 tercapai.",
       "takenBy": "Self"
@@ -273,8 +273,8 @@
       "category": "TTD",
       "dosage": "1 Tablet",
       "scheduledDate": "2026-09-26",
-      "scheduledTime": "08:00",
-      "takenAt": "08:10 WIB",
+      "scheduledTime": "20:00",
+      "takenAt": "20:10 WIB",
       "status": "ON_TIME",
       "notes": "Streak minggu ke-6 bersama Alya!",
       "takenBy": "Self"
@@ -287,8 +287,8 @@
       "category": "TTD",
       "dosage": "1 Tablet",
       "scheduledDate": "2026-09-26",
-      "scheduledTime": "08:00",
-      "takenAt": "08:30 WIB",
+      "scheduledTime": "20:00",
+      "takenAt": "20:30 WIB",
       "status": "ON_TIME",
       "notes": "Kompak bersama Sarah.",
       "takenBy": "Self"
@@ -377,7 +377,7 @@
       "views": 320,
       "publishedAt": "2026-09-18",
       "authorId": "adm_1",
-      "authorName": "Tim Medis Fe-Tablet",
+      "authorName": "Tim Medis FEMORY",
       "authorRole": "Fasilitator Kesehatan Sekolah",
       "authorAvatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
       "keyTakeaways": "[\"Remaja putri kehilangan 1.5-2mg zat besi setiap hari saat menstruasi\", \"Gejala 5L menurunkan konsentrasi belajar dan daya tahan tubuh\", \"Minum TTD 1x seminggu mampu mencegah penurunan kadar Hb secara signifikan\"]",
@@ -461,7 +461,7 @@
       "views": 142,
       "publishedAt": "2026-09-05",
       "authorId": "adm_1",
-      "authorName": "Kemenkes RI & Fe-Tablet",
+      "authorName": "Kemenkes RI & FEMORY",
       "authorRole": "Tim Medis",
       "authorAvatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop",
       "keyTakeaways": "[\"Kurang darah (anemia) berbeda dengan tekanan darah rendah (hipotensi)\", \"TTD tidak menyebabkan hipertensi dan aman untuk konsumsi jangka panjang\"]",
@@ -482,7 +482,7 @@
       "views": 110,
       "publishedAt": "2026-09-01",
       "authorId": "adm_1",
-      "authorName": "Tim Medis Fe-Tablet",
+      "authorName": "Tim Medis FEMORY",
       "authorRole": "Fasilitator Kesehatan",
       "keyTakeaways": "[\"Tidur cukup 7-8 jam mendukung regenerasi sel darah merah\", \"Olahraga ringan 3x seminggu meningkatkan sirkulasi oksigen\"]",
       "tags": "[\"Gaya Hidup\", \"Tidur\", \"Kebugaran\"]",
@@ -499,6 +499,98 @@
       "message": "Halo Nadia! Jangan lupa minum Tablet Tambah Darah minggu ini ya. Tetap semangat menjaga kadar Hb optimal! 🌸",
       "channel": "app",
       "status": "UNREAD"
+    }
+  ],
+  "buddyGroups": [
+    {
+      "id": "grp_1",
+      "name": "Pejuang TTD X-IPA 1",
+      "description": "Grup penyemangat konsumsi TTD mingguan siswi kelas X-IPA 1 SMA Negeri 1 Sehat 🌸",
+      "groupCode": "GRP-XIPA1-2026",
+      "creatorId": "usr_1",
+      "streakCount": 6,
+      "avatarUrl": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "grp_2",
+      "name": "Sahabat Sehat UKS",
+      "description": "Komunitas siswi kader kesehatan remaja dan peduli anemia UKS.",
+      "groupCode": "GRP-UKS-7701",
+      "creatorId": "usr_2",
+      "streakCount": 3,
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
+    }
+  ],
+  "buddyGroupMembers": [
+    {
+      "id": "gmb_1_1",
+      "groupId": "grp_1",
+      "userId": "usr_1",
+      "role": "admin"
+    },
+    {
+      "id": "gmb_1_2",
+      "groupId": "grp_1",
+      "userId": "usr_2",
+      "role": "member"
+    },
+    {
+      "id": "gmb_1_3",
+      "groupId": "grp_1",
+      "userId": "usr_3",
+      "role": "member"
+    },
+    {
+      "id": "gmb_1_4",
+      "groupId": "grp_1",
+      "userId": "usr_4",
+      "role": "member"
+    },
+    {
+      "id": "gmb_2_1",
+      "groupId": "grp_2",
+      "userId": "usr_2",
+      "role": "admin"
+    },
+    {
+      "id": "gmb_2_2",
+      "groupId": "grp_2",
+      "userId": "usr_1",
+      "role": "member"
+    }
+  ],
+  "buddyGroupMessages": [
+    {
+      "id": "gmsg_1_1",
+      "groupId": "grp_1",
+      "senderId": "usr_1",
+      "messageType": "system",
+      "content": "🎉 Sarah membuat grup Pejuang TTD X-IPA 1. Selamat datang kawan-kawan!",
+      "cheerType": null
+    },
+    {
+      "id": "gmsg_1_2",
+      "groupId": "grp_1",
+      "senderId": "usr_2",
+      "messageType": "text",
+      "content": "Hai semuanya! Jangan lupa ya hari Sabtu ini jadwal minum TTD bareng.",
+      "cheerType": null
+    },
+    {
+      "id": "gmsg_1_3",
+      "groupId": "grp_1",
+      "senderId": "usr_3",
+      "messageType": "cheer",
+      "content": "Semangat terus kawan-kawan! Kita jaga streak grup kita ya ❤️",
+      "cheerType": "HEART"
+    },
+    {
+      "id": "gmsg_1_4",
+      "groupId": "grp_1",
+      "senderId": "usr_1",
+      "messageType": "text",
+      "content": "Aku barusan sudah minum setelah sarapan! Segar banget 🌸",
+      "cheerType": null
     }
   ]
 }

@@ -7,9 +7,7 @@ import {
   UserDashboardData,
 } from '@/src/features/user/api/userRepository';
 import {
-  getConsumptionLogsAction,
-  getConsumptionStatsAction,
-  getConsumptionActivityCalendarAction,
+  getMonitoringSummaryAction,
   recordConsumptionForDateAction,
   ActivityDateInfo,
 } from '../api/consumptionRepository';
@@ -26,17 +24,15 @@ export function useMonitoringData(userId: string) {
   // Load all monitoring and adherence data from PostgreSQL
   const loadData = useCallback(async () => {
     try {
-      const [dash, actMap, logs, statsData] = await Promise.all([
+      const [dash, summary] = await Promise.all([
         getUserDashboardDataAction(userId),
-        getConsumptionActivityCalendarAction(userId),
-        getConsumptionLogsAction('ALL', 'ALL', 'ALL', userId),
-        getConsumptionStatsAction(userId),
+        getMonitoringSummaryAction(userId),
       ]);
 
       setDashboardData(dash);
-      setActivityMap(actMap);
-      setAllLogs(logs);
-      setStats(statsData);
+      setActivityMap(summary.activityMap);
+      setAllLogs(summary.logs);
+      setStats(summary.stats);
       setLoading(false);
     } catch (err) {
       console.error('Error loading monitoring data:', err);
@@ -50,18 +46,16 @@ export function useMonitoringData(userId: string) {
 
     async function initMonitoring() {
       try {
-        const [dash, actMap, logs, statsData] = await Promise.all([
+        const [dash, summary] = await Promise.all([
           getUserDashboardDataAction(userId),
-          getConsumptionActivityCalendarAction(userId),
-          getConsumptionLogsAction('ALL', 'ALL', 'ALL', userId),
-          getConsumptionStatsAction(userId),
+          getMonitoringSummaryAction(userId),
         ]);
 
         if (isSubscribed) {
           setDashboardData(dash);
-          setActivityMap(actMap);
-          setAllLogs(logs);
-          setStats(statsData);
+          setActivityMap(summary.activityMap);
+          setAllLogs(summary.logs);
+          setStats(summary.stats);
           setLoading(false);
         }
       } catch (err) {

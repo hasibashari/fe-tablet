@@ -90,11 +90,11 @@ export function ProfileHeaderCard({
               variant='outline'
               size='sm'
               shape='rounded'
-              icon={<Edit2 size={14} />}
+              icon={<Edit2 size={13} />}
               onClick={onEditClick}
-              className='w-full sm:w-auto text-xs font-bold py-2.5 px-4 border-rose-200 text-rose-700 hover:bg-rose-50 cursor-pointer'
+              className='w-full sm:w-auto text-xs font-bold py-2 px-3.5 border-rose-200 text-rose-700 hover:bg-rose-50 cursor-pointer'
             >
-              Ubah Data Profil
+              Ubah Profil
             </Button>
           </div>
         )}

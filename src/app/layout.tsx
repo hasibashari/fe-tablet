@@ -12,14 +12,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Fe-Tablet | Pengingat & Monitoring Tablet Tambah Darah',
+  title: 'FEMORY | Pengingat & Monitoring Tablet Tambah Darah',
   description:
     'Small habit, big impact. Aplikasi pintar pemantau kepatuhan konsumsi Tablet Tambah Darah (TTD) untuk cegah anemia remaja putri dan wanita usia subur.',
-  applicationName: 'Fe-Tablet',
+  applicationName: 'FEMORY',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Fe-Tablet',
+    title: 'FEMORY',
   },
   formatDetection: {
     telephone: false,

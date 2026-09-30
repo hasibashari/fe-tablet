@@ -26,7 +26,9 @@ export function ProfileContactCard({
   className = '',
 }: ProfileContactCardProps) {
   return (
-    <div className={`rounded-3xl bg-white border border-rose-100/80 shadow-sm p-5 sm:p-6 ${className}`}>
+    <div
+      className={`rounded-3xl bg-white border border-rose-100/80 shadow-sm p-5 sm:p-6 ${className}`}
+    >
       <div className='mb-4 pb-3 border-b border-slate-100'>
         <h2 className='text-sm sm:text-base font-bold text-slate-800'>{title}</h2>
         {subtitle && <p className='text-xs text-slate-400 mt-0.5'>{subtitle}</p>}

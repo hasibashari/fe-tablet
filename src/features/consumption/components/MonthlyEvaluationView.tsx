@@ -10,15 +10,15 @@ export interface MonthlyEvaluationViewProps {
   stats: ConsumptionStats | null;
   streakCount: number;
   streakUnit: string;
-  hbLevel?: number;
-  riskLevel?: string;
+  hbLevel?: number | null;
+  riskLevel?: string | null;
 }
 
 export function MonthlyEvaluationView({
   stats,
   streakCount,
   streakUnit,
-  hbLevel = 12.4,
+  hbLevel,
   riskLevel = 'Rendah',
 }: MonthlyEvaluationViewProps) {
   return (
@@ -66,8 +66,8 @@ export function MonthlyEvaluationView({
             <Activity size={18} />
           </div>
           <span className='text-[11px] text-[#64748b] block font-medium'>Kadar Hb</span>
-          <span className='text-sm sm:text-base font-extrabold text-[#10b981]'>
-            {hbLevel} g/dL
+          <span className={`text-sm sm:text-base font-extrabold ${hbLevel ? 'text-[#10b981]' : 'text-slate-500'}`}>
+            {hbLevel ? `${hbLevel} g/dL` : 'Belum Tes'}
           </span>
         </Card>
 

@@ -50,7 +50,7 @@ export function AuthTabbedContainer({ initialTab = 'login' }: AuthTabbedContaine
       <p className='text-xs sm:text-sm text-[#64748b] -mt-3 mb-6 leading-relaxed'>
         {activeTab === 'login'
           ? 'Selamat datang kembali! Masuk untuk memantau konsumsi TTD-mu.'
-          : 'Lengkapi data dirimu untuk mulai hidup bebas anemia bersama Fe-Tablet.'}
+          : 'Lengkapi data dirimu untuk mulai hidup bebas anemia bersama FEMORY.'}
       </p>
 
       {/* Form Content */}

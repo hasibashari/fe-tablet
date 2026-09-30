@@ -28,7 +28,7 @@ function SendReminderModalContent({
   patientPhone = '0812-3456-7890',
   medicationName = 'Tablet Tambah Darah (TTD)',
   dosage = '1 Tablet (Setelah makan)',
-  timeSlot = '08:00 WIB',
+  timeSlot = '20:00 WIB',
   onSendSuccess,
 }: Omit<SendReminderModalProps, 'open'>) {
   const displayName = userName || patientName || 'Siswi';
@@ -42,7 +42,7 @@ function SendReminderModalContent({
   const getTemplateContent = (templateKey: string) => {
     switch (templateKey) {
       case 'standard':
-        return `Halo ${displayName}, ini pengingat dari Pembina UKS / Fe-Tablet untuk minum ${medicationName} (${dosage}) pada jam ${timeSlot}. Jangan lupa diminum setelah makan dengan air putih/jeruk ya! 🌸`;
+        return `Halo ${displayName}, ini pengingat dari Pembina UKS / FEMORY untuk minum ${medicationName} (${dosage}) pada jam ${timeSlot}. Jangan lupa diminum setelah makan dengan air putih/jeruk ya! 🌸`;
       case 'friendly':
         return `Halo ${displayName}, cegah anemia biar tetap fit dan konsentrasi belajar! Jangan lupa minum ${medicationName} (${dosage}) hari ini ya! Semangat selalu! 🌸`;
       case 'urgent':

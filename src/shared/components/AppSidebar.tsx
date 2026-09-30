@@ -31,7 +31,7 @@ export interface AppSidebarProps {
 
 export default function AppSidebar({
   navItems,
-  brandTitle = 'Fe-Tablet',
+  brandTitle = 'FEMORY',
   brandSubtitle = 'Admin Panel',
   brandIcon: BrandIcon,
   brandHref = '/admin/dashboard',

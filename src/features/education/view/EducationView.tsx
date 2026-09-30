@@ -67,8 +67,8 @@ export default function EducationView() {
         <h2 className='text-xl sm:text-2xl font-extrabold text-[#1e293b] tracking-tight'>
           Edukasi & Literasi Anemia
         </h2>
-        <p className='text-xs sm:text-sm text-[#64748b]'>
-          Pelajari fakta medis, tips konsumsi TTD, dan panduan gizi seimbang
+        <p className='text-xs sm:text-sm text-[#64748b] mt-0.5'>
+          Informasi medis, tips konsumsi TTD, dan panduan gizi seimbang
         </p>
       </div>
 
@@ -114,10 +114,7 @@ export default function EducationView() {
       {/* Featured Article Banner */}
       {!searchQuery && selectedCategory === 'Semua' && featuredArticle && (
         <Link href={`/user/education/${featuredArticle.id}`} className='block group'>
-          <Card
-            padding='none'
-            className='overflow-hidden hover:shadow-md transition-shadow'
-          >
+          <Card padding='none' className='overflow-hidden hover:shadow-md transition-shadow'>
             <div className='relative h-44 sm:h-60 w-full overflow-hidden'>
               <Image
                 src={featuredArticle.imageUrl}
@@ -142,11 +139,11 @@ export default function EducationView() {
               </p>
               <div className='flex items-center justify-between mt-3 pt-3 border-t border-[#fce7f3]'>
                 <span className='text-xs text-[#94a3b8]'>
-                  Oleh <strong>{featuredArticle.author?.name || 'Tim Medis Fe-Tablet'}</strong> •{' '}
+                  Oleh <strong>{featuredArticle.author?.name || 'Tim Medis FEMORY'}</strong> •{' '}
                   {featuredArticle.publishedAt}
                 </span>
                 <span className='text-xs sm:text-sm font-bold text-[#e11d48] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform'>
-                  <span>Baca Lengkap</span>
+                  <span>Baca</span>
                   <ArrowRight size={14} />
                 </span>
               </div>

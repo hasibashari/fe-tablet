@@ -106,8 +106,7 @@ export default function HistoryView() {
             Monitoring Kepatuhan TTD 🌸
           </h2>
           <p className='text-xs sm:text-sm text-[#64748b] mt-0.5'>
-            Pantau riwayat konsumsi Tablet Tambah Darah (TTD) dan status kepatuhan berdasarkan
-            tanggal
+            Riwayat konsumsi TTD dan evaluasi kepatuhan
           </p>
         </div>
 
@@ -166,8 +165,6 @@ export default function HistoryView() {
             onSelectDate={setSelectedDate}
             dateFilterPreset={dateFilterPreset}
             onDateFilterPresetChange={setDateFilterPreset}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
             activityMap={activityMap}
             todayStr={todayStr}
             todayStatus={dashboardData?.todayStatus}
@@ -180,15 +177,20 @@ export default function HistoryView() {
               isToday={isSelectedDateToday}
               activity={selectedDateActivity}
               effectiveStatus={effectiveSelectedStatus}
-              fallbackTabletName={dashboardData?.activeSchedule.tabletName}
-              fallbackTime={dashboardData?.activeSchedule.time}
+              fallbackTabletName={dashboardData?.activeSchedule?.tabletName}
+              fallbackTime={dashboardData?.activeSchedule?.time}
               isUpdating={isUpdatingDate}
               onUpdateStatus={updateDateStatus}
             />
           )}
 
-          {/* UNIFIED CONSUMPTION LOG LIST */}
-          <ConsumptionLogList logs={filteredLogs} filterLabel={filterLabel} />
+          {/* UNIFIED CONSUMPTION LOG LIST WITH STATUS FILTER DROPDOWN */}
+          <ConsumptionLogList
+            logs={filteredLogs}
+            filterLabel={filterLabel}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+          />
         </div>
       )}
 

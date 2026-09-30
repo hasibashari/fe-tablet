@@ -12,11 +12,12 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Card } from '@/src/shared/components/ui/Card';
+import { useAuth } from '@/src/features/auth';
 import {
-  MOCK_CONSULTATION_TOPICS,
-  MOCK_INITIAL_CHAT,
-  ChatMessageMock,
-} from '@/src/shared/mock/feTabletData';
+  CONSULTATION_TOPICS,
+  getInitialChatMessages,
+  ChatMessage,
+} from '@/src/features/consultation';
 import { askGeminiConsultationAction } from '@/src/lib/gemini';
 import { MarkdownRenderer } from '@/src/shared/components/markdown';
 
@@ -25,7 +26,9 @@ const getFormattedTimestamp = () =>
   new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
 
 export default function ConsultationPage() {
-  const [messages, setMessages] = useState<ChatMessageMock[]>(MOCK_INITIAL_CHAT);
+  const { user } = useAuth();
+  const userName = user?.name || '';
+  const [messages, setMessages] = useState<ChatMessage[]>(() => getInitialChatMessages(userName));
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -42,7 +45,7 @@ export default function ConsultationPage() {
     const text = (textToSend || inputText).trim();
     if (!text || isTyping) return;
 
-    const userMsg: ChatMessageMock = {
+    const userMsg: ChatMessage = {
       id: createMsgId('usr'),
       sender: 'user',
       text,
@@ -55,18 +58,25 @@ export default function ConsultationPage() {
     setIsTyping(true);
 
     try {
-      // Call Real Gemini API Server Action
+      // Call Real Gemini API Server Action with User Context
       const res = await askGeminiConsultationAction(
         text,
         updatedHistory.map(m => ({ sender: m.sender, text: m.text })),
+        {
+          name: user?.name,
+          schoolOrOrg: user?.schoolOrOrg,
+          hbLevel: user?.hbLevel,
+          gender: user?.gender,
+        }
       );
 
+      const displayName = user?.name?.trim() ? user.name.trim().split(' ')[0] : 'Sahabat FEMORY';
       const answer =
         res.success && res.answer
           ? res.answer
-          : 'Halo! Terima kasih atas pertanyaannya. Minum Tablet Tambah Darah secara rutin sangat penting untuk mencegah anemia. Pastikan diminum setelah makan dengan air putih atau jus buah ya!';
+          : `Halo ${displayName}! Terima kasih atas pertanyaannya. Minum Tablet Tambah Darah secara rutin sangat penting untuk mencegah anemia. Pastikan diminum setelah makan dengan air putih atau jus buah ya! 🌸`;
 
-      const assistantMsg: ChatMessageMock = {
+      const assistantMsg: ChatMessage = {
         id: createMsgId('ai'),
         sender: 'assistant',
         text: answer,
@@ -76,7 +86,7 @@ export default function ConsultationPage() {
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
       console.error('Gemini Consultation Error:', err);
-      const errorMsg: ChatMessageMock = {
+      const errorMsg: ChatMessage = {
         id: createMsgId('ai_err'),
         sender: 'assistant',
         text: 'Mohon maaf, terjadi gangguan koneksi ke asisten AI. Silakan tanyakan kembali sesaat lagi.',
@@ -93,18 +103,18 @@ export default function ConsultationPage() {
   };
 
   const handleResetChat = () => {
-    setMessages(MOCK_INITIAL_CHAT);
+    setMessages(getInitialChatMessages(user?.name));
   };
 
   return (
-    <div className='flex flex-col gap-3 sm:gap-4 w-full h-[calc(100dvh-130px)] md:h-[calc(100vh-75px)] min-h-[500px] overflow-hidden'>
+    <div className='flex flex-col gap-2.5 sm:gap-4 w-full h-[calc(100dvh-135px)] md:h-[calc(100vh-80px)] -mb-20 md:mb-0 overflow-hidden'>
       {/* Screen Title Header (Shrink-0) */}
-      <div className='shrink-0 flex items-center justify-between'>
+      <div className='shrink-0 flex items-center justify-between gap-2'>
         <div>
-          <h2 className='text-xl sm:text-2xl font-extrabold text-[#1e293b] tracking-tight'>
+          <h2 className='text-lg sm:text-2xl font-extrabold text-[#1e293b] tracking-tight'>
             Konsultasi AI
           </h2>
-          <p className='text-xs sm:text-sm text-[#64748b]'>
+          <p className='text-[11px] sm:text-sm text-[#64748b] leading-tight'>
             Tanya jawab pintar seputar anemia & tips minum tablet
           </p>
         </div>
@@ -112,16 +122,17 @@ export default function ConsultationPage() {
         <button
           type='button'
           onClick={handleResetChat}
-          className='inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:text-[#e11d48] rounded-xl hover:bg-rose-50 transition-colors border border-[#fce7f3] bg-white cursor-pointer shadow-2xs'
+          className='inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:text-[#e11d48] rounded-xl hover:bg-rose-50 transition-colors border border-[#fce7f3] bg-white cursor-pointer shadow-2xs shrink-0'
           title='Reset Percakapan'
+          aria-label='Reset Chat'
         >
-          <RotateCcw size={14} />
+          <RotateCcw size={13} />
           <span>Reset Chat</span>
         </button>
       </div>
 
       {/* Main Responsive Grid Layout (Flex-1 Min-h-0) */}
-      <div className='flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-stretch h-full overflow-hidden'>
+      <div className='flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6 items-stretch h-full overflow-hidden'>
         {/* LEFT PANEL: Suggested Questions & Topics (Visible on md+) */}
         <div className='hidden md:flex md:col-span-4 flex-col gap-4 h-full min-h-0 overflow-y-auto pr-1'>
           <Card padding='md' className='shrink-0 bg-gradient-to-br from-[#fff5f7] to-[#ffe4e6]'>
@@ -151,7 +162,7 @@ export default function ConsultationPage() {
               </h4>
 
               <div className='space-y-2'>
-                {MOCK_CONSULTATION_TOPICS.map(topic => (
+                {CONSULTATION_TOPICS.map(topic => (
                   <button
                     key={topic.id}
                     type='button'
@@ -183,13 +194,13 @@ export default function ConsultationPage() {
         {/* RIGHT PANEL: Chat Conversation (md:col-span-8) */}
         <div className='md:col-span-8 h-full min-h-0 flex flex-col overflow-hidden'>
           {/* Mobile-Only Horizontal Chips Bar (Shrink-0) */}
-          <div className='shrink-0 flex md:hidden items-center gap-1.5 overflow-x-auto pb-2 mb-1.5 no-scrollbar'>
-            {MOCK_CONSULTATION_TOPICS.map(topic => (
+          <div className='shrink-0 flex md:hidden items-center gap-1.5 overflow-x-auto pb-1.5 mb-1 no-scrollbar overscroll-x-contain'>
+            {CONSULTATION_TOPICS.map(topic => (
               <button
                 key={topic.id}
                 type='button'
                 onClick={() => handleTopicClick(topic.prompt)}
-                className='inline-flex items-center gap-1.5 px-3 py-1 bg-white text-[#475569] text-[11px] font-medium rounded-full border border-[#fce7f3] hover:bg-[#fff1f2] hover:text-[#e11d48] transition-all shrink-0 cursor-pointer shadow-2xs'
+                className='inline-flex items-center gap-1.5 px-2.5 py-1 bg-white text-[#475569] text-[11px] font-medium rounded-full border border-[#fce7f3] hover:bg-[#fff1f2] hover:text-[#e11d48] transition-all shrink-0 cursor-pointer shadow-2xs whitespace-nowrap active:scale-95'
               >
                 <span>{topic.icon}</span>
                 <span>{topic.title}</span>
@@ -199,43 +210,43 @@ export default function ConsultationPage() {
 
           <Card
             padding='none'
-            className='flex-1 min-h-0 flex flex-col overflow-hidden bg-[#fffdfd] shadow-sm border border-[#fce7f3] p-3 sm:p-4'
+            className='flex-1 min-h-0 flex flex-col overflow-hidden bg-[#fffdfd] shadow-sm border border-[#fce7f3] p-2.5 sm:p-4 rounded-2xl'
           >
             {/* Scrollable Message List (Only this section scrolls!) */}
-            <div className='flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-2 space-y-3 pb-2 overscroll-contain'>
+            <div className='flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-2 space-y-2.5 sm:space-y-3 pb-2 overscroll-contain'>
               {messages.map(msg => {
                 const isUser = msg.sender === 'user';
 
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+                    className={`flex items-start gap-2 sm:gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
                   >
                     {/* Avatar Icon */}
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 text-white ${
                         isUser
                           ? 'bg-rose-500'
                           : 'bg-gradient-to-tr from-rose-600 to-rose-400 shadow-xs'
                       }`}
                     >
-                      {isUser ? <User size={16} /> : <Bot size={16} />}
+                      {isUser ? <User size={14} className='sm:w-4 sm:h-4' /> : <Bot size={14} className='sm:w-4 sm:h-4' />}
                     </div>
 
                     {/* Message Bubble */}
                     <div
-                      className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-2xs ${
+                      className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm leading-relaxed shadow-2xs break-words ${
                         isUser
                           ? 'bg-[#e11d48] text-white rounded-tr-none'
                           : 'bg-white text-[#1e293b] border border-[#fce7f3] rounded-tl-none'
                       }`}
                     >
                       {isUser ? (
-                        <p className='whitespace-pre-wrap'>{msg.text}</p>
+                        <p className='whitespace-pre-wrap break-words'>{msg.text}</p>
                       ) : (
                         <MarkdownRenderer
                           content={msg.text}
-                          className='text-xs sm:text-sm [&_p]:text-xs [&_p]:sm:text-sm [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:text-xs [&_li]:sm:text-sm [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold [&_h1]:my-2 [&_h2]:my-1.5 [&_h3]:my-1.5'
+                          className='text-xs sm:text-sm [&_p]:text-xs [&_p]:sm:text-sm [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_ul]:pl-4 [&_ol]:pl-4 [&_li]:text-xs [&_li]:sm:text-sm [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold [&_h1]:my-2 [&_h2]:my-1.5 [&_h3]:my-1.5 break-words overflow-hidden'
                         />
                       )}
                       <span
@@ -252,15 +263,15 @@ export default function ConsultationPage() {
 
               {/* Typing Indicator */}
               {isTyping && (
-                <div className='flex items-center gap-2.5'>
-                  <div className='w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0'>
-                    <Bot size={16} />
+                <div className='flex items-center gap-2 sm:gap-2.5'>
+                  <div className='w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0'>
+                    <Bot size={14} className='sm:w-4 sm:h-4' />
                   </div>
-                  <div className='bg-white border border-[#fce7f3] rounded-2xl rounded-tl-none px-4 py-2.5 text-xs text-[#94a3b8] flex items-center gap-1.5 shadow-2xs'>
+                  <div className='bg-white border border-[#fce7f3] rounded-2xl rounded-tl-none px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs text-[#94a3b8] flex items-center gap-1.5 shadow-2xs'>
                     <span className='w-1.5 h-1.5 rounded-full bg-[#e11d48] animate-bounce' />
                     <span className='w-1.5 h-1.5 rounded-full bg-[#e11d48] animate-bounce delay-150' />
                     <span className='w-1.5 h-1.5 rounded-full bg-[#e11d48] animate-bounce delay-300' />
-                    <span className='text-xs font-medium ml-1'>Asisten sedang mengetik...</span>
+                    <span className='text-[11px] sm:text-xs font-medium ml-1'>Asisten sedang mengetik...</span>
                   </div>
                 </div>
               )}
@@ -269,11 +280,10 @@ export default function ConsultationPage() {
             </div>
 
             {/* Medical Disclaimer Banner (Shrink-0) */}
-            <div className='shrink-0 bg-[#fff5f7] border border-[#fce7f3] rounded-xl p-2 sm:p-2.5 my-2 flex items-center gap-2'>
-              <AlertCircle size={14} className='text-[#e11d48] shrink-0' />
-              <p className='text-[11px] text-[#64748b]'>
-                Informasi ini bersifat edukatif dan bukan pengganti saran, resep, atau diagnosa
-                medis dokter.
+            <div className='shrink-0 bg-[#fff5f7] border border-[#fce7f3] rounded-xl p-1.5 sm:p-2.5 my-1.5 sm:my-2 flex items-center gap-1.5 sm:gap-2'>
+              <AlertCircle size={13} className='text-[#e11d48] shrink-0' />
+              <p className='text-[10px] sm:text-[11px] text-[#64748b] leading-tight'>
+                Edukasi & panduan umum, bukan pengganti diagnosa dokter.
               </p>
             </div>
 
@@ -283,22 +293,23 @@ export default function ConsultationPage() {
                 e.preventDefault();
                 handleSendMessage();
               }}
-              className='shrink-0 flex items-center gap-2.5 pt-2 border-t border-[#fce7f3]'
+              className='shrink-0 flex items-center gap-2 sm:gap-2.5 pt-1.5 sm:pt-2 border-t border-[#fce7f3]'
             >
               <input
                 type='text'
-                placeholder='Ketik pertanyaan seputar Tablet Tambah Darah...'
+                placeholder='Ketik pertanyaan seputar TTD...'
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
-                className='flex-1 bg-[#fff5f7] text-[#1e293b] placeholder-[#94a3b8] text-xs sm:text-sm rounded-full border border-[#fce7f3] focus:border-[#e11d48] px-4 py-2.5 sm:py-3 outline-none'
+                className='flex-1 bg-[#fff5f7] text-[#1e293b] placeholder-[#94a3b8] text-xs sm:text-sm rounded-full border border-[#fce7f3] focus:border-[#e11d48] px-3.5 py-2 sm:px-4 sm:py-2.5 outline-none touch-manipulation'
               />
 
               <button
                 type='submit'
                 disabled={!inputText.trim() || isTyping}
-                className='w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#e11d48] text-white hover:bg-[#be123c] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20 transition-all cursor-pointer'
+                className='w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#e11d48] text-white hover:bg-[#be123c] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20 transition-all cursor-pointer touch-manipulation'
+                aria-label='Kirim Pesan'
               >
-                <Send size={17} />
+                <Send size={15} className='sm:w-4 sm:h-4' />
               </button>
             </form>
           </Card>

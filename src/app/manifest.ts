@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Fe-Tablet - Portal Monitoring & Suplementasi TTD',
-    short_name: 'Fe-Tablet',
+    name: 'FEMORY - Portal Monitoring & Suplementasi TTD',
+    short_name: 'FEMORY',
     description: 'Aplikasi Monitoring Konsumsi TTD Siswi & Portal Manajemen Anemia Sekolah',
     start_url: '/splash',
     display: 'standalone',

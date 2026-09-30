@@ -58,7 +58,7 @@ export default function Navbar() {
             <Heart size={20} className='fill-white' />
           </div>
           <span className='text-xl font-extrabold text-[#1e293b] tracking-tight flex items-center gap-1'>
-            <span>Fe-Tablet</span>
+            <span>FEMORY</span>
             <span className='text-base'>🌸</span>
           </span>
         </Link>

@@ -1,7 +1,13 @@
 export { default as BuddyView } from './view/BuddyView';
-export { default as BuddyHeroCard } from './components/BuddyHeroCard';
-export { default as BuddyFriendsList } from './components/BuddyFriendsList';
-export { default as AddBuddyModal } from './components/AddBuddyModal';
+export { default as GroupChatHeader } from './components/GroupChatHeader';
+export { default as GroupStreakCompactBar } from './components/GroupStreakCompactBar';
+export { default as GroupChatMessages } from './components/GroupChatMessages';
+export { default as GroupChatInput } from './components/GroupChatInput';
+export { default as GroupInfoModal } from './components/GroupInfoModal';
+export { default as CreateGroupModal } from './components/CreateGroupModal';
+export { default as EditGroupModal } from './components/EditGroupModal';
+export { default as JoinGroupModal } from './components/JoinGroupModal';
+export { default as GroupSidebarList } from './components/GroupSidebarList';
 export * from './types';
 export * from './constants/buddy.constants';
 export * from './api/buddyRepository';

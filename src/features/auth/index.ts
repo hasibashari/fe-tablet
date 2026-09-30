@@ -1,5 +1,4 @@
 export * from './types/auth.types';
-export * from './api/mockAuthData';
 export * from './context/AuthContext';
 export * from './components/AuthCardLayout';
 export * from './components/AuthTabbedContainer';

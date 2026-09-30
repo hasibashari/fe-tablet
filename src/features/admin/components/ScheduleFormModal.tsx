@@ -158,7 +158,7 @@ export default function ScheduleFormModal({
             </label>
             <input
               type='text'
-              placeholder='08:00'
+              placeholder='20:00'
               value={formData.timeSlot}
               onChange={e => onUpdateFormData({ timeSlot: e.target.value })}
               className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'
@@ -172,7 +172,7 @@ export default function ScheduleFormModal({
           </label>
           <input
             type='text'
-            placeholder='08:00'
+            placeholder='20:00'
             value={formData.timeSlot}
             onChange={e => onUpdateFormData({ timeSlot: e.target.value })}
             className='w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-transparent transition-all'

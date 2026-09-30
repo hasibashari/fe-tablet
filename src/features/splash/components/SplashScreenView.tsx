@@ -34,7 +34,7 @@ export function SplashScreenView({
 
         {/* App Name */}
         <h1 className='text-3xl sm:text-4xl md:text-5xl font-black text-[#1e293b] tracking-tight flex items-center justify-center gap-2 mb-2'>
-          <span>Fe-Tablet</span>
+          <span>FEMORY</span>
           <span className='text-2xl sm:text-3xl'>🌸</span>
         </h1>
 

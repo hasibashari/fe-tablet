@@ -19,7 +19,13 @@ interface UserDbRow {
 
 export async function loginUserAction(
   credentials: LoginCredentials,
-): Promise<{ success: boolean; user?: AuthUser; error?: string; redirectTo?: string }> {
+): Promise<{
+  success: boolean;
+  user?: AuthUser;
+  error?: string;
+  redirectTo?: string;
+  isProfileComplete?: boolean;
+}> {
   try {
     const normalizedEmail = credentials.email.trim().toLowerCase();
 
@@ -34,7 +40,7 @@ export async function loginUserAction(
     );
     let row = res.rows[0];
 
-    // 2. If not found by exact email, support roleHint / keyword fallback
+    // 2. If not found by exact email, support roleHint / keyword fallback for demo
     if (!row) {
       if (normalizedEmail.includes('admin') || credentials.roleHint === 'admin') {
         const adminRes = await db.query<UserDbRow>(
@@ -69,6 +75,17 @@ export async function loginUserAction(
       };
     }
 
+    // 3. Check active schedule count to determine if user has set up their initial schedule
+    const schedRes = await db.query<{ count: string }>(
+      `SELECT COUNT(*)::text as count FROM reminder_schedules WHERE user_id = $1 AND status = 'Aktif'`,
+      [row.id],
+    );
+    const scheduleCount = Number(schedRes.rows[0]?.count || 0);
+
+    const hasSchool = Boolean(row.school_or_org && row.school_or_org.trim());
+    const hasSchedule = scheduleCount > 0;
+    const isProfileComplete = row.role === 'admin' || (hasSchool && hasSchedule);
+
     const authUser: AuthUser = {
       id: row.id,
       name: row.name,
@@ -79,12 +96,19 @@ export async function loginUserAction(
       gender: row.gender || 'Perempuan',
       friendCode: row.friend_code || undefined,
       schoolOrOrg: row.school_or_org || undefined,
-      hbLevel: row.hb_level ? Number(row.hb_level) : undefined,
+      hbLevel: row.hb_level !== null ? Number(row.hb_level) : undefined,
       streakCount: row.streak_count !== null ? Number(row.streak_count) : 0,
+      isProfileComplete,
     };
 
-    const redirectTo = authUser.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
-    return { success: true, user: authUser, redirectTo };
+    const redirectTo =
+      authUser.role === 'admin'
+        ? '/admin/dashboard'
+        : isProfileComplete
+          ? '/user/dashboard'
+          : '/user/setup';
+
+    return { success: true, user: authUser, redirectTo, isProfileComplete };
   } catch (error: unknown) {
     console.error('Login error:', error);
     return { success: false, error: 'Terjadi kesalahan sistem saat login.' };
@@ -93,7 +117,7 @@ export async function loginUserAction(
 
 export async function quickLoginAction(
   role: UserRole,
-): Promise<{ success: boolean; user?: AuthUser; redirectTo: string }> {
+): Promise<{ success: boolean; user?: AuthUser; redirectTo: string; isProfileComplete?: boolean }> {
   try {
     const targetRole = role === 'admin' ? 'admin' : 'user';
     const res = await db.query<UserDbRow>(
@@ -111,6 +135,15 @@ export async function quickLoginAction(
       throw new Error(`No user found for role ${role}`);
     }
 
+    const schedRes = await db.query<{ count: string }>(
+      `SELECT COUNT(*)::text as count FROM reminder_schedules WHERE user_id = $1 AND status = 'Aktif'`,
+      [row.id],
+    );
+    const scheduleCount = Number(schedRes.rows[0]?.count || 0);
+    const hasSchool = Boolean(row.school_or_org && row.school_or_org.trim());
+    const hasSchedule = scheduleCount > 0;
+    const isProfileComplete = row.role === 'admin' || (hasSchool && hasSchedule);
+
     const authUser: AuthUser = {
       id: row.id,
       name: row.name,
@@ -121,14 +154,23 @@ export async function quickLoginAction(
       gender: row.gender || 'Perempuan',
       friendCode: row.friend_code || undefined,
       schoolOrOrg: row.school_or_org || undefined,
-      hbLevel: row.hb_level ? Number(row.hb_level) : undefined,
+      hbLevel: row.hb_level !== null ? Number(row.hb_level) : undefined,
       streakCount: row.streak_count !== null ? Number(row.streak_count) : 0,
+      isProfileComplete,
     };
+
+    const redirectTo =
+      authUser.role === 'admin'
+        ? '/admin/dashboard'
+        : isProfileComplete
+          ? '/user/dashboard'
+          : '/user/setup';
 
     return {
       success: true,
       user: authUser,
-      redirectTo: role === 'admin' ? '/admin/dashboard' : '/user/dashboard',
+      redirectTo,
+      isProfileComplete,
     };
   } catch (error: unknown) {
     console.error('Quick login error:', error);
@@ -141,10 +183,18 @@ export async function quickLoginAction(
 
 export async function registerUserAction(
   data: RegisterCredentials,
-): Promise<{ success: boolean; user?: AuthUser; error?: string; redirectTo?: string }> {
+): Promise<{ success: boolean; error?: string; message?: string }> {
   try {
+    if (!data.name || !data.name.trim()) {
+      return { success: false, error: 'Nama lengkap wajib diisi.' };
+    }
+
     if (!data.email || !data.email.trim()) {
-      return { success: false, error: 'Email wajib diisi.' };
+      return { success: false, error: 'Alamat email wajib diisi.' };
+    }
+
+    if (!data.password || data.password.length < 6) {
+      return { success: false, error: 'Kata sandi minimal 6 karakter.' };
     }
 
     const normalizedEmail = data.email.trim().toLowerCase();
@@ -152,78 +202,52 @@ export async function registerUserAction(
       normalizedEmail,
     ]);
     if (existingRes.rows.length > 0) {
-      return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain.' };
+      return { success: false, error: 'Email sudah terdaftar. Silakan masuk menggunakan email tersebut.' };
     }
 
-    // Default friendly name
-    const defaultName =
-      data.name?.trim() ||
-      normalizedEmail
-        .split('@')[0]
-        .replace(/[._-]/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase()) ||
-      'Pengguna Fe-Tablet';
-
-    const cleanTag = defaultName.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5) || 'USER';
+    const cleanName = data.name.trim();
+    const cleanTag = cleanName.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5) || 'USER';
     const randNum = Math.floor(1000 + Math.random() * 9000);
     const friendCode = `FE-${cleanTag}-${randNum}`;
 
     const newId = `usr_${Date.now().toString().slice(-6)}`;
-    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(defaultName)}`;
+    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanName)}`;
 
     await db.transaction(async client => {
-      // 1. Insert into users (role 'user')
+      // 1. Insert into users table
       await client.query(
         `INSERT INTO users (id, name, email, role, phone, gender, avatar_url)
          VALUES ($1, $2, $3, 'user', $4, $5, $6)`,
         [
           newId,
-          defaultName,
+          cleanName,
           normalizedEmail,
-          data.phone || null,
+          data.phone?.trim() || null,
           data.gender || 'Perempuan',
           avatarUrl,
         ],
       );
 
-      // 2. Insert into user_profiles
+      // 2. Insert into user_profiles table without dummy default biometrics/school
       await client.query(
         `INSERT INTO user_profiles (
-          user_id, friend_code, school_or_org, hb_level, hb_status, risk_level, streak_count, level_title, status
-        ) VALUES ($1, $2, $3, 12.4, 'Normal', 'Rendah', 0, 'Pemula Sehat', 'Aktif')`,
-        [newId, friendCode, data.schoolOrOrg || 'SMA Negeri 1 Sehat'],
+          user_id, friend_code, school_or_org, hb_level, hb_status, risk_level, height, weight, blood_type, streak_count, level_title, status
+        ) VALUES ($1, $2, NULL, NULL, 'Normal', 'Rendah', NULL, NULL, NULL, 0, 'Pemula Sehat', 'Aktif')`,
+        [newId, friendCode],
       );
-
-      // 3. Create default weekly TTD schedule (Sabtu 08:00)
-      const schId = `sch_${newId}`;
-      await client.query(
-        `INSERT INTO reminder_schedules (
-          id, user_id, tablet_name, dosage, frequency, day_of_week, time_slot, is_enabled, remind_15min_before, instructions, status
-        ) VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', '1 tablet', 'weekly', 'Sabtu', '08:00', true, true, 'Minum setelah sarapan atau sebelum tidur dengan air putih.', 'Aktif')`,
-        [schId, newId],
-      );
+      // NOTE: No dummy reminder_schedules inserted! User sets up their own schedule after login.
     });
 
-    const authUser: AuthUser = {
-      id: newId,
-      name: defaultName,
-      email: normalizedEmail,
-      role: 'user',
-      phone: data.phone || undefined,
-      gender: data.gender || 'Perempuan',
-      avatarUrl: avatarUrl,
-      friendCode: friendCode,
-      schoolOrOrg: data.schoolOrOrg || 'SMA Negeri 1 Sehat',
-      hbLevel: 12.4,
-      streakCount: 0,
+    return {
+      success: true,
+      message: 'Pendaftaran akun berhasil! Silakan masuk dengan akun baru Anda.',
     };
-
-    return { success: true, user: authUser, redirectTo: '/user/dashboard' };
   } catch (error: unknown) {
     console.error('Register error:', error);
-    return { success: false, error: 'Gagal mendaftarkan akun baru.' };
+    return { success: false, error: 'Gagal mendaftarkan akun baru. Silakan coba kembali.' };
   }
 }
 
 export const registerPatientAction = registerUserAction;
+
 

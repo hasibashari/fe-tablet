@@ -1,404 +1,633 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import {
-  Flame,
-  Heart,
-  CheckCircle2,
-  Sparkles,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Sparkles, MessageSquare, Plus, UserPlus } from 'lucide-react';
 import { Card } from '@/src/shared/components/ui/Card';
 import { Button } from '@/src/shared/components/ui/Button';
 import { useAuth } from '@/src/features/auth/context/AuthContext';
 import {
-  getBuddyStreakDataAction,
-  sendBuddyCheerAction,
-  addBuddyByCodeAction,
-  removeBuddyAction,
+  getUserGroupsAction,
+  getGroupChatDetailsAction,
+  createBuddyGroupAction,
+  joinGroupByCodeAction,
+  addMemberToGroupAction,
+  sendGroupMessageAction,
+  leaveOrDeleteGroupAction,
+  updateBuddyGroupAction,
+  deleteBuddyGroupAction,
 } from '../api/buddyRepository';
-import { BuddyStreakData, BuddyItem } from '../types';
-import BuddyHeroCard from '../components/BuddyHeroCard';
-import BuddyFriendsList from '../components/BuddyFriendsList';
-import AddBuddyModal from '../components/AddBuddyModal';
-
-let tempActivityCounter = 0;
-const generateTempActivityId = () => `act_tmp_${++tempActivityCounter}`;
+import {
+  BuddyGroupItem,
+  GroupChatDetail,
+  CheerType,
+  BuddyGroupMessage,
+} from '../types';
+import GroupChatHeader from '../components/GroupChatHeader';
+import GroupStreakCompactBar from '../components/GroupStreakCompactBar';
+import GroupChatMessages from '../components/GroupChatMessages';
+import GroupChatInput from '../components/GroupChatInput';
+import GroupInfoModal from '../components/GroupInfoModal';
+import CreateGroupModal from '../components/CreateGroupModal';
+import EditGroupModal from '../components/EditGroupModal';
+import JoinGroupModal from '../components/JoinGroupModal';
+import GroupSidebarList from '../components/GroupSidebarList';
+import {
+  publishRealtimeEvent,
+  subscribeRealtimeEvent,
+} from '@/src/shared/utils/realtimeSync';
 
 export default function BuddyView() {
   const { user } = useAuth();
   const userId = user?.id || 'usr_1';
-  const userName = user?.name || 'Sarah Azzahra';
-  const userAvatar =
-    user?.avatarUrl ||
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
 
-  const [buddyData, setBuddyData] = useState<BuddyStreakData>({
-    connectionId: '',
-    buddyId: '',
-    buddyName: '',
-    buddyAvatarUrl: '',
-    sharedStreakCount: 0,
-    userStatusThisWeek: 'pending',
-    buddyStatusThisWeek: 'pending',
-    userFriendCode: user?.friendCode || 'FE-SARAH-9901',
-    buddyFriendCode: undefined,
-    activeBuddy: null,
-    friendsList: [],
-    activities: [],
-  });
+  // State Management
+  const [groups, setGroups] = useState<BuddyGroupItem[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [chatDetail, setChatDetail] = useState<GroupChatDetail | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [cheerCount, setCheerCount] = useState(12);
-  const [cheeredJustNow, setCheeredJustNow] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [friendCodeInput, setFriendCodeInput] = useState('');
+  const [isLoadingGroups, setIsLoadingGroups] = useState(true);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+
+  // Modals & Navigation
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasCopiedCode, setHasCopiedCode] = useState(false);
-
-  // Delete modal state
-  const [buddyToDelete, setBuddyToDelete] = useState<BuddyItem | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const data = await getBuddyStreakDataAction(userId);
-        if (isMounted && data) {
-          setBuddyData(data);
-        }
-      } catch (err) {
-        console.error('Failed to load buddy streak data:', err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-    loadData();
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
-
-  // Switch active hero partner
-  const handleSwitchActiveBuddy = async (connectionId: string) => {
-    try {
-      const updated = await getBuddyStreakDataAction(userId, connectionId);
-      if (updated) {
-        setBuddyData(updated);
-        setCheeredJustNow(false);
-        showToast(`Partner duel diubah ke ${updated.buddyName}! 👑`);
-      }
-    } catch (err) {
-      console.error('Error switching active buddy:', err);
-    }
-  };
-
-  // Send cheer
-  const handleSendCheer = async (
-    targetBuddyId?: string,
-    targetConnId?: string,
-    targetName?: string,
-  ) => {
-    const connId = targetConnId || buddyData.connectionId;
-    const bId = targetBuddyId || buddyData.buddyId;
-    const bName = targetName || buddyData.buddyName;
-
-    if (!connId || !bId) return;
-
-    setCheerCount(prev => prev + 1);
-    setCheeredJustNow(true);
-    showToast(`Stiker semangat terkirim ke ${bName}! ❤️`);
-
-    // Add activity locally immediately
-    const tempId = generateTempActivityId();
-    const newAct = {
-      id: tempId,
-      userName: userName,
-      action: `mengirimkan stiker semangat ke ${bName} ❤️`,
-      timestamp: 'Baru saja',
-      isPositive: true,
-      iconType: 'heart' as const,
-    };
-
-    setBuddyData(prev => ({
-      ...prev,
-      activities: [newAct, ...prev.activities],
-    }));
-
-    // Async server action call
-    try {
-      await sendBuddyCheerAction(connId, userId, bId, 'HEART', `Semangat terus ${bName}!`);
-    } catch (err) {
-      console.error('Error sending cheer:', err);
-    }
-  };
-
-  // Add friend
-  const handleAddFriend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!friendCodeInput.trim()) return;
-
-    setIsSubmitting(true);
-    try {
-      const res = await addBuddyByCodeAction(userId, friendCodeInput.trim());
-      if (res.success) {
-        showToast(`Berhasil terhubung dengan ${res.buddyName || friendCodeInput}! 🎉`);
-        setIsAddModalOpen(false);
-        setFriendCodeInput('');
-        const freshData = await getBuddyStreakDataAction(userId);
-        if (freshData) setBuddyData(freshData);
-      } else {
-        showToast(res.error || 'Gagal menambahkan teman.');
-      }
-    } catch (err) {
-      console.error('Error adding buddy:', err);
-      showToast('Terjadi kesalahan saat menambahkan kawan.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Remove friend confirmation
-  const handleConfirmDeleteBuddy = async () => {
-    if (!buddyToDelete) return;
-    setIsDeleting(true);
-
-    try {
-      const res = await removeBuddyAction(buddyToDelete.connectionId, userId);
-      if (res.success) {
-        showToast(`${buddyToDelete.name} berhasil dihapus dari daftar Buddy.`);
-        setBuddyToDelete(null);
-
-        // Refresh data
-        const freshData = await getBuddyStreakDataAction(userId);
-        if (freshData) {
-          setBuddyData(freshData);
-          setCheeredJustNow(false);
-        }
-      } else {
-        showToast(res.error || 'Gagal menghapus teman.');
-      }
-    } catch (err) {
-      console.error('Error removing buddy:', err);
-      showToast('Terjadi kesalahan sistem saat menghapus teman.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // Copy friend code
-  const handleCopyCode = () => {
-    const code = buddyData.userFriendCode || user?.friendCode || 'FE-SARAH-9901';
-    navigator.clipboard.writeText(code);
-    setHasCopiedCode(true);
-    showToast('Kode teman berhasil disalin ke clipboard! 📋');
-    setTimeout(() => setHasCopiedCode(false), 2500);
-  };
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // 1. Load User's Groups
+  const loadGroups = useCallback(async (preferredGroupId?: string) => {
+    setIsLoadingGroups(true);
+    try {
+      const userGroups = await getUserGroupsAction(userId);
+      setGroups(userGroups);
+
+      if (userGroups.length > 0) {
+        // Choose target group
+        const targetId =
+          preferredGroupId && userGroups.some(g => g.id === preferredGroupId)
+            ? preferredGroupId
+            : selectedGroupId && userGroups.some(g => g.id === selectedGroupId)
+            ? selectedGroupId
+            : userGroups[0].id;
+
+        setSelectedGroupId(targetId);
+      } else {
+        setSelectedGroupId(null);
+        setChatDetail(null);
+      }
+    } catch (err) {
+      console.error('Failed to load user groups:', err);
+    } finally {
+      setIsLoadingGroups(false);
+    }
+  }, [userId, selectedGroupId]);
+
+  // 2. Load Chat Details for Selected Group
+  const loadChatDetails = useCallback(async (groupId: string) => {
+    setIsLoadingChat(true);
+    try {
+      const detail = await getGroupChatDetailsAction(groupId, userId);
+      setChatDetail(detail);
+    } catch (err) {
+      console.error('Failed to load group chat details:', err);
+    } finally {
+      setIsLoadingChat(false);
+    }
+  }, [userId]);
+
+  // Initial load
+  useEffect(() => {
+    let isSubscribed = true;
+    getUserGroupsAction(userId)
+      .then(userGroups => {
+        if (!isSubscribed) return;
+        setGroups(userGroups);
+        if (userGroups.length > 0) {
+          setSelectedGroupId(prev =>
+            prev && userGroups.some(g => g.id === prev) ? prev : userGroups[0].id,
+          );
+        } else {
+          setSelectedGroupId(null);
+          setChatDetail(null);
+        }
+      })
+      .catch(err => console.error('Failed to load user groups:', err))
+      .finally(() => {
+        if (isSubscribed) setIsLoadingGroups(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [userId]);
+
+  // When selectedGroupId changes, load its chat details
+  useEffect(() => {
+    if (!selectedGroupId) return;
+    let isSubscribed = true;
+    getGroupChatDetailsAction(selectedGroupId, userId)
+      .then(detail => {
+        if (isSubscribed) setChatDetail(detail);
+      })
+      .catch(err => console.error('Failed to load group chat details:', err))
+      .finally(() => {
+        if (isSubscribed) setIsLoadingChat(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [selectedGroupId, userId]);
+
+  // 3. Realtime Event Listener across tabs & actions
+  useEffect(() => {
+    const unsubscribe = subscribeRealtimeEvent(event => {
+      if (
+        event.type === 'GROUP_MESSAGE_SENT' ||
+        event.type === 'GROUP_MEMBER_ADDED' ||
+        event.type === 'GROUP_UPDATED'
+      ) {
+        if (event.groupId && event.groupId === selectedGroupId) {
+          loadChatDetails(event.groupId);
+        }
+        getUserGroupsAction(userId).then(freshGroups => setGroups(freshGroups));
+      } else if (event.type === 'GROUP_CREATED' || event.type === 'GROUP_DELETED') {
+        getUserGroupsAction(userId).then(freshGroups => {
+          setGroups(freshGroups);
+          if (event.type === 'GROUP_DELETED' && event.groupId === selectedGroupId) {
+            if (freshGroups.length > 0) {
+              setSelectedGroupId(freshGroups[0].id);
+            } else {
+              setSelectedGroupId(null);
+              setChatDetail(null);
+              setMobileView('list');
+            }
+          }
+        });
+      } else if (event.type === 'MEDICATION_TAKEN') {
+        // Refresh compliance
+        if (selectedGroupId) loadChatDetails(selectedGroupId);
+        getUserGroupsAction(userId).then(freshGroups => setGroups(freshGroups));
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedGroupId, userId, loadChatDetails]);
+
+  // Handle Group Selection
+  const handleSelectGroup = (groupId: string) => {
+    setSelectedGroupId(groupId);
+    setMobileView('chat');
+  };
+
+  // Handle Send Message
+  const handleSendMessage = async (content: string) => {
+    if (!selectedGroupId || !content.trim()) return;
+
+    setIsSending(true);
+
+    // Optimistic message append
+    const tempId = `tmp_${Date.now()}`;
+    const optimisticMsg: BuddyGroupMessage = {
+      id: tempId,
+      groupId: selectedGroupId,
+      senderId: userId,
+      senderName: user?.name || 'Siswi',
+      senderAvatarUrl:
+        user?.avatarUrl ||
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      messageType: 'text',
+      content: content.trim(),
+      timestamp: 'Baru saja',
+      isSelf: true,
+    };
+
+    setChatDetail(prev =>
+      prev ? { ...prev, messages: [...prev.messages, optimisticMsg] } : null
+    );
+
+    try {
+      const res = await sendGroupMessageAction(selectedGroupId, userId, content, 'text');
+      if (res.success && res.message) {
+        // Replace temp msg with real msg
+        setChatDetail(prev => {
+          if (!prev) return null;
+          const filtered = prev.messages.filter(m => m.id !== tempId);
+          return { ...prev, messages: [...filtered, res.message!] };
+        });
+
+        // Broadcast to other tabs
+        publishRealtimeEvent('GROUP_MESSAGE_SENT', {
+          groupId: selectedGroupId,
+          userId,
+          messageId: res.message.id,
+        });
+
+        // Refresh group list snippet
+        const fresh = await getUserGroupsAction(userId);
+        setGroups(fresh);
+      }
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      showToast('Gagal mengirim pesan.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // Handle Send Quick Cheer
+  const handleSendCheer = async (cheerType: CheerType, label: string) => {
+    if (!selectedGroupId) return;
+
+    setIsSending(true);
+
+    // Optimistic cheer append
+    const tempId = `tmp_chr_${Date.now()}`;
+    const optimisticMsg: BuddyGroupMessage = {
+      id: tempId,
+      groupId: selectedGroupId,
+      senderId: userId,
+      senderName: user?.name || 'Siswi',
+      senderAvatarUrl:
+        user?.avatarUrl ||
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      messageType: 'cheer',
+      content: label,
+      cheerType,
+      timestamp: 'Baru saja',
+      isSelf: true,
+    };
+
+    setChatDetail(prev =>
+      prev ? { ...prev, messages: [...prev.messages, optimisticMsg] } : null
+    );
+    showToast(`Stiker semangat terkirim! ${label} 🌸`);
+
+    try {
+      const res = await sendGroupMessageAction(selectedGroupId, userId, label, 'cheer', cheerType);
+      if (res.success && res.message) {
+        setChatDetail(prev => {
+          if (!prev) return null;
+          const filtered = prev.messages.filter(m => m.id !== tempId);
+          return { ...prev, messages: [...filtered, res.message!] };
+        });
+
+        publishRealtimeEvent('GROUP_MESSAGE_SENT', {
+          groupId: selectedGroupId,
+          userId,
+          messageId: res.message.id,
+        });
+
+        const fresh = await getUserGroupsAction(userId);
+        setGroups(fresh);
+      }
+    } catch (err) {
+      console.error('Failed to send cheer:', err);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // Handle Create Group
+  const handleCreateGroup = async (
+    name: string,
+    description?: string,
+    initialFriendCodes?: string[]
+  ): Promise<boolean> => {
+    try {
+      const res = await createBuddyGroupAction(userId, name, description, initialFriendCodes);
+      if (res.success && res.group) {
+        showToast(`Grup "${res.group.name}" berhasil dibuat! 🎉`);
+        publishRealtimeEvent('GROUP_CREATED', { groupId: res.group.id, userId });
+        await loadGroups(res.group.id);
+        setMobileView('chat');
+        return true;
+      } else {
+        showToast(res.error || 'Gagal membuat grup.');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error creating group:', err);
+      showToast('Terjadi kesalahan saat membuat grup.');
+      return false;
+    }
+  };
+
+  // Handle Edit Group
+  const handleUpdateGroup = async (name: string, description?: string): Promise<boolean> => {
+    if (!selectedGroupId) return false;
+    try {
+      const res = await updateBuddyGroupAction(selectedGroupId, userId, { name, description });
+      if (res.success) {
+        showToast('Informasi grup berhasil diperbarui! ✨');
+        publishRealtimeEvent('GROUP_UPDATED', { groupId: selectedGroupId, userId });
+        await loadChatDetails(selectedGroupId);
+        const fresh = await getUserGroupsAction(userId);
+        setGroups(fresh);
+        setIsInfoModalOpen(false);
+        return true;
+      } else {
+        showToast(res.error || 'Gagal memperbarui grup.');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error updating group:', err);
+      showToast('Terjadi kesalahan saat memperbarui grup.');
+      return false;
+    }
+  };
+
+  // Handle Delete Group
+  const handleDeleteGroup = async () => {
+    if (!selectedGroupId) return;
+    try {
+      const deletedId = selectedGroupId;
+      const res = await deleteBuddyGroupAction(deletedId, userId);
+      if (res.success) {
+        showToast(res.message || 'Grup berhasil dihapus.');
+        publishRealtimeEvent('GROUP_DELETED', { groupId: deletedId, userId });
+        setIsInfoModalOpen(false);
+        setIsEditModalOpen(false);
+        await loadGroups();
+        setMobileView('list');
+      } else {
+        showToast(res.error || 'Gagal menghapus grup.');
+      }
+    } catch (err) {
+      console.error('Error deleting group:', err);
+      showToast('Terjadi kesalahan sistem saat menghapus grup.');
+    }
+  };
+
+  // Handle Join Group
+  const handleJoinGroup = async (groupCode: string): Promise<boolean> => {
+    try {
+      const res = await joinGroupByCodeAction(userId, groupCode);
+      if (res.success && res.group) {
+        showToast(`Berhasil bergabung ke grup "${res.group.name}"! 👋`);
+        publishRealtimeEvent('GROUP_MEMBER_ADDED', { groupId: res.group.id, userId });
+        await loadGroups(res.group.id);
+        setMobileView('chat');
+        return true;
+      } else {
+        showToast(res.error || 'Gagal bergabung ke grup.');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error joining group:', err);
+      showToast('Terjadi kesalahan saat bergabung ke grup.');
+      return false;
+    }
+  };
+
+  // Handle Add Member
+  const handleAddMember = async (friendCode: string): Promise<boolean> => {
+    if (!selectedGroupId) return false;
+    try {
+      const res = await addMemberToGroupAction(selectedGroupId, userId, friendCode);
+      if (res.success && res.member) {
+        showToast(`${res.member.name} berhasil ditambahkan! 🎉`);
+        publishRealtimeEvent('GROUP_MEMBER_ADDED', { groupId: selectedGroupId, userId });
+        await loadChatDetails(selectedGroupId);
+        const fresh = await getUserGroupsAction(userId);
+        setGroups(fresh);
+        return true;
+      } else {
+        showToast(res.error || 'Gagal menambahkan anggota.');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error adding member:', err);
+      return false;
+    }
+  };
+
+  // Handle Leave Group
+  const handleLeaveGroup = async () => {
+    if (!selectedGroupId) return;
+    try {
+      const res = await leaveOrDeleteGroupAction(selectedGroupId, userId);
+      if (res.success) {
+        showToast(res.message || 'Berhasil keluar dari grup.');
+        publishRealtimeEvent('GROUP_UPDATED', { groupId: selectedGroupId, userId });
+        setIsInfoModalOpen(false);
+        await loadGroups();
+        setMobileView('list');
+      } else {
+        showToast(res.error || 'Gagal keluar dari grup.');
+      }
+    } catch (err) {
+      console.error('Error leaving group:', err);
+    }
   };
 
   return (
-    <div className='flex flex-col gap-6 w-full'>
-      {/* Toast Feedback */}
+    <div className='flex flex-col gap-3 sm:gap-4 w-full h-[calc(100dvh-135px)] md:h-[calc(100vh-80px)] min-h-[520px] overflow-hidden'>
+      {/* Toast Notification */}
       {toastMessage && (
         <div className='fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#1e293b] text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-fade-in'>
-          <Sparkles size={14} className='text-amber-400' />
+          <Sparkles size={14} className='text-amber-400 shrink-0' />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Screen Title & Add Button */}
-      <div className='flex items-center justify-between'>
+      {/* Screen Title */}
+      <div
+        className={`shrink-0 ${
+          mobileView === 'chat' ? 'hidden md:flex' : 'flex'
+        } items-center justify-between`}
+      >
         <div>
           <h2 className='text-xl sm:text-2xl font-extrabold text-[#1e293b] tracking-tight'>
-            Buddy Streak
+            Group Buddy
           </h2>
           <p className='text-xs sm:text-sm text-[#64748b]'>
-            Bangun kebiasaan sehat minum TTD bersama sahabatmu
+            Pantau kepatuhan & saling semangati teman
           </p>
         </div>
-
-        <Button
-          variant='soft'
-          size='sm'
-          shape='pill'
-          icon={<Plus size={14} />}
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          Tambah Buddy
-        </Button>
       </div>
 
-      {/* Loading Skeleton */}
-      {isLoading ? (
-        <div className='grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 items-start animate-pulse'>
-          <div className='md:col-span-5 flex flex-col gap-5'>
-            <div className='h-80 bg-rose-50/70 rounded-2xl border border-rose-100 p-6 flex flex-col items-center justify-center gap-4'>
-              <div className='w-20 h-20 rounded-full bg-rose-200/60' />
-              <div className='w-32 h-4 bg-rose-200/60 rounded-full' />
-              <div className='w-48 h-3 bg-rose-200/40 rounded-full' />
+      {/* Unified Empty State when User has 0 Groups */}
+      {!isLoadingGroups && groups.length === 0 ? (
+        <div className='flex-1 min-h-0 flex items-center justify-center p-4'>
+          <Card
+            padding='none'
+            className='w-full max-w-md flex flex-col items-center justify-center text-center p-6 sm:p-8 bg-white border border-[#fce7f3] shadow-sm animate-scale-up'
+          >
+            <div className='w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-400 text-white flex items-center justify-center shadow-md shadow-rose-500/25 mb-3.5'>
+              <MessageSquare size={28} />
             </div>
-          </div>
-          <div className='md:col-span-7 flex flex-col gap-5'>
-            <div className='h-52 bg-slate-50 rounded-2xl border border-slate-100 p-6' />
-            <div className='h-52 bg-slate-50 rounded-2xl border border-slate-100 p-6' />
-          </div>
-        </div>
-      ) : (
-        /* Responsive Grid: Mobile 1-col -> Tablet/Desktop 2-col */
-        <div className='grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 items-start'>
-          {/* LEFT COLUMN: Hero Active Buddy or Empty State (md:col-span-5) */}
-          <div className='md:col-span-5 flex flex-col gap-5'>
-            <BuddyHeroCard
-              buddyData={buddyData}
-              userName={userName}
-              userAvatar={userAvatar}
-              cheeredJustNow={cheeredJustNow}
-              cheerCount={cheerCount}
-              hasCopiedCode={hasCopiedCode}
-              onSendCheer={() => handleSendCheer()}
-              onOpenAddModal={() => setIsAddModalOpen(true)}
-              onCopyCode={handleCopyCode}
-              onSelectBuddyToDelete={buddy => setBuddyToDelete(buddy)}
-            />
-
-            {/* Motivational Box */}
-            <Card padding='md' className='bg-[#fdf2f4]'>
-              <h4 className='text-xs sm:text-sm font-bold text-[#be123c] mb-1'>Tahukah Kamu? 💡</h4>
-              <p className='text-xs text-[#475569] leading-relaxed'>
-                Membangun kebiasaan suplementasi bersama teman sebaya (<em>peer encouragement</em>)
-                melipatgandakan kepatuhan minum tablet zat besi tepat waktu setiap minggu.
-              </p>
-            </Card>
-          </div>
-
-          {/* RIGHT COLUMN: Friends List (Ala Duolingo) & Activity Feed (md:col-span-7) */}
-          <div className='md:col-span-7 flex flex-col gap-5'>
-            <BuddyFriendsList
-              friendsList={buddyData.friendsList}
-              activeBuddyName={buddyData.buddyName}
-              onOpenAddModal={() => setIsAddModalOpen(true)}
-              onSendCheer={(bId, cId, bName) => handleSendCheer(bId, cId, bName)}
-              onSwitchActiveBuddy={handleSwitchActiveBuddy}
-              onSelectBuddyToDelete={buddy => setBuddyToDelete(buddy)}
-            />
-
-            {/* Live Activity Feed */}
-            <Card padding='lg'>
-              <div className='flex items-center justify-between mb-4'>
-                <h4 className='text-sm sm:text-base font-bold text-[#1e293b] flex items-center gap-2'>
-                  <Sparkles size={18} className='text-[#e11d48]' />
-                  <span>Aktivitas & Dukungan Sebaya</span>
-                </h4>
-                <span className='text-xs text-[#94a3b8]'>Pembaruan Langsung</span>
-              </div>
-
-              <div className='flex flex-col divide-y divide-[#fce7f3]'>
-                {buddyData.activities.length > 0 ? (
-                  buddyData.activities.map(act => (
-                    <div key={act.id} className='py-3 first:pt-0 last:pb-0 flex items-start gap-3'>
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs mt-0.5 ${
-                          act.iconType === 'heart'
-                            ? 'bg-rose-100 text-rose-600'
-                            : act.iconType === 'flame'
-                              ? 'bg-amber-100 text-amber-600'
-                              : 'bg-emerald-100 text-emerald-600'
-                        }`}
-                      >
-                        {act.iconType === 'heart' ? (
-                          <Heart size={14} className='fill-rose-600' />
-                        ) : act.iconType === 'flame' ? (
-                          <Flame size={14} />
-                        ) : (
-                          <CheckCircle2 size={14} />
-                        )}
-                      </div>
-
-                      <div className='flex-1'>
-                        <p className='text-xs sm:text-sm text-[#1e293b]'>
-                          <strong className='font-semibold'>{act.userName}</strong> {act.action}
-                        </p>
-                        <span className='text-[11px] text-[#94a3b8]'>{act.timestamp}</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className='py-4 text-center text-xs text-[#94a3b8]'>
-                    Belum ada aktivitas minggu ini. Kirim stiker semangat pertamamu!
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* Add Buddy Modal Component */}
-      <AddBuddyModal
-        open={isAddModalOpen}
-        userFriendCode={buddyData.userFriendCode || user?.friendCode || 'FE-SARAH-9901'}
-        friendCodeInput={friendCodeInput}
-        isSubmitting={isSubmitting}
-        hasCopiedCode={hasCopiedCode}
-        onClose={() => setIsAddModalOpen(false)}
-        onInputChange={val => setFriendCodeInput(val)}
-        onSubmit={handleAddFriend}
-        onCopyCode={handleCopyCode}
-      />
-
-      {/* Delete / Remove Buddy Confirmation Modal */}
-      {buddyToDelete && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xs animate-fade-in'>
-          <div className='w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl border border-[#fce7f3] text-center flex flex-col items-center'>
-            <div className='w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-3 shadow-inner'>
-              <Trash2 size={24} />
-            </div>
-
-            <h3 className='text-base font-bold text-[#1e293b]'>
-              Hapus {buddyToDelete.name}?
+            <h3 className='text-base sm:text-lg font-bold text-[#1e293b]'>
+              Belum Bergabung ke Grup Buddy
             </h3>
-
-            <p className='text-xs text-[#64748b] mt-2 mb-5 leading-relaxed'>
-              Apakah kamu yakin ingin menghapus <strong>{buddyToDelete.name}</strong> dari daftar Buddy Sehat?
-              Riwayat streak bersama <strong>{buddyToDelete.sharedStreakCount} minggu</strong> kalian akan terhenti.
+            <p className='text-xs sm:text-sm text-[#64748b] max-w-xs mt-1 mb-5 leading-relaxed'>
+              Ajak kawan sekelas atau sahabat UKS untuk saling mengingatkan jadwal minum TTD setiap minggu!
             </p>
 
-            <div className='flex items-center gap-3 w-full'>
+            <div className='flex items-center gap-2.5 w-full'>
               <Button
-                type='button'
-                variant='outline'
-                size='md'
-                shape='pill'
-                className='flex-1'
-                onClick={() => setBuddyToDelete(null)}
-                disabled={isDeleting}
-              >
-                Batal
-              </Button>
-
-              <Button
-                type='button'
                 variant='primary'
                 size='md'
                 shape='pill'
-                className='flex-1 bg-[#e11d48] hover:bg-[#be123c]'
-                onClick={handleConfirmDeleteBuddy}
-                disabled={isDeleting}
+                icon={<Plus size={15} />}
+                className='flex-1 text-xs'
+                onClick={() => setIsCreateModalOpen(true)}
               >
-                {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+                Buat Grup Baru
+              </Button>
+              <Button
+                variant='soft'
+                size='md'
+                shape='pill'
+                icon={<UserPlus size={15} />}
+                className='flex-1 text-xs'
+                onClick={() => setIsJoinModalOpen(true)}
+              >
+                Gabung via Kode
               </Button>
             </div>
+          </Card>
+        </div>
+      ) : (
+        /* Main Responsive Grid Layout (When groups exist) */
+        <div className='flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 items-stretch h-full overflow-hidden'>
+          {/* LEFT PANEL: Group Sidebar List (md:col-span-4 lg:col-span-4) */}
+          <div
+            className={`h-full min-h-0 flex-col ${
+              mobileView === 'list' ? 'flex md:flex' : 'hidden md:flex'
+            } md:col-span-4 lg:col-span-4`}
+          >
+            {isLoadingGroups ? (
+              <Card padding='md' className='h-full animate-pulse flex flex-col gap-3'>
+                <div className='h-8 bg-rose-100/60 rounded-xl' />
+                <div className='h-16 bg-slate-100 rounded-2xl' />
+                <div className='h-16 bg-slate-100 rounded-2xl' />
+                <div className='h-16 bg-slate-100 rounded-2xl' />
+              </Card>
+            ) : (
+              <GroupSidebarList
+                groups={groups}
+                selectedGroupId={selectedGroupId}
+                onSelectGroup={handleSelectGroup}
+                onOpenCreateModal={() => setIsCreateModalOpen(true)}
+                onOpenJoinModal={() => setIsJoinModalOpen(true)}
+              />
+            )}
+          </div>
+
+          {/* RIGHT PANEL: Group Chat Room (md:col-span-8 lg:col-span-8) */}
+          <div
+            className={`h-full min-h-0 flex-col ${
+              mobileView === 'chat' ? 'flex md:flex' : 'hidden md:flex'
+            } md:col-span-8 lg:col-span-8`}
+          >
+            {isLoadingChat && !chatDetail ? (
+              <Card padding='none' className='h-full flex flex-col items-center justify-center p-6 bg-white animate-pulse'>
+                <div className='w-12 h-12 rounded-full bg-rose-100 mb-3' />
+                <div className='w-40 h-4 bg-slate-200 rounded-full mb-2' />
+                <div className='w-64 h-3 bg-slate-100 rounded-full' />
+              </Card>
+            ) : chatDetail ? (
+              <Card
+                padding='none'
+                className='h-full flex flex-col overflow-hidden bg-white shadow-sm border border-[#fce7f3]'
+              >
+                {/* 1. Top Bar Header (Compact) */}
+                <GroupChatHeader
+                  group={chatDetail.group}
+                  onOpenGroupInfo={() => setIsInfoModalOpen(true)}
+                  onBackToGroupList={() => setMobileView('list')}
+                  showBackButton={true}
+                />
+
+                {/* 2. Compact Weekly Progress Bar */}
+                <GroupStreakCompactBar group={chatDetail.group} />
+
+                {/* 3. Message Thread (Flex-1 Scrollable) */}
+                <GroupChatMessages
+                  messages={chatDetail.messages}
+                  currentUserId={userId}
+                />
+
+                {/* 4. Sticky Chat Input + Quick Cheers */}
+                <GroupChatInput
+                  onSendMessage={handleSendMessage}
+                  onSendCheer={handleSendCheer}
+                  isSending={isSending}
+                />
+              </Card>
+            ) : (
+              /* Prompt to select a group */
+              <Card
+                padding='none'
+                className='h-full flex flex-col items-center justify-center text-center p-8 bg-white border border-[#fce7f3]'
+              >
+                <div className='w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3'>
+                  <MessageSquare size={26} />
+                </div>
+                <h3 className='text-sm sm:text-base font-bold text-[#1e293b]'>
+                  Pilih Grup untuk Mulai Chat
+                </h3>
+                <p className='text-xs text-[#64748b] max-w-xs mt-1'>
+                  Pilih salah satu grup dari daftar sebelah kiri untuk melihat pesan dan progres kepatuhan.
+                </p>
+              </Card>
+            )}
           </div>
         </div>
       )}
+
+      {/* Group Info Modal / Drawer */}
+      {chatDetail && (
+        <GroupInfoModal
+          open={isInfoModalOpen}
+          group={chatDetail.group}
+          members={chatDetail.members}
+          currentUserId={userId}
+          onClose={() => setIsInfoModalOpen(false)}
+          onAddMember={handleAddMember}
+          onLeaveGroup={handleLeaveGroup}
+          onOpenEditGroup={() => {
+            setIsInfoModalOpen(false);
+            setIsEditModalOpen(true);
+          }}
+          onDeleteGroup={handleDeleteGroup}
+        />
+      )}
+
+      {/* Edit Group Modal */}
+      {chatDetail && (
+        <EditGroupModal
+          open={isEditModalOpen}
+          group={chatDetail.group}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdateGroup={handleUpdateGroup}
+        />
+      )}
+
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreateGroup={handleCreateGroup}
+      />
+
+      {/* Join Group Modal */}
+      <JoinGroupModal
+        open={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        onJoinGroup={handleJoinGroup}
+      />
     </div>
   );
 }

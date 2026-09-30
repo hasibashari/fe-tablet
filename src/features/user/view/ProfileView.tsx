@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Flame,
@@ -10,14 +9,8 @@ import {
   Mail,
   Phone,
   School,
-  Clock,
-  Bell,
-  HelpCircle,
-  Info,
-  ChevronRight,
   Check,
 } from 'lucide-react';
-import { Card } from '@/src/shared/components/ui/Card';
 import {
   ProfileHeaderCard,
   ProfileContactCard,
@@ -28,19 +21,31 @@ import {
 import { useAuth } from '@/src/features/auth/context/AuthContext';
 import { getUserDashboardDataAction, updateUserProfileAction } from '../api/userRepository';
 
+interface UserProfileState {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatarUrl: string;
+  streakCount: number;
+  hbLevel?: number | null;
+  schoolOrOrg?: string | null;
+  riskLevel?: string | null;
+}
+
 export default function ProfileView() {
   const router = useRouter();
   const { user: authUser, logout, updateUser } = useAuth();
-  const [userProfile, setUserProfile] = useState({
-    id: 'usr_1',
-    name: 'Sarah Azzahra',
-    email: 'sarah@email.com',
-    phone: '0812-3456-7890',
+  const [userProfile, setUserProfile] = useState<UserProfileState>({
+    id: authUser?.id || '',
+    name: authUser?.name || 'Siswi FEMORY',
+    email: authUser?.email || '',
+    phone: authUser?.phone || '',
     avatarUrl: authUser?.avatarUrl || '',
-    streakCount: 4,
-    hbLevel: 12.4,
-    schoolOrOrg: 'SMA Negeri 1 Jakarta',
-    riskLevel: 'Rendah',
+    streakCount: authUser?.streakCount || 0,
+    hbLevel: authUser?.hbLevel || null,
+    schoolOrOrg: authUser?.schoolOrOrg || null,
+    riskLevel: null,
   });
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,9 +53,9 @@ export default function ProfileView() {
 
   // Edit Profile Form State
   const [editName, setEditName] = useState(userProfile.name);
-  const [editSchool, setEditSchool] = useState(userProfile.schoolOrOrg);
+  const [editSchool, setEditSchool] = useState(userProfile.schoolOrOrg || '');
   const [editPhone, setEditPhone] = useState(userProfile.phone);
-  const [editHb, setEditHb] = useState(String(userProfile.hbLevel || 12.4));
+  const [editHb, setEditHb] = useState(userProfile.hbLevel ? String(userProfile.hbLevel) : '');
 
   useEffect(() => {
     let isMounted = true;
@@ -58,11 +63,21 @@ export default function ProfileView() {
       try {
         const dashboard = await getUserDashboardDataAction(authUser?.id);
         if (isMounted && dashboard.user) {
-          setUserProfile(dashboard.user);
+          setUserProfile({
+            id: dashboard.user.id,
+            name: dashboard.user.name,
+            email: dashboard.user.email,
+            phone: dashboard.user.phone || '',
+            avatarUrl: dashboard.user.avatarUrl || '',
+            streakCount: dashboard.user.streakCount || 0,
+            hbLevel: dashboard.user.hbLevel,
+            schoolOrOrg: dashboard.user.schoolOrOrg,
+            riskLevel: dashboard.user.riskLevel,
+          });
           setEditName(dashboard.user.name);
-          setEditSchool(dashboard.user.schoolOrOrg);
-          setEditPhone(dashboard.user.phone);
-          setEditHb(String(dashboard.user.hbLevel || 12.4));
+          setEditSchool(dashboard.user.schoolOrOrg || '');
+          setEditPhone(dashboard.user.phone || '');
+          setEditHb(dashboard.user.hbLevel ? String(dashboard.user.hbLevel) : '');
         }
       } catch (err) {
         console.error('Failed to load user profile:', err);
@@ -106,9 +121,9 @@ export default function ProfileView() {
 
   const handleOpenEdit = () => {
     setEditName(userProfile.name);
-    setEditSchool(userProfile.schoolOrOrg);
+    setEditSchool(userProfile.schoolOrOrg || '');
     setEditPhone(userProfile.phone);
-    setEditHb(String(userProfile.hbLevel || 12.4));
+    setEditHb(userProfile.hbLevel ? String(userProfile.hbLevel) : '');
     setIsEditProfileModalOpen(true);
   };
 
@@ -116,20 +131,21 @@ export default function ProfileView() {
     e.preventDefault();
     setIsSaving(true);
     try {
+      const parsedHb = editHb.trim() ? Number(editHb) : undefined;
       const res = await updateUserProfileAction(userProfile.id, {
         name: editName,
         phone: editPhone,
         schoolOrOrg: editSchool,
-        hbLevel: Number(editHb) || 12.4,
+        hbLevel: parsedHb,
       });
 
       if (res.success) {
         setUserProfile(prev => ({
           ...prev,
           name: editName,
-          schoolOrOrg: editSchool,
+          schoolOrOrg: editSchool || null,
           phone: editPhone,
-          hbLevel: Number(editHb) || 12.4,
+          hbLevel: parsedHb || null,
         }));
         updateUser({ name: editName, phone: editPhone, schoolOrOrg: editSchool });
         setIsEditProfileModalOpen(false);
@@ -159,30 +175,46 @@ export default function ProfileView() {
       icon: Flame,
       iconBgColor: 'bg-orange-100',
       iconColor: 'text-orange-600',
-      badgeText: 'Konsisten',
-      badgeColor: 'bg-orange-100 text-orange-700',
+      badgeText: userProfile.streakCount > 0 ? 'Konsisten' : 'Mulai Sekarang',
+      badgeColor:
+        userProfile.streakCount > 0
+          ? 'bg-orange-100 text-orange-700'
+          : 'bg-slate-100 text-slate-600',
     },
     {
       id: 'hb',
       label: 'Kadar Hemoglobin (Hb)',
-      value: `${userProfile.hbLevel} g/dL`,
-      subtitle: 'Standar normal $\\ge 12.0$ g/dL',
+      value: userProfile.hbLevel ? `${userProfile.hbLevel} g/dL` : 'Belum Diisi',
+      subtitle: userProfile.hbLevel
+        ? 'Standar normal ≥ 12.0 g/dL'
+        : 'Isi hasil tes lab di profil',
       icon: Activity,
       iconBgColor: 'bg-emerald-100',
       iconColor: 'text-emerald-600',
-      badgeText: 'Normal',
-      badgeColor: 'bg-emerald-100 text-emerald-700',
+      badgeText: userProfile.hbLevel
+        ? userProfile.hbLevel >= 12
+          ? 'Normal'
+          : 'Anemia'
+        : 'Belum Tes',
+      badgeColor: userProfile.hbLevel
+        ? userProfile.hbLevel >= 12
+          ? 'bg-emerald-100 text-emerald-700'
+          : 'bg-rose-100 text-rose-700'
+        : 'bg-slate-100 text-slate-600',
     },
     {
       id: 'risk',
       label: 'Status Risiko Anemia',
       value: userProfile.riskLevel || 'Rendah',
-      subtitle: 'Berdasarkan evaluasi klinis',
+      subtitle: 'Berdasarkan evaluasi UKS',
       icon: HeartPulse,
       iconBgColor: 'bg-rose-100',
       iconColor: 'text-rose-600',
-      badgeText: 'Aman',
-      badgeColor: 'bg-rose-100 text-rose-700',
+      badgeText: userProfile.riskLevel === 'Tinggi' ? 'Perhatian' : 'Aman',
+      badgeColor:
+        userProfile.riskLevel === 'Tinggi'
+          ? 'bg-rose-100 text-rose-700'
+          : 'bg-emerald-100 text-emerald-700',
     },
   ];
 
@@ -190,53 +222,18 @@ export default function ProfileView() {
     {
       icon: Mail,
       label: 'Email Akun',
-      value: userProfile.email,
+      value: userProfile.email || '-',
     },
     {
       icon: Phone,
       label: 'Nomor Telepon',
-      value: userProfile.phone,
+      value: userProfile.phone || 'Belum diisi',
     },
     {
       icon: School,
       label: 'Sekolah / Instansi',
-      value: userProfile.schoolOrOrg,
-      fallbackValue: 'SMA Negeri 1 Jakarta',
-    },
-  ];
-
-  const quickMenuItems = [
-    {
-      id: 'reminder',
-      title: 'Jadwal & Pengingat Minum',
-      subtitle: 'Atur jam dan hari konsumsi rutin TTD',
-      icon: Clock,
-      iconBg: 'bg-amber-100 text-amber-600',
-      href: '/user/schedule',
-    },
-    {
-      id: 'notification',
-      title: 'Preferensi Notifikasi',
-      subtitle: 'Pengingat aktif sebelum jadwal konsumsi',
-      icon: Bell,
-      iconBg: 'bg-sky-100 text-sky-600',
-      action: () => showToast('Pengingat otomatis aktif! 🔔'),
-    },
-    {
-      id: 'help',
-      title: 'Edukasi & FAQ Anemia',
-      subtitle: 'Panduan gizi dan pencegahan anemia remaja',
-      icon: HelpCircle,
-      iconBg: 'bg-purple-100 text-purple-600',
-      href: '/user/education',
-    },
-    {
-      id: 'about',
-      title: 'Tentang Aplikasi Fe-Tablet',
-      subtitle: 'Versi 2.0.0 • Program Tablet Tambah Darah',
-      icon: Info,
-      iconBg: 'bg-emerald-100 text-emerald-600',
-      action: () => showToast('Fe-Tablet v2.0.0 • Sehat Bebas Anemia 🌸'),
+      value: userProfile.schoolOrOrg || 'Belum diatur',
+      fallbackValue: 'Belum diatur',
     },
   ];
 
@@ -266,7 +263,7 @@ export default function ProfileView() {
         avatarUrl={userProfile.avatarUrl}
         roleBadgeText='SISWI TERDAFTAR'
         roleBadgeColor='user'
-        subtitle={`${userProfile.schoolOrOrg} • Program Suplementasi TTD`}
+        subtitle={`${userProfile.schoolOrOrg || 'Program Pencegahan Anemia'} • FEMORY 🌸`}
         verified={true}
         onEditClick={handleOpenEdit}
         onSaveAvatar={handleSaveAvatar}
@@ -287,53 +284,15 @@ export default function ProfileView() {
         items={contactItems}
       />
 
-      {/* 4. Quick Navigation & Preferences Menu */}
-      <Card padding='sm' className='divide-y divide-rose-100/60'>
-        <div className='p-4 sm:p-5 pb-2'>
-          <h2 className='text-sm sm:text-base font-bold text-slate-800'>Preferensi & Navigasi Cepat</h2>
-          <p className='text-xs text-slate-400 mt-0.5'>Akses cepat pengaturan dan materi kesehatan</p>
-        </div>
-
-        {quickMenuItems.map(item => {
-          const Icon = item.icon;
-          const content = (
-            <div className='flex items-center justify-between p-3.5 sm:p-4 hover:bg-rose-50/50 rounded-2xl transition-colors cursor-pointer'>
-              <div className='flex items-center gap-3.5'>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${item.iconBg}`}>
-                  <Icon size={18} />
-                </div>
-                <div>
-                  <h3 className='text-xs sm:text-sm font-bold text-slate-800'>{item.title}</h3>
-                  <p className='text-[11px] text-slate-400 mt-0.5'>{item.subtitle}</p>
-                </div>
-              </div>
-              <ChevronRight size={18} className='text-slate-400' />
-            </div>
-          );
-
-          if (item.href) {
-            return (
-              <Link key={item.id} href={item.href} className='block'>
-                {content}
-              </Link>
-            );
-          }
-
-          return (
-            <div key={item.id} onClick={item.action}>
-              {content}
-            </div>
-          );
-        })}
-      </Card>
-
-      {/* 5. Security & Session Section */}
+      {/* 4. Security & Session Section */}
       <ProfileSecuritySection
         onLogoutClick={handleConfirmLogout}
-        onChangePasswordClick={() => showToast('Fitur ubah kata sandi dapat dilakukan melalui admin UKS.')}
+        onChangePasswordClick={() =>
+          showToast('Fitur ubah kata sandi dapat dilakukan melalui admin UKS.')
+        }
       />
 
-      {/* 6. Edit Profile Dynamic Modal */}
+      {/* 5. Edit Profile Dynamic Modal */}
       <ProfileEditModal
         isOpen={isEditProfileModalOpen}
         onClose={() => setIsEditProfileModalOpen(false)}
@@ -354,7 +313,9 @@ export default function ProfileView() {
         </div>
 
         <div>
-          <label className='block text-xs font-bold text-slate-700 mb-1.5'>Sekolah / Instansi</label>
+          <label className='block text-xs font-bold text-slate-700 mb-1.5'>
+            Sekolah / Instansi
+          </label>
           <input
             type='text'
             value={editSchool}
@@ -371,18 +332,20 @@ export default function ProfileView() {
               type='tel'
               value={editPhone}
               onChange={e => setEditPhone(e.target.value)}
-              required
               className='w-full px-3.5 py-2.5 rounded-xl border border-rose-200 bg-slate-50 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white'
             />
           </div>
 
           <div>
-            <label className='block text-xs font-bold text-slate-700 mb-1.5'>Kadar Hb Terakhir (g/dL)</label>
+            <label className='block text-xs font-bold text-slate-700 mb-1.5'>
+              Kadar Hb Terakhir (g/dL)
+            </label>
             <input
               type='number'
               step='0.1'
               value={editHb}
               onChange={e => setEditHb(e.target.value)}
+              placeholder='Contoh: 12.4'
               className='w-full px-3.5 py-2.5 rounded-xl border border-rose-200 bg-slate-50 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white'
             />
           </div>

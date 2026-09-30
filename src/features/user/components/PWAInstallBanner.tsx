@@ -140,7 +140,7 @@ export function PWAInstallBanner({
             <div className='flex-1 min-w-0'>
               <div className='flex items-center gap-2 mb-0.5'>
                 <h4 className='font-extrabold text-sm sm:text-base text-white leading-tight'>
-                  Pasang Fe-Tablet
+                  Pasang FEMORY
                 </h4>
                 <span className='inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold uppercase tracking-wider'>
                   <Sparkles size={10} /> App

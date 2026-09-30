@@ -136,73 +136,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = useCallback(
-    async (credentials: LoginCredentials): Promise<{ success: boolean; user?: AuthUser; error?: string; redirectTo?: string }> => {
-      setState((prev) => ({ ...prev, isLoading: true }))
+    async (
+      credentials: LoginCredentials,
+    ): Promise<{
+      success: boolean;
+      user?: AuthUser;
+      error?: string;
+      redirectTo?: string;
+      isProfileComplete?: boolean;
+    }> => {
+      setState(prev => ({ ...prev, isLoading: true }));
       try {
-        const res = await loginUserAction(credentials)
+        const res = await loginUserAction(credentials);
         if (res.success && res.user) {
-          saveUserSession(res.user)
-          return { success: true, user: res.user, redirectTo: res.redirectTo }
+          saveUserSession(res.user);
+          return {
+            success: true,
+            user: res.user,
+            redirectTo: res.redirectTo,
+            isProfileComplete: res.isProfileComplete,
+          };
         }
-        setState((prev) => ({ ...prev, isLoading: false }))
+        setState(prev => ({ ...prev, isLoading: false }));
         return {
           success: false,
           error: res.error || 'Gagal login. Periksa kembali email Anda.',
-        }
+        };
       } catch {
-        setState((prev) => ({ ...prev, isLoading: false }))
+        setState(prev => ({ ...prev, isLoading: false }));
         return {
           success: false,
           error: 'Terjadi kendala sistem saat login.',
-        }
+        };
       }
     },
-    [saveUserSession]
-  )
+    [saveUserSession],
+  );
 
   const quickLogin = useCallback(
     async (role: UserRole): Promise<{ success: boolean; redirectTo: string }> => {
-      setState((prev) => ({ ...prev, isLoading: true }))
+      setState(prev => ({ ...prev, isLoading: true }));
       try {
-        const res = await quickLoginAction(role)
+        const res = await quickLoginAction(role);
         if (res.success && res.user) {
-          saveUserSession(res.user)
-          return { success: true, redirectTo: res.redirectTo }
+          saveUserSession(res.user);
+          return { success: true, redirectTo: res.redirectTo };
         }
-        setState((prev) => ({ ...prev, isLoading: false }))
-        return { success: false, redirectTo: '/auth/login' }
+        setState(prev => ({ ...prev, isLoading: false }));
+        return { success: false, redirectTo: '/auth/login' };
       } catch {
-        setState((prev) => ({ ...prev, isLoading: false }))
-        return { success: false, redirectTo: '/auth/login' }
+        setState(prev => ({ ...prev, isLoading: false }));
+        return { success: false, redirectTo: '/auth/login' };
       }
     },
-    [saveUserSession]
-  )
+    [saveUserSession],
+  );
 
   const register = useCallback(
-    async (data: RegisterCredentials): Promise<{ success: boolean; error?: string; redirectTo?: string }> => {
-      setState((prev) => ({ ...prev, isLoading: true }))
+    async (
+      data: RegisterCredentials,
+    ): Promise<{ success: boolean; error?: string; message?: string }> => {
+      setState(prev => ({ ...prev, isLoading: true }));
       try {
-        const res = await registerUserAction(data)
-        if (res.success && res.user) {
-          saveUserSession(res.user)
-          return { success: true, redirectTo: res.redirectTo }
-        }
-        setState((prev) => ({ ...prev, isLoading: false }))
-        return {
-          success: false,
-          error: res.error || 'Gagal mendaftar. Silakan coba lagi.',
-        }
+        const res = await registerUserAction(data);
+        setState(prev => ({ ...prev, isLoading: false }));
+        return res;
       } catch {
-        setState((prev) => ({ ...prev, isLoading: false }))
+        setState(prev => ({ ...prev, isLoading: false }));
         return {
           success: false,
           error: 'Terjadi kendala sistem saat pendaftaran.',
-        }
+        };
       }
     },
-    [saveUserSession]
-  )
+    [],
+  );
 
   const logout = useCallback(() => {
     try {

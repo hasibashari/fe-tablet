@@ -32,7 +32,7 @@ export default function AdminProfileView() {
     phone: user?.phone || '+62 811-2233-4455',
     title: user?.schoolOrOrg || 'Fasilitator Kesehatan UKS',
     department: 'Manajemen Program TTD & Anemia Remaja',
-    clinicName: 'Fe-Tablet Puskesmas / UKS Sekolah',
+    clinicName: 'FEMORY Puskesmas / UKS Sekolah',
     roleLabel: 'Administrator',
     avatarUrl: user?.avatarUrl || '',
   });
@@ -212,7 +212,7 @@ export default function AdminProfileView() {
       {/* 3. Contact Card */}
       <ProfileContactCard
         title='Informasi Kontak Dinas'
-        subtitle='Saluran komunikasi resmi koordinator program Fe-Tablet'
+        subtitle='Saluran komunikasi resmi koordinator program FEMORY'
         items={contactItems}
       />
 

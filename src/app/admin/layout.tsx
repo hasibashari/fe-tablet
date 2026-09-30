@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile Top App Bar (< md) - Clean without hamburger button */}
         <div className="block md:hidden">
           <MobileTopBar
-            brandTitle="Fe-Tablet 🌸"
+            brandTitle="FEMORY 🌸"
             brandSubtitle="Pusat Kontrol Admin"
             brandHref="/admin/dashboard"
             badge={adminBadge}

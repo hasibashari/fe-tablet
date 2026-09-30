@@ -4,10 +4,22 @@ import React from 'react';
 import Link from 'next/link';
 import { Pill, Clock, ArrowRight, BellRing } from 'lucide-react';
 import { Card } from '../ui/Card';
-import { ReminderScheduleMock } from '../../mock/feTabletData';
+
+export interface ReminderScheduleCardData {
+  id?: string;
+  dayOfWeek: string;
+  time: string;
+  tabletName: string;
+  dosage: string;
+  frequency?: string;
+  isEnabled?: boolean;
+  remind15MinBefore?: boolean;
+  nextDate: string;
+  daysRemaining: number;
+}
 
 export interface ReminderCardProps {
-  schedule: ReminderScheduleMock;
+  schedule: ReminderScheduleCardData;
   onTakeAction?: () => void;
 }
 

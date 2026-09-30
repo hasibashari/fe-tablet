@@ -4,10 +4,14 @@ export interface UserProfile {
   email: string;
   phone: string;
   avatarUrl: string;
-  dateOfBirth: string;
-  bloodType: string;
-  height: number;
-  weight: number;
+  dateOfBirth?: string;
+  bloodType?: string;
+  height?: number;
+  weight?: number;
+  schoolOrOrg?: string;
+  hbLevel?: number;
+  streakCount?: number;
+  friendCode?: string;
 }
 
 export interface StreakResult {
@@ -43,27 +47,14 @@ export interface UserDashboardData {
     streakCount: number;
     streakUnit?: 'Hari' | 'Minggu';
     consecutiveDates?: string[];
-    hbLevel: number;
-    schoolOrOrg: string;
-    riskLevel: string;
+    hbLevel?: number | null;
+    schoolOrOrg?: string | null;
+    riskLevel?: string | null;
     friendCode?: string;
   };
   todayStatus: 'recorded' | 'missed' | 'pending';
   todayRecordedTime?: string;
-  activeSchedule: {
-    id: string;
-    dayOfWeek: string;
-    time: string;
-    tabletName: string;
-    dosage: string;
-    frequency: string;
-    category?: string;
-    isEnabled: boolean;
-    remind15MinBefore: boolean;
-    nextDate: string;
-    daysRemaining: number;
-    instructions: string;
-  };
+  activeSchedule: UserScheduleData | null;
   featuredArticle: {
     id: string;
     title: string;
@@ -80,5 +71,17 @@ export interface UserDashboardData {
     sharedStreakCount: number;
     userStatusThisWeek: 'recorded' | 'missed' | 'pending';
     buddyStatusThisWeek: 'recorded' | 'missed' | 'pending';
+  } | null;
+  primaryGroup?: {
+    id: string;
+    name: string;
+    groupCode: string;
+    streakCount: number;
+    memberCount: number;
+    membersSummary: string[];
+    weeklyCompletedCount: number;
+    weeklyTotalCount: number;
+    weeklyCompletionRate: number;
+    avatarUrl?: string;
   } | null;
 }

@@ -55,7 +55,7 @@ export async function getRemindersAction(userId: string = 'usr_1'): Promise<Remi
           title: sch?.tablet_name || 'Tablet Tambah Darah (TTD)',
           description: sch?.instructions || 'Minum setelah makan malam atau sebelum tidur.',
           date: today,
-          time: sch?.time_slot || '08:00',
+          time: sch?.time_slot || '20:00',
           status: 'PENDING' as ReminderStatus,
           type: 'MEDICATION' as ReminderType,
         },
@@ -104,7 +104,7 @@ export async function getRemindersByDateAction(
           title: 'Tablet Tambah Darah (TTD)',
           description: 'Minum setelah makan malam bersama air jeruk atau air putih.',
           date: dateStr,
-          time: '08:00',
+          time: '20:00',
           status: 'PENDING' as ReminderStatus,
           type: 'MEDICATION' as ReminderType,
         },
@@ -149,7 +149,7 @@ export async function toggleReminderStatusAction(
     await db.query(
       `INSERT INTO consumption_logs (
         id, user_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
-      ) VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', 'TTD', '1 Tablet', $3, '08:00', $4, $5, 'Self')
+      ) VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', 'TTD', '1 Tablet', $3, '20:00', $4, $5, 'Self')
       ON CONFLICT (id) DO UPDATE SET
         status = EXCLUDED.status,
         taken_at = EXCLUDED.taken_at`,
@@ -250,12 +250,12 @@ export async function getActiveNudgeAction(userId: string = 'usr_1'): Promise<Ad
     return {
       id: row.id,
       patientId: row.user_id,
-      senderName: row.sender_name || 'Fasilitator Medis Fe-Tablet',
+      senderName: row.sender_name || 'Fasilitator Medis FEMORY',
       senderRole: 'Fasilitator Kesehatan UKS',
       scheduleId: row.schedule_id || undefined,
       medicationName: 'Tablet Tambah Darah (TTD)',
       dosage: '1 tablet',
-      timeSlot: '08:00',
+      timeSlot: '20:00',
       message: row.message,
       channel: (row.channel as 'app' | 'whatsapp') || 'app',
       status: row.status as 'UNREAD' | 'READ' | 'DISMISSED',
@@ -285,9 +285,40 @@ export async function getAdherenceTrendAction(
   days: number = 7,
 ): Promise<AdherenceTrendPoint[]> {
   try {
-    const result: AdherenceTrendPoint[] = [];
     const now = new Date();
+    const cutoffDate = new Date(now);
+    cutoffDate.setDate(cutoffDate.getDate() - (days - 1));
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
+    // Single aggregated query for all days in the range
+    const logRes = await db.query<{
+      scheduled_date: string | Date;
+      total_logs: string | number;
+      completed_logs: string | number | null;
+    }>(
+      `SELECT 
+         scheduled_date,
+         COUNT(*) as total_logs,
+         SUM(CASE WHEN status IN ('ON_TIME', 'LATE') THEN 1 ELSE 0 END) as completed_logs
+       FROM consumption_logs 
+       WHERE user_id = $1 AND scheduled_date >= $2
+       GROUP BY scheduled_date`,
+      [userId, cutoffDateStr],
+    );
+
+    const statsMap = new Map<string, { total: number; completed: number }>();
+    for (const r of logRes.rows) {
+      const dateKey =
+        typeof r.scheduled_date === 'string'
+          ? r.scheduled_date.split('T')[0]
+          : new Date(r.scheduled_date).toISOString().split('T')[0];
+      statsMap.set(dateKey, {
+        total: Number(r.total_logs) || 0,
+        completed: Number(r.completed_logs) || 0,
+      });
+    }
+
+    const result: AdherenceTrendPoint[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
@@ -296,21 +327,9 @@ export async function getAdherenceTrendAction(
       const dayLabel = d.toLocaleDateString('id-ID', { weekday: 'short' });
       const dateLabel = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 
-      const logRes = await db.query<{
-        total_logs: string | number;
-        completed_logs: string | number | null;
-      }>(
-        `SELECT 
-           COUNT(*) as total_logs,
-           SUM(CASE WHEN status IN ('ON_TIME', 'LATE') THEN 1 ELSE 0 END) as completed_logs
-         FROM consumption_logs 
-         WHERE user_id = $1 AND scheduled_date = $2`,
-        [userId, dateStr],
-      );
-      const logStats = logRes.rows[0];
-
-      const total = Number(logStats?.total_logs) || 0;
-      const completed = Number(logStats?.completed_logs) || 0;
+      const stats = statsMap.get(dateStr);
+      const total = stats ? stats.total : 0;
+      const completed = stats ? stats.completed : 0;
       const adherence = total > 0 ? Math.round((completed / total) * 100) : 100;
 
       result.push({

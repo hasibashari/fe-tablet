@@ -1,14 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Filter,
-  X,
-} from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
 import { Card } from '@/src/shared/components/ui/Card';
 import { ActivityDateInfo } from '../api/consumptionRepository';
 import { formatShortDate } from '../utils/dateHelpers';
@@ -21,8 +14,6 @@ export interface DateFilterBarProps {
   onSelectDate: (date: string) => void;
   dateFilterPreset: DateFilterPreset;
   onDateFilterPresetChange: (preset: DateFilterPreset) => void;
-  statusFilter: StatusFilterOption;
-  onStatusFilterChange: (status: StatusFilterOption) => void;
   activityMap: Record<string, ActivityDateInfo>;
   todayStr: string;
   todayStatus?: 'pending' | 'recorded' | 'missed';
@@ -33,8 +24,6 @@ export function DateFilterBar({
   onSelectDate,
   dateFilterPreset,
   onDateFilterPresetChange,
-  statusFilter,
-  onStatusFilterChange,
   activityMap,
   todayStr,
   todayStatus = 'pending',
@@ -124,14 +113,16 @@ export function DateFilterBar({
             <button
               type='button'
               onClick={() => setIsCalendarOpen(prev => !prev)}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs ${
+              className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs ${
                 isCalendarOpen || dateFilterPreset === 'CUSTOM'
                   ? 'bg-[#fff1f2] border-[#e11d48] text-[#e11d48] ring-2 ring-rose-200'
                   : 'bg-white border-slate-200 text-slate-700 hover:border-rose-300'
               }`}
+              title='Pilih Tanggal dari Kalender'
+              aria-label='Pilih Tanggal dari Kalender'
             >
-              <CalendarIcon size={15} className='text-[#e11d48]' />
-              <span>
+              <CalendarIcon size={15} className='text-[#e11d48] shrink-0' />
+              <span className='hidden sm:inline'>
                 {dateFilterPreset === 'CUSTOM'
                   ? formatShortDate(selectedDate)
                   : dateFilterPreset === 'TODAY'
@@ -140,7 +131,7 @@ export function DateFilterBar({
               </span>
               <ChevronDown
                 size={14}
-                className={`transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`}
+                className={`hidden sm:inline-block transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`}
               />
             </button>
 
@@ -328,30 +319,20 @@ export function DateFilterBar({
           </div>
         </div>
 
-        {/* Right Side: Status Filter Dropdown */}
-        <div className='flex items-center gap-2 self-end lg:self-auto'>
-          <Filter size={14} className='text-slate-400' />
-          <select
-            value={statusFilter}
-            onChange={e => onStatusFilterChange(e.target.value as StatusFilterOption)}
-            className='text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 h-8 focus:outline-none focus:ring-2 focus:ring-rose-400 cursor-pointer'
-          >
-            <option value='ALL'>Semua Status</option>
-            <option value='ON_TIME'>Hanya Selesai (✓)</option>
-            <option value='MISSED'>Hanya Terlewat (✕)</option>
-          </select>
-
-          {dateFilterPreset !== 'ALL' && (
+        {/* Right Side: Reset Date Filter button if preset is active */}
+        {dateFilterPreset !== 'ALL' && (
+          <div className='flex items-center gap-1.5 self-end lg:self-auto'>
             <button
               type='button'
               onClick={() => onDateFilterPresetChange('ALL')}
-              className='text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer'
+              className='inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-[#e11d48] hover:bg-rose-50 rounded-xl transition-colors cursor-pointer border border-slate-200 hover:border-[#fce7f3]'
               title='Reset Filter Tanggal'
             >
-              <X size={15} />
+              <X size={14} />
+              <span>Reset Filter</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </Card>
   );

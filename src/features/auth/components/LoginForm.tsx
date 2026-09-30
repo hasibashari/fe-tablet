@@ -24,6 +24,7 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get('redirect');
+  const isJustRegistered = searchParams.get('registered') === 'true';
 
   const { login } = useAuth();
 
@@ -74,10 +75,18 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
       {/* Optional Header Form if not in tabbed container */}
       {!hideHeader && (
         <div className='mb-6 text-left'>
-          <h2 className='text-2xl font-extrabold text-[#1e293b] tracking-tight mb-1'>Masuk</h2>
+          <h2 className='text-2xl font-extrabold text-[#1e293b] tracking-tight mb-1'>Masuk ke FEMORY</h2>
           <p className='text-xs sm:text-sm text-[#64748b]'>
             Masukkan kredensial akun Siswi atau Administrator Anda.
           </p>
+        </div>
+      )}
+
+      {/* Notice if newly registered */}
+      {isJustRegistered && !errorMessage && !successRole && (
+        <div className='mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-2 animate-fade-in'>
+          <CheckCircle2 size={16} className='text-emerald-600 shrink-0' />
+          <span>Akun Anda telah berhasil dibuat! Silakan masuk menggunakan email dan kata sandi Anda.</span>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 /**
  * Domain Constants
- * Centralized static domain rules, enumerations, and metadata for Fe-Tablet.
+ * Centralized static domain rules, enumerations, and metadata for FEMORY.
  */
 
 export const DAYS_OF_WEEK = [

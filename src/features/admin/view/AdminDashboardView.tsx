@@ -86,7 +86,7 @@ export default function AdminDashboardView() {
       userPhone: phone || '0812-3456-7890',
       medicationName: medicationName || 'Tablet Tambah Darah (TTD)',
       dosage: dosage || '1 Tablet (Setelah makan)',
-      timeSlot: timeSlot || '08:00 WIB',
+      timeSlot: timeSlot || '20:00 WIB',
     });
     setReminderModalOpen(true);
   };

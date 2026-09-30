@@ -169,20 +169,13 @@ export function ProfilePhotoUploader({
         )}
       </div>
 
-      {/* Interactive Photo Upload Modal Dialog */}
+      {/* Interactive Photo Upload Modal Dialog (Centered) */}
       {isModalOpen && (
-        <div className='fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in'>
+        <div className='fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in'>
           <div
-            className='bg-white rounded-t-[28px] sm:rounded-3xl shadow-2xl border border-rose-100 max-w-md w-full p-5 sm:p-6 relative overflow-hidden animate-scale-up max-h-[88dvh] sm:max-h-[90vh] flex flex-col'
-            style={{
-              paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
-            }}
+            className='bg-white rounded-3xl shadow-2xl border border-rose-100 max-w-md w-full p-5 sm:p-6 relative overflow-hidden animate-scale-up max-h-[88dvh] sm:max-h-[90vh] flex flex-col'
             onClick={e => e.stopPropagation()}
           >
-            {/* Sheet Handle Indicator on Mobile */}
-            <div className='pt-0.5 pb-2 flex justify-center sm:hidden'>
-              <div className='w-10 h-1 rounded-full bg-slate-300' />
-            </div>
             {/* Modal Header */}
             <div className='flex items-center justify-between pb-3 border-b border-slate-100 mb-5'>
               <div>

@@ -8,8 +8,8 @@ interface ChatHistoryItem {
 const GEMINI_API_KEY = process.env.GEMINI_API || process.env.GEMINI_API_KEY || '';
 const GEMINI_MODEL = 'gemini-3.6-flash';
 
-const FE_TABLET_SYSTEM_PROMPT = `
-Kamu adalah "Dokter & Asisten Medis Cerdas Fe-Tablet" (Klinik Edukasi Anemia & Suplementasi Tablet Tambah Darah).
+const FEMORY_SYSTEM_PROMPT = `
+Kamu adalah "Dokter & Asisten Medis Cerdas FEMORY" (Klinik Edukasi Anemia & Suplementasi Tablet Tambah Darah).
 Tugas utamamu adalah:
 1. Menjawab pertanyaan pasien (terutama remaja putri, calon pengantin, dan ibu) seputar Anemia Defisiensi Besi, Tablet Tambah Darah (TTD), asupan nutrisi kaya zat besi, dan pola hidup sehat.
 2. Memberikan edukasi yang jelas, akurat secara medis sesuai pedoman Kemenkes RI dan WHO, ramah, menenangkan, dan mudah dimengerti.
@@ -18,12 +18,20 @@ Tugas utamamu adalah:
 5. Format jawaban dengan rapi menggunakan poin-poin bila perlu, singkat padat, dan bahasa Indonesia yang hangat, bersahabat, serta menyemangati (gunakan emotikon sopan seperti 🌸, 💊, 💡 bila sesuai).
 `;
 
+export interface UserConsultationContext {
+  name?: string;
+  schoolOrOrg?: string;
+  hbLevel?: number;
+  gender?: string;
+}
+
 /**
- * Tanya jawab AI Konsultasi Medis Fe-Tablet
+ * Tanya jawab AI Konsultasi Medis FEMORY
  */
 export async function askGeminiConsultationAction(
   prompt: string,
-  history: Array<{ sender: 'user' | 'assistant'; text: string }> = []
+  history: Array<{ sender: 'user' | 'assistant'; text: string }> = [],
+  userContext?: UserConsultationContext
 ): Promise<{ success: boolean; answer: string; error?: string }> {
   try {
     if (!GEMINI_API_KEY) {
@@ -33,6 +41,28 @@ export async function askGeminiConsultationAction(
         error: 'GEMINI_API key tidak ditemukan di file .env konfigurasi server.',
       };
     }
+
+    // Personalize system instruction based on user context
+    const contextDetails: string[] = [];
+    if (userContext?.name?.trim()) {
+      contextDetails.push(
+        `Pasien/pengguna yang sedang berkonsultasi bernama "${userContext.name.trim()}". Sapalah dan panggil dia dengan nama depannya secara hangat, akrab, dan bersahabat (misal: "Halo ${userContext.name.trim().split(' ')[0]} 🌸").`
+      );
+    } else {
+      contextDetails.push(
+        `Sapalah pasien/pengguna dengan ramah dan sopan menggunakan panggilan "Sahabat FEMORY" atau "Kakak".`
+      );
+    }
+
+    if (userContext?.schoolOrOrg?.trim()) {
+      contextDetails.push(`Asal sekolah/institusi: ${userContext.schoolOrOrg.trim()}.`);
+    }
+
+    if (userContext?.hbLevel) {
+      contextDetails.push(`Kadar Hb terakhir yang tercatat: ${userContext.hbLevel} g/dL.`);
+    }
+
+    const dynamicSystemPrompt = `${FEMORY_SYSTEM_PROMPT}\n6. ${contextDetails.join(' ')}`;
 
     // Format chat contents
     const contents: ChatHistoryItem[] = [];
@@ -60,7 +90,7 @@ export async function askGeminiConsultationAction(
         },
         body: JSON.stringify({
           system_instruction: {
-            parts: [{ text: FE_TABLET_SYSTEM_PROMPT }],
+            parts: [{ text: dynamicSystemPrompt }],
           },
           contents,
           generationConfig: {
@@ -130,7 +160,7 @@ export async function generateAiArticleDraftAction(
     }
 
     const prompt = `
-Buatkan draf artikel edukasi kesehatan lengkap dan menarik untuk aplikasi Fe-Tablet (Program Tablet Tambah Darah & Pencegahan Anemia Remaja Putri).
+Buatkan draf artikel edukasi kesehatan lengkap dan menarik untuk aplikasi FEMORY (Program Tablet Tambah Darah & Pencegahan Anemia Remaja Putri).
 Topik: "${topic}"
 Kategori: "${category}"
 Target Pembaca: Siswi sekolah, remaja putri, dan pembina UKS.
@@ -204,7 +234,7 @@ export async function generateAiUserNudgeAction(params: {
     const name = params.userName || params.patientName || 'Siswi';
 
     const prompt = `
-Tuliskan 1 pesan pengingat WhatsApp singkat (2-3 kalimat) dari Pembina UKS / Tim Fe-Tablet untuk siswi/pengguna berikut:
+Tuliskan 1 pesan pengingat WhatsApp singkat (2-3 kalimat) dari Pembina UKS / Tim FEMORY untuk siswi/pengguna berikut:
 - Nama Siswi: ${name}
 - Nama Tablet/Obat: ${params.medicationName} (${params.dosage})
 - Waktu Minum: ${params.timeSlot}

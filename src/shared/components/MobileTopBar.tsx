@@ -23,7 +23,7 @@ export default function MobileTopBar({
   brandHref = '/user/dashboard',
   badge,
   rightAction,
-  userName = 'Sarah',
+  userName = 'Siswi',
   avatarUrl,
 }: MobileTopBarProps) {
   return (
@@ -60,7 +60,7 @@ export default function MobileTopBar({
                 </span>
               ) : (
                 <span className='text-[10px] sm:text-[11px] text-[#e11d48] font-medium leading-none'>
-                  Fe-Tablet App
+                  FEMORY App
                 </span>
               )}
             </div>

@@ -7,9 +7,11 @@ import { calculateChronologicalStreak as calcChronStreak } from '../utils/streak
 import {
   getUserProfileAction as getProfile,
   updateUserProfileAction as updateProfile,
+  saveUserInitialSetupAction as saveInitialSetup,
 } from './profileRepository';
 import {
   getUserScheduleAction as getSchedule,
+  createUserScheduleAction as createSchedule,
   updateUserScheduleSettingsAction as updateSchedule,
 } from './scheduleRepository';
 import { calculateAndSyncUserStreak as syncStreak } from './streakRepository';
@@ -31,8 +33,23 @@ export async function calculateAndSyncUserStreak(
   return syncStreak(userId, scheduleFrequency);
 }
 
-export async function getUserScheduleAction(userId?: string): Promise<UserScheduleData> {
+export async function getUserScheduleAction(userId?: string): Promise<UserScheduleData | null> {
   return getSchedule(userId);
+}
+
+export async function createUserScheduleAction(
+  userId: string,
+  data: {
+    dayOfWeek: string;
+    timeSlot: string;
+    remind15MinBefore?: boolean;
+    frequency?: string;
+    tabletName?: string;
+    dosage?: string;
+    instructions?: string;
+  },
+): Promise<{ success: boolean; error?: string }> {
+  return createSchedule(userId, data);
 }
 
 export async function updateUserScheduleSettingsAction(
@@ -58,6 +75,7 @@ export async function updateUserProfileAction(
     name?: string;
     phone?: string;
     avatarUrl?: string | null;
+    dateOfBirth?: string;
     schoolOrOrg?: string;
     hbLevel?: number;
     bloodType?: string;
@@ -66,6 +84,28 @@ export async function updateUserProfileAction(
   },
 ): Promise<{ success: boolean; error?: string }> {
   return updateProfile(userId, data);
+}
+
+export async function saveUserInitialSetupAction(
+  userId: string,
+  data: {
+    schoolOrOrg: string;
+    dateOfBirth?: string;
+    bloodType?: string;
+    height?: number;
+    weight?: number;
+    hbLevel?: number;
+    schedule: {
+      dayOfWeek: string;
+      timeSlot: string;
+      remind15MinBefore?: boolean;
+      frequency?: 'weekly' | 'daily';
+      tabletName?: string;
+      dosage?: string;
+    };
+  },
+): Promise<{ success: boolean; error?: string }> {
+  return saveInitialSetup(userId, data);
 }
 
 // ============================================================
@@ -84,89 +124,121 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
       effectiveUserId = firstUserRes.rows[0]?.id || 'usr_1';
     }
 
-    const userRes = await db.query<{
-      id: string;
-      name: string;
-      email: string;
-      phone: string | null;
-      avatar_url: string | null;
-      school_or_org: string | null;
-      hb_level: number | null;
-      risk_level: string | null;
-      friend_code: string | null;
-      streak_count: number | null;
-    }>(
-      `SELECT u.id, u.name, u.email, u.phone, u.avatar_url,
-              p.school_or_org, p.hb_level, p.risk_level, p.friend_code, p.streak_count
-       FROM users u
-       LEFT JOIN user_profiles p ON u.id = p.user_id
-       WHERE u.id = $1`,
-      [effectiveUserId],
-    );
+    // Parallelize user, schedule, today's log, featured article, and primary group queries
+    const [userRes, scheduleRes, todayLogRes, articleRes, groupRes] = await Promise.all([
+      db.query<{
+        id: string;
+        name: string;
+        email: string;
+        phone: string | null;
+        avatar_url: string | null;
+        school_or_org: string | null;
+        hb_level: number | null;
+        risk_level: string | null;
+        friend_code: string | null;
+        streak_count: number | null;
+      }>(
+        `SELECT u.id, u.name, u.email, u.phone, u.avatar_url,
+                p.school_or_org, p.hb_level, p.risk_level, p.friend_code, p.streak_count
+         FROM users u
+         LEFT JOIN user_profiles p ON u.id = p.user_id
+         WHERE u.id = $1`,
+        [effectiveUserId],
+      ),
+      db.query<{
+        id: string;
+        tablet_name: string;
+        dosage: string;
+        frequency: string;
+        day_of_week: string;
+        time_slot: string;
+        is_enabled: boolean;
+        remind_15min_before: boolean;
+        instructions: string | null;
+      }>(
+        `SELECT id, tablet_name, dosage, frequency, day_of_week, time_slot, is_enabled, remind_15min_before, instructions
+         FROM reminder_schedules
+         WHERE user_id = $1 AND status = 'Aktif'
+         ORDER BY created_at DESC LIMIT 1`,
+        [effectiveUserId],
+      ),
+      db.query<{ status: string; taken_at: string | null }>(
+        `SELECT status, taken_at 
+         FROM consumption_logs 
+         WHERE user_id = $1 AND scheduled_date = $2
+         ORDER BY created_at DESC LIMIT 1`,
+        [effectiveUserId, todayStr],
+      ),
+      db.query<{
+        id: string;
+        title: string;
+        category: string;
+        read_time: string;
+        summary: string;
+        image_url: string;
+      }>(
+        `SELECT id, title, category, read_time, summary, image_url 
+         FROM articles 
+         WHERE status = 'Terbit' 
+         ORDER BY is_featured DESC, published_at DESC LIMIT 1`,
+      ),
+      db.query<{
+        id: string;
+        name: string;
+        group_code: string;
+        streak_count: number;
+        avatar_url: string | null;
+      }>(
+        `SELECT g.id, g.name, g.group_code, g.streak_count, g.avatar_url
+         FROM buddy_groups g
+         JOIN buddy_group_members gm ON g.id = gm.group_id
+         WHERE gm.user_id = $1
+         ORDER BY g.updated_at DESC, g.created_at DESC
+         LIMIT 1`,
+        [effectiveUserId],
+      ),
+    ]);
 
     const userRow = userRes.rows[0];
-    const userName = userRow?.name || 'Sarah Azzahra';
-    const userEmail = userRow?.email || 'sarah@email.com';
-    const userPhone = userRow?.phone || '0812-3456-7890';
+    const userName = userRow?.name || 'Siswi FEMORY';
+    const userEmail = userRow?.email || '';
+    const userPhone = userRow?.phone || '';
     const userAvatarUrl = userRow?.avatar_url || '';
 
-    // 2. Active schedule
-    const scheduleRes = await db.query<{
-      id: string;
-      tablet_name: string;
-      dosage: string;
-      frequency: string;
-      day_of_week: string;
-      time_slot: string;
-      is_enabled: boolean;
-      remind_15min_before: boolean;
-      instructions: string | null;
-    }>(
-      `SELECT id, tablet_name, dosage, frequency, day_of_week, time_slot, is_enabled, remind_15min_before, instructions
-       FROM reminder_schedules
-       WHERE user_id = $1 AND status = 'Aktif'
-       ORDER BY created_at DESC LIMIT 1`,
-      [effectiveUserId],
-    );
-
-    let scheduleId = 'sch_fe_1';
-    let dayOfWeek = 'Sabtu';
-    let timeSlot = '08:00';
-    let isEnabled = true;
-    let dosage = '1 tablet, 1x seminggu';
-    let tabletName = 'Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)';
-    let frequency = 'Mingguan';
+    // Active schedule
+    let activeSchedule: UserScheduleData | null = null;
     let schedFrequencyType: 'daily' | 'weekly' = 'weekly';
-    let remind15MinBefore = true;
-    let instructions =
-      'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.';
 
     if (scheduleRes.rows.length > 0) {
       const sch = scheduleRes.rows[0];
-      scheduleId = sch.id;
-      tabletName = sch.tablet_name || tabletName;
-      dosage = sch.dosage ? `${sch.dosage}, 1x seminggu` : dosage;
       schedFrequencyType = sch.frequency === 'daily' ? 'daily' : 'weekly';
-      frequency = sch.frequency === 'daily' ? 'Harian' : 'Mingguan';
-      dayOfWeek = sch.day_of_week || 'Sabtu';
-      timeSlot = sch.time_slot || '08:00';
-      isEnabled = sch.is_enabled;
-      remind15MinBefore = sch.remind_15min_before;
-      instructions = sch.instructions || instructions;
+      const dayOfWeek = sch.day_of_week || 'Sabtu';
+      const timeSlot = sch.time_slot || '20:00';
+      const { nextDate, daysRemaining } = calculateNextSchedule(dayOfWeek, timeSlot);
+
+      activeSchedule = {
+        id: sch.id,
+        patientId: effectiveUserId,
+        tabletName: sch.tablet_name || 'Tablet Tambah Darah (TTD)',
+        dosage: sch.dosage || '1 tablet, 1x seminggu',
+        frequency: sch.frequency === 'daily' ? 'Harian' : 'Mingguan',
+        category: sch.frequency === 'daily' ? 'Terapi Anemia' : 'TTD Rutin',
+        dayOfWeek,
+        time: timeSlot,
+        isEnabled: sch.is_enabled,
+        remind15MinBefore: sch.remind_15min_before,
+        instructions:
+          sch.instructions ||
+          'Minum 1 tablet seminggu sekali setelah makan malam atau sebelum tidur.',
+        nextDate,
+        daysRemaining,
+      };
     }
 
-    // 3. Dynamic chronological streak calculation from database
+    // Dynamic chronological streak calculation from database
     const streakResult = await calculateAndSyncUserStreak(effectiveUserId, schedFrequencyType);
 
-    // 4. Today's consumption status
-    const todayLogRes = await db.query<{ status: string; taken_at: string | null }>(
-      `SELECT status, taken_at 
-       FROM consumption_logs 
-       WHERE user_id = $1 AND scheduled_date = $2
-       ORDER BY created_at DESC LIMIT 1`,
-      [effectiveUserId, todayStr],
-    );
-
+    // Today's consumption status
     let todayStatus: 'recorded' | 'missed' | 'pending' = 'pending';
     let todayRecordedTime: string | undefined;
 
@@ -174,29 +246,13 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
       const log = todayLogRes.rows[0];
       if (log.status === 'ON_TIME' || log.status === 'LATE') {
         todayStatus = 'recorded';
-        todayRecordedTime = log.taken_at || '08:00 WIB';
+        todayRecordedTime = log.taken_at || '20:00 WIB';
       } else if (log.status === 'MISSED' || log.status === 'SKIPPED') {
         todayStatus = 'missed';
       }
     }
 
-    const { nextDate, daysRemaining } = calculateNextSchedule(dayOfWeek, timeSlot);
-
-    // 5. Featured Article
-    const articleRes = await db.query<{
-      id: string;
-      title: string;
-      category: string;
-      read_time: string;
-      summary: string;
-      image_url: string;
-    }>(
-      `SELECT id, title, category, read_time, summary, image_url 
-       FROM articles 
-       WHERE status = 'Terbit' 
-       ORDER BY is_featured DESC, published_at DESC LIMIT 1`,
-    );
-
+    // Featured Article
     const art = articleRes.rows[0];
     const featuredArticle = art
       ? {
@@ -209,48 +265,49 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         }
       : null;
 
-    // 6. Active Buddy Connection
-    let activeBuddy = null;
-    const buddyRes = await db.query<{
-      connection_id: string;
-      user_id: string;
-      buddy_user_id: string;
-      shared_streak_count: number;
-      this_week_user_status: string;
-      this_week_buddy_status: string;
-      buddy_id: string;
-      buddy_name: string;
-      buddy_avatar_url: string | null;
-    }>(
-      `SELECT bc.id as connection_id, bc.user_id, bc.buddy_user_id, bc.shared_streak_count,
-              bc.this_week_user_status, bc.this_week_buddy_status,
-              bu.id as buddy_id, bu.name as buddy_name, bu.avatar_url as buddy_avatar_url
-       FROM buddy_connections bc
-       JOIN users bu ON (CASE WHEN bc.user_id = $1 THEN bc.buddy_user_id ELSE bc.user_id END) = bu.id
-       WHERE (bc.user_id = $1 OR bc.buddy_user_id = $1) AND bc.status = 'ACCEPTED'
-       ORDER BY bc.shared_streak_count DESC, bc.updated_at DESC
-       LIMIT 1`,
-      [effectiveUserId],
-    );
+    // Active Group Buddy
+    let primaryGroup = null;
+    if (groupRes.rows.length > 0) {
+      const gRow = groupRes.rows[0];
+      const membersRes = await db.query<{
+        user_id: string;
+        name: string;
+        avatar_url: string | null;
+        status_this_week: string | null;
+      }>(
+        `SELECT u.id as user_id, u.name, u.avatar_url,
+                (SELECT cl.status 
+                 FROM consumption_logs cl 
+                 WHERE cl.user_id = u.id 
+                   AND cl.scheduled_date >= CURRENT_DATE - INTERVAL '7 days'
+                 ORDER BY cl.created_at DESC LIMIT 1) as status_this_week
+         FROM buddy_group_members gm
+         JOIN users u ON gm.user_id = u.id
+         WHERE gm.group_id = $1
+         ORDER BY gm.joined_at ASC`,
+        [gRow.id],
+      );
 
-    if (buddyRes.rows.length > 0) {
-      const bRow = buddyRes.rows[0];
-      const isUserInitiator = bRow.user_id === effectiveUserId;
-      const uStatus = (
-        isUserInitiator ? bRow.this_week_user_status : bRow.this_week_buddy_status
-      ) as 'recorded' | 'missed' | 'pending';
-      const bStatus = (
-        isUserInitiator ? bRow.this_week_buddy_status : bRow.this_week_user_status
-      ) as 'recorded' | 'missed' | 'pending';
+      const gMembers = membersRes.rows;
+      const gMemberCount = gMembers.length;
+      const gCompletedCount = gMembers.filter(
+        m => m.status_this_week === 'ON_TIME' || m.status_this_week === 'LATE',
+      ).length;
+      const gRate = gMemberCount > 0 ? Math.round((gCompletedCount / gMemberCount) * 100) : 0;
 
-      activeBuddy = {
-        connectionId: bRow.connection_id,
-        buddyId: bRow.buddy_id,
-        buddyName: bRow.buddy_name || 'Sahabat Sehat',
-        buddyAvatarUrl: bRow.buddy_avatar_url || '',
-        sharedStreakCount: Number(bRow.shared_streak_count) || 0,
-        userStatusThisWeek: uStatus || 'pending',
-        buddyStatusThisWeek: bStatus || 'pending',
+      primaryGroup = {
+        id: gRow.id,
+        name: gRow.name,
+        groupCode: gRow.group_code,
+        streakCount: Number(gRow.streak_count) || 0,
+        memberCount: gMemberCount,
+        membersSummary: gMembers.map(m => m.name.split(' ')[0]),
+        weeklyCompletedCount: gCompletedCount,
+        weeklyTotalCount: gMemberCount,
+        weeklyCompletionRate: gRate,
+        avatarUrl:
+          gRow.avatar_url ||
+          `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(gRow.name)}`,
       };
     }
 
@@ -264,64 +321,39 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         streakCount: streakResult.streakCount,
         streakUnit: streakResult.streakUnit,
         consecutiveDates: streakResult.consecutiveDates,
-        hbLevel: Number(userRow?.hb_level) || 12.4,
-        schoolOrOrg: userRow?.school_or_org || 'SMA Negeri 1 Sehat',
-        riskLevel: userRow?.risk_level || 'Rendah',
-        friendCode: userRow?.friend_code || 'FE-SARAH-9901',
+        hbLevel:
+          userRow?.hb_level !== null && userRow?.hb_level !== undefined
+            ? Number(userRow.hb_level)
+            : null,
+        schoolOrOrg: userRow?.school_or_org || null,
+        riskLevel: userRow?.risk_level || null,
+        friendCode: userRow?.friend_code || undefined,
       },
       todayStatus,
       todayRecordedTime,
-      activeSchedule: {
-        id: scheduleId,
-        dayOfWeek,
-        time: timeSlot,
-        tabletName,
-        dosage,
-        frequency,
-        category: frequency === 'Harian' ? 'Terapi Anemia' : 'TTD Rutin',
-        isEnabled,
-        remind15MinBefore,
-        nextDate,
-        daysRemaining,
-        instructions,
-      },
+      activeSchedule,
       featuredArticle,
-      activeBuddy,
+      activeBuddy: null,
+      primaryGroup,
     };
   } catch (error) {
     console.error('Error in getUserDashboardDataAction:', error);
-    const { nextDate, daysRemaining } = calculateNextSchedule('Sabtu', '08:00');
     return {
       user: {
         id: userId || 'usr_1',
-        name: 'Sarah Azzahra',
-        email: 'sarah@email.com',
-        phone: '0812-3456-7890',
+        name: 'Siswi FEMORY',
+        email: '',
+        phone: '',
         avatarUrl: '',
         streakCount: 0,
         streakUnit: 'Minggu',
         consecutiveDates: [],
-        hbLevel: 12.4,
-        schoolOrOrg: 'SMA Negeri 1 Sehat',
-        riskLevel: 'Rendah',
-        friendCode: 'FE-SARAH-9901',
+        hbLevel: null,
+        schoolOrOrg: null,
+        riskLevel: null,
       },
       todayStatus: 'pending',
-      activeSchedule: {
-        id: 'sch_fe_1',
-        dayOfWeek: 'Sabtu',
-        time: '08:00',
-        tabletName: 'Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)',
-        dosage: '1 tablet, 1x seminggu',
-        frequency: 'Mingguan',
-        category: 'TTD Rutin',
-        isEnabled: true,
-        remind15MinBefore: true,
-        nextDate,
-        daysRemaining,
-        instructions:
-          'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
-      },
+      activeSchedule: null,
       featuredArticle: null,
       activeBuddy: null,
     };
@@ -393,7 +425,7 @@ export async function recordUserConsumptionAction(
         await db.query(
           `INSERT INTO consumption_logs (
             id, user_id, schedule_id, title, category, dosage, scheduled_date, scheduled_time, taken_at, status, taken_by
-          ) VALUES ($1, $2, $3, $4, 'TTD', $5, $6, '08:00', $7, $8, 'Self')`,
+          ) VALUES ($1, $2, $3, $4, 'TTD', $5, $6, '20:00', $7, $8, 'Self')`,
           [
             logId,
             userId,
@@ -410,20 +442,6 @@ export async function recordUserConsumptionAction(
 
     // Dynamic streak calculation & synchronization in PostgreSQL
     const streakResult = await calculateAndSyncUserStreak(userId, schedFreq);
-
-    // Sync buddy_connections
-    await db.query(
-      `UPDATE buddy_connections 
-       SET this_week_user_status = $1, shared_streak_count = $2, last_synced_at = CURRENT_TIMESTAMP 
-       WHERE user_id = $3`,
-      [status, streakResult.streakCount, userId],
-    );
-    await db.query(
-      `UPDATE buddy_connections 
-       SET this_week_buddy_status = $1, shared_streak_count = $2, last_synced_at = CURRENT_TIMESTAMP 
-       WHERE buddy_user_id = $3`,
-      [status, streakResult.streakCount, userId],
-    );
 
     return { success: true, status, newStreak: streakResult.streakCount };
   } catch (error) {

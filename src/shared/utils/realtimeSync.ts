@@ -5,6 +5,11 @@ export type RealtimeEventType =
   | 'MEDICATION_TAKEN'
   | 'SCHEDULE_UPDATED'
   | 'NUDGE_DISMISSED'
+  | 'GROUP_MESSAGE_SENT'
+  | 'GROUP_MEMBER_ADDED'
+  | 'GROUP_UPDATED'
+  | 'GROUP_CREATED'
+  | 'GROUP_DELETED'
 
 export interface RealtimeEventPayload {
   type: RealtimeEventType
@@ -12,6 +17,9 @@ export interface RealtimeEventPayload {
   patientId?: string
   scheduleId?: string
   nudgeId?: string
+  groupId?: string
+  messageId?: string
+  senderName?: string
   timestamp: number
 }
 

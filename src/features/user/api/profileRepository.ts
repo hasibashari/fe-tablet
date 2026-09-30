@@ -35,12 +35,16 @@ export async function getUserProfileAction(userId: string = 'usr_1'): Promise<Us
       id: row.id,
       name: row.name,
       email: row.email,
-      phone: row.phone || '-',
+      phone: row.phone || '',
       avatarUrl: row.avatar_url || '',
-      dateOfBirth: row.date_of_birth ? String(row.date_of_birth) : '2008-04-12',
-      bloodType: row.blood_type || 'O+',
-      height: Number(row.height) || 158,
-      weight: Number(row.weight) || 48,
+      dateOfBirth: row.date_of_birth ? String(row.date_of_birth).split('T')[0] : undefined,
+      bloodType: row.blood_type || undefined,
+      height: row.height ? Number(row.height) : undefined,
+      weight: row.weight ? Number(row.weight) : undefined,
+      schoolOrOrg: row.school_or_org || undefined,
+      hbLevel: row.hb_level ? Number(row.hb_level) : undefined,
+      friendCode: row.friend_code || undefined,
+      streakCount: Number(row.streak_count) || 0,
     };
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -54,6 +58,7 @@ export async function updateUserProfileAction(
     name?: string;
     phone?: string;
     avatarUrl?: string | null;
+    dateOfBirth?: string;
     schoolOrOrg?: string;
     hbLevel?: number;
     bloodType?: string;
@@ -79,6 +84,10 @@ export async function updateUserProfileAction(
       if (data.avatarUrl !== undefined) {
         userFields.push(`avatar_url = $${pIdx++}`);
         userParams.push(data.avatarUrl);
+      }
+      if (data.dateOfBirth !== undefined) {
+        userFields.push(`date_of_birth = $${pIdx++}`);
+        userParams.push(data.dateOfBirth ? data.dateOfBirth : null);
       }
 
       if (userFields.length > 0) {
@@ -116,6 +125,88 @@ export async function updateUserProfileAction(
   } catch (error: unknown) {
     console.error('Error updating user profile:', error);
     const errMsg = error instanceof Error ? error.message : 'Gagal memperbarui profil.';
+    return { success: false, error: errMsg };
+  }
+}
+
+export async function saveUserInitialSetupAction(
+  userId: string,
+  data: {
+    schoolOrOrg: string;
+    dateOfBirth?: string;
+    bloodType?: string;
+    height?: number;
+    weight?: number;
+    hbLevel?: number;
+    schedule: {
+      dayOfWeek: string;
+      timeSlot: string;
+      remind15MinBefore?: boolean;
+      frequency?: 'weekly' | 'daily';
+      tabletName?: string;
+      dosage?: string;
+    };
+  },
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!data.schoolOrOrg || !data.schoolOrOrg.trim()) {
+      return { success: false, error: 'Asal sekolah atau kelas wajib diisi.' };
+    }
+
+    await db.transaction(async client => {
+      // 1. Update user date of birth if provided
+      if (data.dateOfBirth) {
+        await client.query(
+          `UPDATE users SET date_of_birth = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          [data.dateOfBirth, userId],
+        );
+      }
+
+      // 2. Update user_profiles with real data
+      await client.query(
+        `UPDATE user_profiles 
+         SET 
+           school_or_org = $1,
+           blood_type = $2,
+           height = $3,
+           weight = $4,
+           hb_level = $5,
+           last_active_at = CURRENT_TIMESTAMP
+         WHERE user_id = $6`,
+        [
+          data.schoolOrOrg.trim(),
+          data.bloodType?.trim() || null,
+          data.height || null,
+          data.weight || null,
+          data.hbLevel || null,
+          userId,
+        ],
+      );
+
+      // 3. Create active schedule in reminder_schedules
+      const schId = `sch_${userId}_${Date.now().toString().slice(-4)}`;
+      const dayOfWeek = data.schedule.dayOfWeek || 'Sabtu';
+      const timeSlot = data.schedule.timeSlot || '20:00';
+      const remind15 = data.schedule.remind15MinBefore !== false;
+      const frequency = data.schedule.frequency || 'weekly';
+      const tabletName = data.schedule.tabletName || 'Tablet Tambah Darah (TTD)';
+      const dosage = data.schedule.dosage || '1 tablet';
+
+      // Remove any pre-existing orphan schedules if any, or insert fresh
+      await client.query(`DELETE FROM reminder_schedules WHERE user_id = $1`, [userId]);
+
+      await client.query(
+        `INSERT INTO reminder_schedules (
+          id, user_id, tablet_name, dosage, frequency, day_of_week, time_slot, is_enabled, remind_15min_before, instructions, status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, 'Minum setelah makan malam atau sebelum tidur dengan air putih.', 'Aktif')`,
+        [schId, userId, tabletName, dosage, frequency, dayOfWeek, timeSlot, remind15],
+      );
+    });
+
+    return { success: true };
+  } catch (error: unknown) {
+    console.error('Error in saveUserInitialSetupAction:', error);
+    const errMsg = error instanceof Error ? error.message : 'Gagal menyimpan profil & jadwal awal.';
     return { success: false, error: errMsg };
   }
 }

@@ -1,107 +1,62 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Flame, Heart, CheckCircle2, Clock, XCircle, UserPlus, ArrowRight } from 'lucide-react';
+import { Flame, Users, ArrowRight, MessageSquare, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 
-export interface BuddyStreakInfo {
-  connectionId?: string;
-  buddyId?: string;
-  buddyName: string;
-  buddyavatarUrl: string;
+export interface GroupBuddySummary {
+  id: string;
+  name: string;
+  groupCode: string;
   streakCount: number;
-  userStatusThisWeek?: 'recorded' | 'missed' | 'pending';
-  buddyStatusThisWeek?: 'recorded' | 'missed' | 'pending';
+  memberCount: number;
+  membersSummary: string[];
+  weeklyCompletedCount: number;
+  weeklyTotalCount: number;
+  weeklyCompletionRate: number;
+  avatarUrl?: string;
 }
 
 export interface BuddyCardProps {
-  buddyData?: BuddyStreakInfo | null;
-  useravatarUrl?: string;
+  groupData?: GroupBuddySummary | null;
   userName?: string;
-  userStatusThisWeek?: 'recorded' | 'missed' | 'pending';
-  onCheer?: (connectionId: string, buddyId: string) => void | Promise<void>;
+  // Legacy fallback props
+  buddyData?: {
+    buddyName: string;
+    streakCount: number;
+  } | null;
 }
 
 export function BuddyCard({
-  buddyData,
-  useravatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  userName = 'Sarah',
-  userStatusThisWeek = 'pending',
-  onCheer,
+  groupData,
 }: BuddyCardProps) {
-  const [cheerCount, setCheerCount] = useState(0);
-  const [hasCheered, setHasCheered] = useState(false);
-  const [isCheering, setIsCheering] = useState(false);
-
-  const effectiveUserStatus = buddyData?.userStatusThisWeek || userStatusThisWeek;
-  const effectiveBuddyStatus = buddyData?.buddyStatusThisWeek || 'pending';
-
-  const handleCheer = async () => {
-    if (isCheering || hasCheered) return;
-    setIsCheering(true);
-    setCheerCount(prev => prev + 1);
-    setHasCheered(true);
-
-    if (onCheer && buddyData?.connectionId && buddyData?.buddyId) {
-      try {
-        await onCheer(buddyData.connectionId, buddyData.buddyId);
-      } catch (err) {
-        console.error('Failed to send cheer:', err);
-      }
-    }
-    setIsCheering(false);
-  };
-
-  // Helper render status badge
-  const renderStatusBadge = (status: 'recorded' | 'missed' | 'pending') => {
-    if (status === 'recorded') {
-      return (
-        <span className='text-[10px] text-[#059669] font-bold flex items-center gap-0.5 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200'>
-          <CheckCircle2 size={10} /> Sudah
-        </span>
-      );
-    }
-    if (status === 'missed') {
-      return (
-        <span className='text-[10px] text-[#e11d48] font-bold flex items-center gap-0.5 bg-rose-50 px-1.5 py-0.5 rounded-full border border-rose-200'>
-          <XCircle size={10} /> Lewat
-        </span>
-      );
-    }
+  // 1. EMPTY / INVITE STATE: If user has no active group
+  if (!groupData || !groupData.name) {
     return (
-      <span className='text-[10px] text-amber-600 font-bold flex items-center gap-0.5 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200'>
-        <Clock size={10} /> Belum
-      </span>
-    );
-  };
-
-  // 1. EMPTY / INVITE STATE: If no active buddy is connected in database
-  if (!buddyData || !buddyData.buddyName) {
-    return (
-      <Card padding='md' className='w-full'>
+      <Card padding='md' className='w-full border border-[#fce7f3] shadow-sm'>
         <div className='flex items-center justify-between mb-3'>
-          <h4 className='text-sm font-bold text-[#1e293b]'>Streak Bersama</h4>
+          <h4 className='text-sm font-bold text-[#1e293b] flex items-center gap-1.5'>
+            <Users size={16} className='text-[#e11d48]' />
+            <span>Group Buddy</span>
+          </h4>
           <span className='text-xs font-semibold text-[#be123c] bg-[#ffe4e6] px-2.5 py-0.5 rounded-full'>
-            Partner Sehat
+            Komunitas Sehat
           </span>
         </div>
 
-        <div className='bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-200/70 rounded-2xl p-4 flex flex-col items-center text-center my-2'>
-          <div className='relative flex items-center justify-center -space-x-2 mb-2.5'>
-            <div className='w-11 h-11 rounded-full ring-2 ring-rose-400 overflow-hidden relative shadow-sm'>
-              <Image src={useravatarUrl} alt={userName} fill className='object-cover' sizes='44px' />
-            </div>
-            <div className='w-11 h-11 rounded-full bg-rose-100 border-2 border-dashed border-rose-300 flex items-center justify-center text-rose-500 shadow-sm'>
-              <UserPlus size={18} />
-            </div>
+        <div className='bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-200/80 rounded-2xl p-4 flex flex-col items-center text-center my-1.5'>
+          <div className='w-12 h-12 rounded-2xl bg-rose-100 border border-rose-200 flex items-center justify-center text-[#e11d48] shadow-sm mb-2.5'>
+            <Users size={22} />
           </div>
 
-          <h5 className='text-xs font-bold text-slate-800 mb-1'>Belum Ada Buddy Sehat</h5>
-          <p className='text-[11.5px] text-slate-500 max-w-xs leading-relaxed mb-3'>
-            Ajak sahabat atau teman sekolahmu untuk saling mengingatkan jadwal minum TTD dan bangun streak bersama!
+          <h5 className='text-xs sm:text-sm font-bold text-[#1e293b] mb-1'>
+            Belum Bergabung ke Grup
+          </h5>
+          <p className='text-[11.5px] text-[#64748b] max-w-xs leading-relaxed mb-3.5'>
+            Ajak kawan sekelas atau sahabat UKS untuk saling mengingatkan jadwal minum TTD setiap minggu!
           </p>
 
           <Link href='/user/buddy' className='w-full'>
@@ -111,9 +66,9 @@ export function BuddyCard({
               shape='pill'
               fullWidth
               icon={<ArrowRight size={14} />}
-              className='text-xs font-bold py-2'
+              className='text-xs font-bold'
             >
-              Ajak Sahabat Sekarang
+              Buka Grup Buddy
             </Button>
           </Link>
         </div>
@@ -121,85 +76,128 @@ export function BuddyCard({
     );
   }
 
-  // 2. ACTIVE BUDDY STATE: Real connected buddy data from database
+  // 2. ACTIVE GROUP BUDDY STATE
+  const completed = groupData.weeklyCompletedCount || 0;
+  const total = groupData.weeklyTotalCount || groupData.memberCount || 1;
+  const percent = groupData.weeklyCompletionRate || Math.round((completed / total) * 100);
+  const isAllCompleted = completed >= total && total > 0;
+
+  const membersText =
+    groupData.membersSummary && groupData.membersSummary.length > 0
+      ? `${groupData.membersSummary.slice(0, 3).join(', ')}${
+          groupData.memberCount > 3 ? '...' : ''
+        }`
+      : `${groupData.memberCount} Anggota`;
+
   return (
-    <Card padding='md' className='w-full'>
+    <Card padding='md' className='w-full border border-[#fce7f3] shadow-sm'>
+      {/* Card Header */}
       <div className='flex items-center justify-between mb-3'>
-        <h4 className='text-sm font-bold text-[#1e293b]'>Streak Bersama</h4>
+        <h4 className='text-sm font-bold text-[#1e293b] flex items-center gap-1.5'>
+          <Users size={16} className='text-[#e11d48]' />
+          <span>Group Buddy</span>
+        </h4>
         <Link
           href='/user/buddy'
           className='text-xs font-semibold text-[#be123c] hover:underline bg-[#ffe4e6] px-2.5 py-0.5 rounded-full'
         >
-          Lihat Semua Partner ({buddyData.streakCount} Mgg)
+          Lihat Chat Grup
         </Link>
       </div>
 
-      {/* Duo-avatar Streak Header */}
-      <div className='bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-200/80 rounded-2xl p-4 flex items-center justify-between my-2'>
-        {/* Left User */}
-        <div className='flex flex-col items-center'>
-          <div className='w-12 h-12 rounded-full ring-3 ring-rose-400 overflow-hidden relative shadow-sm'>
-            <Image src={useravatarUrl} alt={userName} fill className='object-cover' sizes='48px' />
+      {/* Main Group Hero Box */}
+      <div className='bg-gradient-to-r from-rose-50/90 via-amber-50/60 to-rose-50/90 border border-rose-200 rounded-2xl p-3.5 my-1 flex flex-col gap-3'>
+        <div className='flex items-center justify-between gap-3'>
+          {/* Group Identity */}
+          <div className='flex items-center gap-2.5 min-w-0 flex-1'>
+            <div className='relative w-11 h-11 rounded-2xl overflow-hidden shrink-0 ring-2 ring-rose-200 bg-rose-100 shadow-2xs'>
+              {groupData.avatarUrl ? (
+                <Image
+                  src={groupData.avatarUrl}
+                  alt={groupData.name}
+                  fill
+                  className='object-cover'
+                  sizes='44px'
+                />
+              ) : (
+                <div className='w-full h-full flex items-center justify-center text-[#e11d48] font-bold'>
+                  <Users size={20} />
+                </div>
+              )}
+            </div>
+
+            <div className='min-w-0'>
+              <h5 className='text-xs sm:text-sm font-extrabold text-[#1e293b] truncate'>
+                {groupData.name}
+              </h5>
+              <p className='text-[10.5px] text-[#64748b] truncate mt-0.5'>
+                {groupData.memberCount} Siswi ({membersText})
+              </p>
+            </div>
           </div>
-          <span className='text-xs font-bold text-[#1e293b] mt-1.5 truncate max-w-[70px] sm:max-w-[80px]'>
-            {userName} (Kamu)
-          </span>
-          <div className='mt-0.5'>{renderStatusBadge(effectiveUserStatus)}</div>
+
+          {/* Group Streak Badge */}
+          <div className='flex flex-col items-center px-2.5 py-1 bg-white/90 border border-amber-200 rounded-2xl shrink-0 shadow-2xs'>
+            <div className='flex items-center gap-1 text-orange-600'>
+              <Flame size={15} className='fill-orange-500 animate-pulse' />
+              <span className='text-xs font-black font-mono'>{groupData.streakCount}</span>
+            </div>
+            <span className='text-[9px] font-extrabold text-[#e11d48] uppercase tracking-wider'>
+              Mgg Streak
+            </span>
+          </div>
         </div>
 
-        {/* Center Flame Badge */}
-        <div className='flex flex-col items-center px-2'>
-          <div className='w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-rose-600 text-white flex flex-col items-center justify-center shadow-lg shadow-orange-500/25 animate-pulse'>
-            <Flame size={20} className='fill-white' />
-            <span className='text-xs font-extrabold -mt-0.5'>{buddyData.streakCount}</span>
+        {/* Weekly Progress Bar */}
+        <div className='bg-white/80 rounded-xl p-2.5 border border-rose-100 flex flex-col gap-1.5'>
+          <div className='flex items-center justify-between text-[11px] font-semibold'>
+            <span className='flex items-center gap-1 text-[#475569]'>
+              {isAllCompleted ? (
+                <CheckCircle2 size={12} className='text-emerald-600' />
+              ) : (
+                <Sparkles size={12} className='text-[#e11d48]' />
+              )}
+              {isAllCompleted
+                ? 'Semua anggota sudah minum TTD! 🎉'
+                : `${completed} dari ${total} siswi sudah minum TTD`}
+            </span>
+            <span
+              className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
+                isAllCompleted
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-rose-100 text-[#be123c]'
+              }`}
+            >
+              {percent}%
+            </span>
           </div>
-          <span className='text-[10px] font-bold text-[#e11d48] mt-1 uppercase tracking-wider'>
-            Minggu Streak
-          </span>
-        </div>
 
-        {/* Right Buddy */}
-        <div className='flex flex-col items-center'>
-          <div className='w-12 h-12 rounded-full ring-3 ring-amber-400 overflow-hidden relative shadow-sm'>
-            <Image
-              src={buddyData.buddyavatarUrl}
-              alt={buddyData.buddyName}
-              fill
-              className='object-cover'
-              sizes='48px'
+          <div className='w-full h-2 bg-rose-100 rounded-full overflow-hidden'>
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                isAllCompleted
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                  : 'bg-gradient-to-r from-amber-500 to-rose-500'
+              }`}
+              style={{ width: `${Math.min(100, Math.max(8, percent))}%` }}
             />
           </div>
-          <span className='text-xs font-bold text-[#1e293b] mt-1.5 truncate max-w-[70px] sm:max-w-[80px]'>
-            {buddyData.buddyName.split(' ')[0]}
-          </span>
-          <div className='mt-0.5'>{renderStatusBadge(effectiveBuddyStatus)}</div>
         </div>
       </div>
 
-      <p className='text-xs text-center text-[#475569] my-3 leading-relaxed'>
-        🎉 Hebat! Kamu dan <strong>{buddyData.buddyName}</strong> sudah konsisten minum TTD selama{' '}
-        <strong>{buddyData.streakCount} minggu berturut-turut!</strong>
-      </p>
-
-      {/* Cheer Button */}
-      <Button
-        variant={hasCheered ? 'soft' : 'primary'}
-        size='sm'
-        shape='pill'
-        fullWidth
-        icon={
-          hasCheered ? (
-            <Heart size={16} className='text-rose-600 fill-rose-600' />
-          ) : (
-            <Heart size={16} />
-          )
-        }
-        onClick={handleCheer}
-      >
-        {hasCheered
-          ? `Terkirim! (${cheerCount} Semangat Dikirim ❤️)`
-          : `Kirim Semangat ke ${buddyData.buddyName.split(' ')[0]}`}
-      </Button>
+      {/* Direct CTA to Group Chat */}
+      <Link href='/user/buddy' className='w-full block mt-3'>
+        <Button
+          variant='primary'
+          size='sm'
+          shape='pill'
+          fullWidth
+          icon={<MessageSquare size={14} />}
+          className='text-xs font-bold'
+        >
+          Buka Obrolan Grup
+        </Button>
+      </Link>
     </Card>
   );
 }

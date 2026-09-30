@@ -25,7 +25,7 @@ export function ActiveDateActionCard({
   activity,
   effectiveStatus,
   fallbackTabletName = 'Tablet Tambah Darah (TTD)',
-  fallbackTime = '08:00',
+  fallbackTime = '20:00',
   isUpdating,
   onUpdateStatus,
 }: ActiveDateActionCardProps) {

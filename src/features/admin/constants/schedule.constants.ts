@@ -47,9 +47,9 @@ export const INITIAL_SCHEDULE_FORM_DATA: ScheduleFormData = {
   dosage: '1 Tablet',
   frequency: '1x Seminggu',
   dayOfWeek: 'Sabtu',
-  timeSlot: '08:00',
+  timeSlot: '20:00',
   category: 'TTD Rutin',
-  instructions: 'Minum 1 tablet setelah sarapan atau sebelum tidur dengan air putih.',
+  instructions: 'Minum 1 tablet setelah makan malam atau sebelum tidur dengan air putih.',
 };
 
 export const CATEGORY_PRESETS: Record<
@@ -59,7 +59,7 @@ export const CATEGORY_PRESETS: Record<
   'TTD Rutin': {
     medicationName: 'Tablet Tambah Darah (TTD)',
     frequency: '1x Seminggu',
-    instructions: 'Minum 1 tablet setelah sarapan atau sebelum tidur dengan air putih.',
+    instructions: 'Minum 1 tablet setelah makan malam atau sebelum tidur dengan air putih.',
   },
   'Terapi Anemia': {
     medicationName: 'Tablet Tambah Darah (Terapi Intensif)',

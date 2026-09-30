@@ -4,7 +4,7 @@ import { pool } from './client';
 import { initializeDatabase } from './init';
 
 export async function seedDatabase() {
-  console.log('🌱 Starting PostgreSQL database seeding for Fe-Tablet (2-Role & Buddy Streak)...');
+  console.log('🌱 Starting PostgreSQL database seeding for FEMORY (2-Role & Buddy Streak)...');
 
   // Ensure schema exists
   await initializeDatabase();
@@ -272,6 +272,81 @@ export async function seedDatabase() {
       ]);
     }
 
+    // 8b. Buddy Groups
+    console.log('  -> Seeding buddy groups...');
+    const insertGroupQuery = `
+      INSERT INTO buddy_groups (
+        id, name, description, group_code, creator_id, streak_count, avatar_url
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        description = EXCLUDED.description,
+        group_code = EXCLUDED.group_code,
+        creator_id = EXCLUDED.creator_id,
+        streak_count = EXCLUDED.streak_count,
+        avatar_url = EXCLUDED.avatar_url,
+        updated_at = CURRENT_TIMESTAMP
+    `;
+
+    if (seedData.buddyGroups) {
+      for (const grp of seedData.buddyGroups) {
+        await client.query(insertGroupQuery, [
+          grp.id,
+          grp.name,
+          grp.description ?? null,
+          grp.groupCode,
+          grp.creatorId ?? null,
+          grp.streakCount ?? 0,
+          grp.avatarUrl ?? null,
+        ]);
+      }
+    }
+
+    // 8c. Buddy Group Members
+    console.log('  -> Seeding buddy group members...');
+    const insertGroupMemberQuery = `
+      INSERT INTO buddy_group_members (
+        id, group_id, user_id, role
+      ) VALUES ($1, $2, $3, $4)
+      ON CONFLICT (id) DO UPDATE SET
+        role = EXCLUDED.role
+    `;
+
+    if (seedData.buddyGroupMembers) {
+      for (const gmb of seedData.buddyGroupMembers) {
+        await client.query(insertGroupMemberQuery, [
+          gmb.id,
+          gmb.groupId,
+          gmb.userId,
+          gmb.role ?? 'member',
+        ]);
+      }
+    }
+
+    // 8d. Buddy Group Messages
+    console.log('  -> Seeding buddy group messages...');
+    const insertGroupMsgQuery = `
+      INSERT INTO buddy_group_messages (
+        id, group_id, sender_id, message_type, content, cheer_type
+      ) VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (id) DO UPDATE SET
+        content = EXCLUDED.content,
+        cheer_type = EXCLUDED.cheer_type
+    `;
+
+    if (seedData.buddyGroupMessages) {
+      for (const gmsg of seedData.buddyGroupMessages) {
+        await client.query(insertGroupMsgQuery, [
+          gmsg.id,
+          gmsg.groupId,
+          gmsg.senderId ?? null,
+          gmsg.messageType ?? 'text',
+          gmsg.content,
+          gmsg.cheerType ?? null,
+        ]);
+      }
+    }
+
     // 9. Articles & Sections
     console.log('  -> Seeding articles...');
     const insertArticleQuery = `
@@ -371,7 +446,7 @@ export async function seedDatabase() {
     }
 
     await client.query('COMMIT');
-    console.log('✅ Fe-Tablet Database seeding completed successfully with 2-Role & Buddy Streak!');
+    console.log('✅ FEMORY Database seeding completed successfully with 2-Role & Buddy Streak!');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Error seeding database:', error);

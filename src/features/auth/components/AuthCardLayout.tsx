@@ -55,7 +55,7 @@ export function AuthCardLayout({ children }: AuthCardLayoutProps) {
                 </div>
                 <div>
                   <h4 className='text-sm font-extrabold text-[#1e293b] leading-tight'>
-                    Fe-Tablet Sehat
+                    FEMORY Sehat
                   </h4>
                   <span className='text-[11px] text-[#64748b] font-medium'>
                     Program Bebas Anemia Siswi
@@ -79,7 +79,7 @@ export function AuthCardLayout({ children }: AuthCardLayoutProps) {
                   <h5 className='text-xs font-bold text-[#1e293b]'>Tablet Tambah Darah (TTD)</h5>
                   <div className='flex items-center gap-1 text-[11px] text-[#64748b] mt-0.5'>
                     <Clock size={11} />
-                    <span>Sabtu • 08:00 WIB</span>
+                    <span>Sabtu • 20:00 WIB</span>
                   </div>
                 </div>
               </div>

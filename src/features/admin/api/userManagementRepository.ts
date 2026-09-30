@@ -73,12 +73,68 @@ export async function getUsersAction(): Promise<ManagedUser[]> {
         lastActive: lastActiveStr,
         joinDate: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : '2026-09-01',
         medicalNotes: `Kadar Hb: ${r.hb_level || 12.4} g/dL • ${r.notes || 'Rutin suplementasi'}`,
-        lastReminderSent: 'Hari ini, 08:00 WIB',
+        lastReminderSent: 'Hari ini, 20:00 WIB',
       };
     });
   } catch (error) {
     console.error('Error in getUsersAction:', error);
     return [];
+  }
+}
+
+export async function getUserByIdAction(userId: string): Promise<ManagedUser | null> {
+  try {
+    const res = await db.query<UserManagementDbRow>(
+      `SELECT 
+        u.id, u.name, u.gender, u.phone, u.email, u.avatar_url, u.created_at,
+        p.risk_level, p.status, p.notes, p.school_or_org, p.hb_level, p.friend_code, p.streak_count, p.last_active_at,
+        (SELECT count(*) FROM reminder_schedules WHERE user_id = u.id AND status = 'Aktif') as active_schedules_count,
+        (SELECT count(*) FROM consumption_logs WHERE user_id = u.id) as total_logs,
+        (SELECT count(*) FROM consumption_logs WHERE user_id = u.id AND status IN ('ON_TIME', 'LATE')) as completed_logs
+      FROM users u
+      LEFT JOIN user_profiles p ON u.id = p.user_id
+      WHERE u.id = $1
+      LIMIT 1`,
+      [userId],
+    );
+
+    if (res.rows.length === 0) return null;
+    const r = res.rows[0];
+    const totalLogs = Number(r.total_logs) || 0;
+    const completedLogs = Number(r.completed_logs) || 0;
+    const adherenceRate = totalLogs > 0 ? Math.round((completedLogs / totalLogs) * 100) : 85;
+
+    const d = r.last_active_at ? new Date(r.last_active_at) : new Date();
+    const lastActiveStr = !isNaN(d.getTime())
+      ? d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+      : 'Hari ini';
+
+    const schoolOrOrg = r.school_or_org || 'SMA Negeri 1 Sehat';
+
+    return {
+      id: r.id,
+      name: r.name,
+      age: 16,
+      gender: r.gender || 'Perempuan',
+      phone: r.phone || '-',
+      email: r.email,
+      avatarUrl:
+        r.avatar_url ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.name)}`,
+      riskLevel: r.risk_level || 'Rendah',
+      status: r.status || 'Aktif',
+      schoolOrOrg,
+      assignedDoctor: schoolOrOrg,
+      activeSchedulesCount: Number(r.active_schedules_count) || 1,
+      adherenceRate,
+      lastActive: lastActiveStr,
+      joinDate: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : '2026-09-01',
+      medicalNotes: `Kadar Hb: ${r.hb_level || 12.4} g/dL • ${r.notes || 'Rutin suplementasi'}`,
+      lastReminderSent: 'Hari ini, 20:00 WIB',
+    };
+  } catch (error) {
+    console.error('Error in getUserByIdAction:', error);
+    return null;
   }
 }
 
@@ -127,14 +183,13 @@ export async function createUserAction(data: {
       // Create default weekly schedule
       await client.query(
         `INSERT INTO reminder_schedules (id, user_id, tablet_name, dosage, frequency, day_of_week, time_slot, is_enabled, status)
-         VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', '1 tablet', 'weekly', 'Sabtu', '08:00', true, 'Aktif')`,
+         VALUES ($1, $2, 'Tablet Tambah Darah (TTD)', '1 tablet', 'weekly', 'Sabtu', '20:00', true, 'Aktif')`,
         [`sch_${newId}`, newId],
       );
     });
 
-    const users = await getUsersAction();
-    const created = users.find(u => u.id === newId);
-    return { success: true, user: created };
+    const created = await getUserByIdAction(newId);
+    return { success: true, user: created || undefined };
   } catch (error: unknown) {
     console.error('Error creating user:', error);
     const errMsg = error instanceof Error ? error.message : 'Gagal membuat data pengguna baru';

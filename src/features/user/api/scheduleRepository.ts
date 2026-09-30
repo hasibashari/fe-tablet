@@ -4,7 +4,7 @@ import db from '@/src/db/client';
 import { UserScheduleData } from '../types';
 import { calculateNextSchedule } from '../utils/scheduleHelpers';
 
-export async function getUserScheduleAction(userId: string = 'usr_1'): Promise<UserScheduleData> {
+export async function getUserScheduleAction(userId: string = 'usr_1'): Promise<UserScheduleData | null> {
   try {
     const scheduleRes = await db.query<{
       id: string;
@@ -24,34 +24,25 @@ export async function getUserScheduleAction(userId: string = 'usr_1'): Promise<U
       [userId],
     );
 
-    let scheduleId = 'sch_fe_1';
-    let dayOfWeek = 'Sabtu';
-    let timeSlot = '08:00';
-    let isEnabled = true;
-    let dosage = '1 tablet, 1x seminggu';
-    let tabletName = 'Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)';
-    let frequency = 'Mingguan';
-    let remind15MinBefore = true;
-    let instructions =
-      'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.';
-
-    if (scheduleRes.rows.length > 0) {
-      const sch = scheduleRes.rows[0];
-      scheduleId = sch.id;
-      tabletName = sch.tablet_name || tabletName;
-      dosage = sch.dosage ? `${sch.dosage}, 1x seminggu` : dosage;
-      frequency = sch.frequency === 'daily' ? 'Harian' : 'Mingguan';
-      dayOfWeek = sch.day_of_week || 'Sabtu';
-      timeSlot = sch.time_slot || '08:00';
-      isEnabled = sch.is_enabled;
-      remind15MinBefore = sch.remind_15min_before;
-      instructions = sch.instructions || instructions;
+    if (scheduleRes.rows.length === 0) {
+      return null;
     }
+
+    const sch = scheduleRes.rows[0];
+    const tabletName = sch.tablet_name || 'Tablet Tambah Darah (TTD)';
+    const dosage = sch.dosage ? `${sch.dosage}, 1x seminggu` : '1 tablet, 1x seminggu';
+    const frequency = sch.frequency === 'daily' ? 'Harian' : 'Mingguan';
+    const dayOfWeek = sch.day_of_week || 'Sabtu';
+    const timeSlot = sch.time_slot || '20:00';
+    const isEnabled = sch.is_enabled;
+    const remind15MinBefore = sch.remind_15min_before;
+    const instructions =
+      sch.instructions || 'Minum 1 tablet seminggu sekali setelah makan malam atau sebelum tidur dengan air putih.';
 
     const { nextDate, daysRemaining } = calculateNextSchedule(dayOfWeek, timeSlot);
 
     return {
-      id: scheduleId,
+      id: sch.id,
       patientId: userId,
       dayOfWeek,
       time: timeSlot,
@@ -67,23 +58,44 @@ export async function getUserScheduleAction(userId: string = 'usr_1'): Promise<U
     };
   } catch (error) {
     console.error('Error in getUserScheduleAction:', error);
-    const { nextDate, daysRemaining } = calculateNextSchedule('Sabtu', '08:00');
-    return {
-      id: 'sch_fe_1',
-      patientId: userId,
-      dayOfWeek: 'Sabtu',
-      time: '08:00',
-      tabletName: 'Tablet Tambah Darah (Sulfas Ferosus / Ferrous Fumarate)',
-      dosage: '1 tablet, 1x seminggu',
-      frequency: 'Mingguan',
-      category: 'TTD Rutin',
-      isEnabled: true,
-      remind15MinBefore: true,
-      nextDate,
-      daysRemaining,
-      instructions:
-        'Minum 1 tablet seminggu sekali setelah sarapan atau sebelum tidur dengan air putih.',
-    };
+    return null;
+  }
+}
+
+export async function createUserScheduleAction(
+  userId: string,
+  data: {
+    dayOfWeek: string;
+    timeSlot: string;
+    remind15MinBefore?: boolean;
+    frequency?: string;
+    tabletName?: string;
+    dosage?: string;
+    instructions?: string;
+  },
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const schId = `sch_${userId}_${Date.now().toString().slice(-4)}`;
+    const dayOfWeek = data.dayOfWeek || 'Sabtu';
+    const timeSlot = data.timeSlot || '20:00';
+    const remind15 = data.remind15MinBefore !== false;
+    const frequency = data.frequency === 'daily' || data.frequency === 'Harian' ? 'daily' : 'weekly';
+    const tabletName = data.tabletName || 'Tablet Tambah Darah (TTD)';
+    const dosage = data.dosage || '1 tablet';
+    const instructions = data.instructions || 'Minum setelah makan malam atau sebelum tidur dengan air putih.';
+
+    await db.query(
+      `INSERT INTO reminder_schedules (
+        id, user_id, tablet_name, dosage, frequency, day_of_week, time_slot, is_enabled, remind_15min_before, instructions, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, 'Aktif')`,
+      [schId, userId, tabletName, dosage, frequency, dayOfWeek, timeSlot, remind15, instructions],
+    );
+
+    return { success: true };
+  } catch (error: unknown) {
+    console.error('Error in createUserScheduleAction:', error);
+    const errMsg = error instanceof Error ? error.message : 'Gagal membuat jadwal.';
+    return { success: false, error: errMsg };
   }
 }
 
