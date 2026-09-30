@@ -67,7 +67,7 @@ export default function ConsultationPage() {
           schoolOrOrg: user?.schoolOrOrg,
           hbLevel: user?.hbLevel,
           gender: user?.gender,
-        }
+        },
       );
 
       const displayName = user?.name?.trim() ? user.name.trim().split(' ')[0] : 'Sahabat FEMORY';
@@ -107,22 +107,23 @@ export default function ConsultationPage() {
   };
 
   return (
-    <div className='flex flex-col gap-2.5 sm:gap-4 w-full h-[calc(100dvh-135px)] md:h-[calc(100vh-80px)] -mb-20 md:mb-0 overflow-hidden'>
+    <div className='flex flex-col gap-2 sm:gap-3 w-full h-[calc(100dvh-120px)] md:h-[calc(100dvh-140px)] -mb-20 md:mb-0 overflow-hidden'>
       {/* Screen Title Header (Shrink-0) */}
-      <div className='shrink-0 flex items-center justify-between gap-2'>
+      <div className='shrink-0 flex items-center justify-between gap-2 pb-0.5'>
         <div>
-          <h2 className='text-lg sm:text-2xl font-extrabold text-[#1e293b] tracking-tight'>
-            Konsultasi AI
+          <h2 className='text-base sm:text-xl md:text-2xl font-extrabold text-[#1e293b] tracking-tight flex items-center gap-1.5'>
+            <span>Konsultasi AI</span>
+            <span className='text-sm sm:text-base'>🌸</span>
           </h2>
-          <p className='text-[11px] sm:text-sm text-[#64748b] leading-tight'>
-            Tanya jawab pintar seputar anemia & tips minum tablet
+          <p className='text-[11px] sm:text-xs text-[#64748b] leading-none mt-0.5'>
+            Tanya jawab seputar TTD, nutrisi zat besi, & cegah anemia
           </p>
         </div>
 
         <button
           type='button'
           onClick={handleResetChat}
-          className='inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:text-[#e11d48] rounded-xl hover:bg-rose-50 transition-colors border border-[#fce7f3] bg-white cursor-pointer shadow-2xs shrink-0'
+          className='inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:text-[#e11d48] rounded-xl hover:bg-rose-50 transition-colors border border-[#fce7f3] bg-white cursor-pointer shadow-2xs shrink-0 active:scale-95'
           title='Reset Percakapan'
           aria-label='Reset Chat'
         >
@@ -132,9 +133,9 @@ export default function ConsultationPage() {
       </div>
 
       {/* Main Responsive Grid Layout (Flex-1 Min-h-0) */}
-      <div className='flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6 items-stretch h-full overflow-hidden'>
+      <div className='flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-5 items-stretch h-full overflow-hidden'>
         {/* LEFT PANEL: Suggested Questions & Topics (Visible on md+) */}
-        <div className='hidden md:flex md:col-span-4 flex-col gap-4 h-full min-h-0 overflow-y-auto pr-1'>
+        <div className='hidden md:flex md:col-span-4 flex-col gap-3.5 h-full min-h-0 overflow-y-auto pr-1'>
           <Card padding='md' className='shrink-0 bg-gradient-to-br from-[#fff5f7] to-[#ffe4e6]'>
             <div className='flex items-center gap-2.5 mb-2'>
               <div className='w-9 h-9 rounded-2xl bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center shadow-md shadow-rose-500/20'>
@@ -156,7 +157,7 @@ export default function ConsultationPage() {
             className='flex-1 min-h-0 flex flex-col justify-between overflow-y-auto'
           >
             <div>
-              <h4 className='text-xs font-bold text-[#1e293b] mb-3 flex items-center gap-1.5'>
+              <h4 className='text-xs font-bold text-[#1e293b] mb-2.5 flex items-center gap-1.5'>
                 <Sparkles size={13} className='text-[#e11d48]' />
                 <span>Pertanyaan Populer:</span>
               </h4>
@@ -182,10 +183,10 @@ export default function ConsultationPage() {
               </div>
             </div>
 
-            <div className='mt-4 pt-3 border-t border-[#fce7f3] flex items-start gap-1.5 text-[10px] text-[#64748b] shrink-0'>
+            <div className='mt-3 pt-2.5 border-t border-[#fce7f3] flex items-start gap-1.5 text-[10px] text-[#64748b] shrink-0'>
               <Info size={13} className='text-rose-500 shrink-0 mt-0.5' />
               <span>
-                Jawaban disesuaikan dengan pedoman Kemenkes RI untuk suplementasi TTD remaja.
+                Diselaraskan dengan pedoman Kemenkes RI untuk suplementasi TTD remaja putri.
               </span>
             </div>
           </Card>
@@ -210,17 +211,17 @@ export default function ConsultationPage() {
 
           <Card
             padding='none'
-            className='flex-1 min-h-0 flex flex-col overflow-hidden bg-[#fffdfd] shadow-sm border border-[#fce7f3] p-2.5 sm:p-4 rounded-2xl'
+            className='flex-1 min-h-0 flex flex-col overflow-hidden bg-[#fffdfd] shadow-sm border border-[#fce7f3] p-3 sm:p-4 rounded-2xl'
           >
-            {/* Scrollable Message List (Only this section scrolls!) */}
-            <div className='flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-2 space-y-2.5 sm:space-y-3 pb-2 overscroll-contain'>
+            {/* Scrollable Message List (Fills full height!) */}
+            <div className='flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-2 space-y-3 pb-2 overscroll-contain'>
               {messages.map(msg => {
                 const isUser = msg.sender === 'user';
 
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-start gap-2 sm:gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+                    className={`flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
                   >
                     {/* Avatar Icon */}
                     <div
@@ -230,7 +231,11 @@ export default function ConsultationPage() {
                           : 'bg-gradient-to-tr from-rose-600 to-rose-400 shadow-xs'
                       }`}
                     >
-                      {isUser ? <User size={14} className='sm:w-4 sm:h-4' /> : <Bot size={14} className='sm:w-4 sm:h-4' />}
+                      {isUser ? (
+                        <User size={14} className='sm:w-4 sm:h-4' />
+                      ) : (
+                        <Bot size={14} className='sm:w-4 sm:h-4' />
+                      )}
                     </div>
 
                     {/* Message Bubble */}
@@ -263,7 +268,7 @@ export default function ConsultationPage() {
 
               {/* Typing Indicator */}
               {isTyping && (
-                <div className='flex items-center gap-2 sm:gap-2.5'>
+                <div className='flex items-center gap-2.5'>
                   <div className='w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0'>
                     <Bot size={14} className='sm:w-4 sm:h-4' />
                   </div>
@@ -271,7 +276,9 @@ export default function ConsultationPage() {
                     <span className='w-1.5 h-1.5 rounded-full bg-[#e11d48] animate-bounce' />
                     <span className='w-1.5 h-1.5 rounded-full bg-[#e11d48] animate-bounce delay-150' />
                     <span className='w-1.5 h-1.5 rounded-full bg-[#e11d48] animate-bounce delay-300' />
-                    <span className='text-[11px] sm:text-xs font-medium ml-1'>Asisten sedang mengetik...</span>
+                    <span className='text-[11px] sm:text-xs font-medium ml-1'>
+                      Asisten sedang mengetik...
+                    </span>
                   </div>
                 </div>
               )}
@@ -279,39 +286,39 @@ export default function ConsultationPage() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Medical Disclaimer Banner (Shrink-0) */}
-            <div className='shrink-0 bg-[#fff5f7] border border-[#fce7f3] rounded-xl p-1.5 sm:p-2.5 my-1.5 sm:my-2 flex items-center gap-1.5 sm:gap-2'>
-              <AlertCircle size={13} className='text-[#e11d48] shrink-0' />
-              <p className='text-[10px] sm:text-[11px] text-[#64748b] leading-tight'>
-                Edukasi & panduan umum, bukan pengganti diagnosa dokter.
-              </p>
-            </div>
-
             {/* Input Message Form (Shrink-0) */}
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                handleSendMessage();
-              }}
-              className='shrink-0 flex items-center gap-2 sm:gap-2.5 pt-1.5 sm:pt-2 border-t border-[#fce7f3]'
-            >
-              <input
-                type='text'
-                placeholder='Ketik pertanyaan seputar TTD...'
-                value={inputText}
-                onChange={e => setInputText(e.target.value)}
-                className='flex-1 bg-[#fff5f7] text-[#1e293b] placeholder-[#94a3b8] text-xs sm:text-sm rounded-full border border-[#fce7f3] focus:border-[#e11d48] px-3.5 py-2 sm:px-4 sm:py-2.5 outline-none touch-manipulation'
-              />
-
-              <button
-                type='submit'
-                disabled={!inputText.trim() || isTyping}
-                className='w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#e11d48] text-white hover:bg-[#be123c] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20 transition-all cursor-pointer touch-manipulation'
-                aria-label='Kirim Pesan'
+            <div className='shrink-0 pt-2 border-t border-[#fce7f3] flex flex-col gap-1.5'>
+              <form
+                onSubmit={e => {
+                  e.preventDefault();
+                  handleSendMessage();
+                }}
+                className='flex items-center gap-2 sm:gap-2.5'
               >
-                <Send size={15} className='sm:w-4 sm:h-4' />
-              </button>
-            </form>
+                <input
+                  type='text'
+                  placeholder='Ketik pertanyaan seputar Tablet Tambah Darah...'
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  className='flex-1 bg-[#fff5f7] text-[#1e293b] placeholder-[#94a3b8] text-xs sm:text-sm rounded-full border border-[#fce7f3] focus:border-[#e11d48] px-4 py-2.5 sm:py-3 outline-none touch-manipulation'
+                />
+
+                <button
+                  type='submit'
+                  disabled={!inputText.trim() || isTyping}
+                  className='w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#e11d48] text-white hover:bg-[#be123c] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20 transition-all cursor-pointer touch-manipulation'
+                  aria-label='Kirim Pesan'
+                >
+                  <Send size={16} className='sm:w-[17px] sm:h-[17px]' />
+                </button>
+              </form>
+
+              {/* Integrated Compact Medical Disclaimer Footer */}
+              <div className='flex items-center justify-center gap-1 text-[10px] text-[#94a3b8] text-center pt-0.5'>
+                <AlertCircle size={11} className='text-[#e11d48] shrink-0' />
+                <span>Edukasi umum • Bukan pengganti diagnosa medis dokter</span>
+              </div>
+            </div>
           </Card>
         </div>
       </div>
