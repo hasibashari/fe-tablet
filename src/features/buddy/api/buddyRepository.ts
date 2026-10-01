@@ -314,7 +314,7 @@ export async function getGroupChatDetailsAction(
       description: grp.description || undefined,
       groupCode: grp.group_code,
       creatorId: grp.creator_id,
-      streakCount: Number(grp.streak_count) || 0,
+      streakCount: dynamicStreak,
       avatarUrl:
         grp.avatar_url ||
         `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(grp.name)}`,
