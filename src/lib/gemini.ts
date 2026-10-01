@@ -5,8 +5,8 @@ interface ChatHistoryItem {
   parts: Array<{ text: string }>;
 }
 
-const GEMINI_API_KEY = process.env.GEMINI_API || process.env.GEMINI_API_KEY || '';
-const GEMINI_MODEL = 'gemini-3.6-flash';
+const GEMINI_API_KEY = process.env.GEMINI_API || '';
+const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 const FEMORY_SYSTEM_PROMPT = `
 Kamu adalah "Dokter & Asisten Medis Cerdas FEMORY" (Klinik Edukasi Anemia & Suplementasi Tablet Tambah Darah).
@@ -31,7 +31,7 @@ export interface UserConsultationContext {
 export async function askGeminiConsultationAction(
   prompt: string,
   history: Array<{ sender: 'user' | 'assistant'; text: string }> = [],
-  userContext?: UserConsultationContext
+  userContext?: UserConsultationContext,
 ): Promise<{ success: boolean; answer: string; error?: string }> {
   try {
     if (!GEMINI_API_KEY) {
@@ -46,11 +46,11 @@ export async function askGeminiConsultationAction(
     const contextDetails: string[] = [];
     if (userContext?.name?.trim()) {
       contextDetails.push(
-        `Pasien/pengguna yang sedang berkonsultasi bernama "${userContext.name.trim()}". Sapalah dan panggil dia dengan nama depannya secara hangat, akrab, dan bersahabat (misal: "Halo ${userContext.name.trim().split(' ')[0]} 🌸").`
+        `Pasien/pengguna yang sedang berkonsultasi bernama "${userContext.name.trim()}". Sapalah dan panggil dia dengan nama depannya secara hangat, akrab, dan bersahabat (misal: "Halo ${userContext.name.trim().split(' ')[0]} 🌸").`,
       );
     } else {
       contextDetails.push(
-        `Sapalah pasien/pengguna dengan ramah dan sopan menggunakan panggilan "Sahabat FEMORY" atau "Kakak".`
+        `Sapalah pasien/pengguna dengan ramah dan sopan menggunakan panggilan "Sahabat FEMORY" atau "Kakak".`,
       );
     }
 
@@ -100,7 +100,7 @@ export async function askGeminiConsultationAction(
             maxOutputTokens: 1000,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -143,7 +143,7 @@ export async function askGeminiConsultationAction(
  */
 export async function generateAiArticleDraftAction(
   topic: string,
-  category: string
+  category: string,
 ): Promise<{
   success: boolean;
   data?: {
@@ -186,7 +186,7 @@ Berikan output dalam format JSON valid persis seperti ini (tanpa markdown backti
             responseMimeType: 'application/json',
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -256,7 +256,7 @@ Pesan harus ramah, menyemangati, ada sedikit sentuhan emotikon hangat, dan mengi
             maxOutputTokens: 200,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -273,4 +273,3 @@ Pesan harus ramah, menyemangati, ada sedikit sentuhan emotikon hangat, dan mengi
 }
 
 export const generateAiPatientNudgeAction = generateAiUserNudgeAction;
-
