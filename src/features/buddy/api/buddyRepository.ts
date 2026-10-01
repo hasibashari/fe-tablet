@@ -1,6 +1,7 @@
 'use server';
 
 import db from '@/src/db/client';
+import { calculateGroupChronologicalStreak } from '../utils/groupStreakCalculator';
 import {
   BuddyGroupItem,
   BuddyGroupMember,
@@ -15,6 +16,50 @@ import {
   CheerType,
   ConsumptionStatus,
 } from '../types';
+
+/**
+ * 0. Calculate and sync dynamic group streak based on members' real consumption logs
+ */
+export async function calculateAndSyncGroupStreak(groupId: string): Promise<number> {
+  try {
+    const membersRes = await db.query<{ user_id: string }>(
+      `SELECT user_id FROM buddy_group_members WHERE group_id = $1`,
+      [groupId],
+    );
+    const memberIds = membersRes.rows.map(r => r.user_id);
+    if (memberIds.length === 0) {
+      await db.query(`UPDATE buddy_groups SET streak_count = 0 WHERE id = $1`, [groupId]);
+      return 0;
+    }
+
+    const logsRes = await db.query<{ user_id: string; scheduled_date: string | Date }>(
+      `SELECT user_id, scheduled_date 
+       FROM consumption_logs 
+       WHERE user_id = ANY($1) AND status IN ('ON_TIME', 'LATE')
+       ORDER BY scheduled_date DESC`,
+      [memberIds],
+    );
+
+    const completedLogs = logsRes.rows.map(r => ({
+      userId: r.user_id,
+      date: r.scheduled_date,
+    }));
+
+    const streak = calculateGroupChronologicalStreak(completedLogs, memberIds.length);
+
+    await db.query(
+      `UPDATE buddy_groups 
+       SET streak_count = $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2`,
+      [streak, groupId],
+    );
+
+    return streak;
+  } catch (error) {
+    console.error(`Error calculating group streak for ${groupId}:`, error);
+    return 0;
+  }
+}
 
 /**
  * Helper: Format timestamp into human-readable Indonesian format
@@ -191,7 +236,9 @@ export async function getGroupChatDetailsAction(
       return null;
     }
 
-    // 2. Fetch Group Metadata
+    // 2. Fetch Group Metadata & Sync Streak dynamically from real logs
+    const dynamicStreak = await calculateAndSyncGroupStreak(groupId);
+
     const grpRes = await db.query<{
       id: string;
       name: string;
@@ -360,10 +407,10 @@ export async function createBuddyGroupAction(
     const creatorName = creatorRes.rows[0]?.name || 'Sahabat Sehat';
 
     await db.transaction(async client => {
-      // 1. Insert Group
+      // 1. Insert Group with streak_count = 0 initially
       await client.query(
         `INSERT INTO buddy_groups (id, name, description, group_code, creator_id, streak_count, avatar_url)
-         VALUES ($1, $2, $3, $4, $5, 1, $6)`,
+         VALUES ($1, $2, $3, $4, $5, 0, $6)`,
         [groupId, trimmedName, description?.trim() || null, groupCode, creatorId, avatarUrl],
       );
 
@@ -412,13 +459,16 @@ export async function createBuddyGroupAction(
       );
     });
 
+    // 5. Dynamic chronological streak calculation for new group
+    const initialStreak = await calculateAndSyncGroupStreak(groupId);
+
     const createdGroup: BuddyGroupItem = {
       id: groupId,
       name: trimmedName,
       description: description?.trim() || undefined,
       groupCode,
       creatorId,
-      streakCount: 1,
+      streakCount: initialStreak,
       avatarUrl,
       memberCount: 1 + (initialFriendCodes?.length || 0),
       membersSummary: [creatorName.split(' ')[0]],
@@ -520,6 +570,8 @@ export async function joinGroupByCodeAction(
       );
     });
 
+    const freshStreak = await calculateAndSyncGroupStreak(grp.id);
+
     return {
       success: true,
       group: {
@@ -528,7 +580,7 @@ export async function joinGroupByCodeAction(
         description: grp.description || undefined,
         groupCode: grp.group_code,
         creatorId: grp.creator_id,
-        streakCount: Number(grp.streak_count) || 0,
+        streakCount: freshStreak,
         avatarUrl: grp.avatar_url || undefined,
         memberCount: 2,
         membersSummary: [userName.split(' ')[0]],
@@ -628,6 +680,9 @@ export async function addMemberToGroupAction(
         ],
       );
     });
+
+    // Sync group streak dynamically
+    await calculateAndSyncGroupStreak(groupId);
 
     const newMember: BuddyGroupMember = {
       id: memberId,

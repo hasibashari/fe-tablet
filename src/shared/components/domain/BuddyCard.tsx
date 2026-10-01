@@ -136,13 +136,13 @@ export function BuddyCard({ groupData }: BuddyCardProps) {
           </div>
 
           {/* Group Streak Badge */}
-          <div className='flex flex-col items-center px-2.5 py-1 bg-white/90 border border-amber-200 rounded-2xl shrink-0 shadow-2xs'>
-            <div className='flex items-center gap-1 text-orange-600'>
-              <Flame size={15} className='fill-orange-500 animate-pulse' />
-              <span className='text-xs font-black font-mono'>{groupData.streakCount}</span>
-            </div>
-            <span className='text-[9px] font-extrabold text-[#e11d48] uppercase tracking-wider'>
-              Streak
+          <div
+            className='flex items-center gap-1 px-2.5 py-1 bg-white/90 border border-amber-200 rounded-full shrink-0 shadow-2xs'
+            title={`Streak: ${groupData.streakCount} Pekan`}
+          >
+            <Flame size={14} className='fill-orange-500 text-orange-500 animate-pulse' />
+            <span className='text-xs font-black font-mono text-orange-700'>
+              {groupData.streakCount}
             </span>
           </div>
         </div>

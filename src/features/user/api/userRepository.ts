@@ -15,6 +15,7 @@ import {
   updateUserScheduleSettingsAction as updateSchedule,
 } from './scheduleRepository';
 import { calculateAndSyncUserStreak as syncStreak } from './streakRepository';
+import { calculateAndSyncGroupStreak } from '@/src/features/buddy/api/buddyRepository';
 
 export type { UserProfile, UserScheduleData, UserDashboardData, StreakResult } from '../types';
 
@@ -269,6 +270,10 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
     let primaryGroup = null;
     if (groupRes.rows.length > 0) {
       const gRow = groupRes.rows[0];
+
+      // Dynamically calculate and synchronize group streak from PostgreSQL
+      const dynamicGroupStreak = await calculateAndSyncGroupStreak(gRow.id);
+
       const membersRes = await db.query<{
         user_id: string;
         name: string;
@@ -299,7 +304,7 @@ export async function getUserDashboardDataAction(userId?: string): Promise<UserD
         id: gRow.id,
         name: gRow.name,
         groupCode: gRow.group_code,
-        streakCount: Number(gRow.streak_count) || 0,
+        streakCount: dynamicGroupStreak,
         memberCount: gMemberCount,
         membersSummary: gMembers.map(m => m.name.split(' ')[0]),
         weeklyCompletedCount: gCompletedCount,
@@ -442,6 +447,15 @@ export async function recordUserConsumptionAction(
 
     // Dynamic streak calculation & synchronization in PostgreSQL
     const streakResult = await calculateAndSyncUserStreak(userId, schedFreq);
+
+    // Sync all group streaks the user belongs to
+    const userGroupsRes = await db.query<{ group_id: string }>(
+      `SELECT group_id FROM buddy_group_members WHERE user_id = $1`,
+      [userId],
+    );
+    for (const row of userGroupsRes.rows) {
+      await calculateAndSyncGroupStreak(row.group_id);
+    }
 
     return { success: true, status, newStreak: streakResult.streakCount };
   } catch (error) {

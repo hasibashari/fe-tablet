@@ -287,8 +287,17 @@ export default function GroupInfoModal({
                       </div>
                     </div>
 
-                    {/* Member Weekly Status Badge */}
-                    <div className='shrink-0'>
+                    {/* Member Streak & Weekly Status Badge */}
+                    <div className='flex items-center gap-1.5 shrink-0'>
+                      {member.streakCount > 0 && (
+                        <span
+                          className='inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80'
+                          title={`Streak Personal: ${member.streakCount} Pekan`}
+                        >
+                          <Flame size={10} className='fill-amber-500 text-amber-500' />
+                          <span>{member.streakCount}</span>
+                        </span>
+                      )}
                       {isRecorded ? (
                         <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200'>
                           <CheckCircle2 size={10} /> Sudah

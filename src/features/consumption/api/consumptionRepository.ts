@@ -11,6 +11,7 @@ import {
   StatusFilter,
 } from '../types';
 import { calculateAndSyncUserStreak, calculateChronologicalStreak } from '@/src/features/user/api/userRepository';
+import { calculateAndSyncGroupStreak } from '@/src/features/buddy/api/buddyRepository';
 
 interface ConsumptionLogRow {
   id: string;
@@ -366,6 +367,15 @@ export async function recordConsumptionForDateAction(
     // Dynamic chronological streak recalculation
     const streakResult = await calculateAndSyncUserStreak(userId, schedFreq);
 
+    // Sync all group streaks the user belongs to
+    const userGroupsRes = await db.query<{ group_id: string }>(
+      `SELECT group_id FROM buddy_group_members WHERE user_id = $1`,
+      [userId],
+    );
+    for (const row of userGroupsRes.rows) {
+      await calculateAndSyncGroupStreak(row.group_id);
+    }
+
     return { success: true, newStreak: streakResult.streakCount };
   } catch (error) {
     console.error('Error in recordConsumptionForDateAction:', error);
@@ -474,6 +484,15 @@ export async function logManualConsumptionAction(data: {
 
     // Sync streak in user_profiles
     await calculateAndSyncUserStreak(targetUserId, 'weekly');
+
+    // Sync all group streaks the user belongs to
+    const userGroupsRes = await db.query<{ group_id: string }>(
+      `SELECT group_id FROM buddy_group_members WHERE user_id = $1`,
+      [targetUserId],
+    );
+    for (const row of userGroupsRes.rows) {
+      await calculateAndSyncGroupStreak(row.group_id);
+    }
 
     return { success: true, logId: id };
   } catch (error: unknown) {
