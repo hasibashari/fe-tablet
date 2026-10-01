@@ -30,7 +30,10 @@ export default function GroupSidebarList({
   );
 
   return (
-    <Card padding='none' className='h-full flex flex-col overflow-hidden bg-white shadow-xs border border-rose-100/80'>
+    <Card
+      padding='none'
+      className='h-full flex flex-col overflow-hidden bg-white shadow-xs border border-rose-100/80'
+    >
       {/* Top Header */}
       <div className='p-3 sm:p-3.5 border-b border-rose-100/80 flex flex-col gap-2 bg-white shrink-0'>
         <div className='flex items-center justify-between'>
@@ -66,7 +69,10 @@ export default function GroupSidebarList({
         {/* Search Bar */}
         {groups.length > 0 && (
           <div className='relative'>
-            <Search size={13} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none' />
+            <Search
+              size={13}
+              className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none'
+            />
             <input
               type='text'
               placeholder='Cari grup...'
@@ -125,7 +131,8 @@ export default function GroupSidebarList({
 
                     {/* Streak Pill */}
                     <span className='shrink-0 flex items-center gap-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded-md border border-amber-200/80'>
-                      <Flame size={10} className='fill-amber-500 text-amber-500' /> {group.streakCount} Mgg
+                      <Flame size={10} className='fill-amber-500 text-amber-500' />{' '}
+                      {group.streakCount}
                     </span>
                   </div>
 

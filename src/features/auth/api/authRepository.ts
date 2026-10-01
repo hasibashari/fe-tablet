@@ -17,9 +17,7 @@ interface UserDbRow {
   streak_count: number | null;
 }
 
-export async function loginUserAction(
-  credentials: LoginCredentials,
-): Promise<{
+export async function loginUserAction(credentials: LoginCredentials): Promise<{
   success: boolean;
   user?: AuthUser;
   error?: string;
@@ -202,11 +200,18 @@ export async function registerUserAction(
       normalizedEmail,
     ]);
     if (existingRes.rows.length > 0) {
-      return { success: false, error: 'Email sudah terdaftar. Silakan masuk menggunakan email tersebut.' };
+      return {
+        success: false,
+        error: 'Email sudah terdaftar. Silakan masuk menggunakan email tersebut.',
+      };
     }
 
     const cleanName = data.name.trim();
-    const cleanTag = cleanName.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5) || 'USER';
+    const cleanTag =
+      cleanName
+        .toUpperCase()
+        .replace(/[^A-Z]/g, '')
+        .slice(0, 5) || 'USER';
     const randNum = Math.floor(1000 + Math.random() * 9000);
     const friendCode = `FE-${cleanTag}-${randNum}`;
 
@@ -223,7 +228,7 @@ export async function registerUserAction(
           cleanName,
           normalizedEmail,
           data.phone?.trim() || null,
-          data.gender || 'Perempuan',
+          'Perempuan',
           avatarUrl,
         ],
       );
@@ -249,5 +254,3 @@ export async function registerUserAction(
 }
 
 export const registerPatientAction = registerUserAction;
-
-

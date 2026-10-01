@@ -30,9 +30,7 @@ export interface BuddyCardProps {
   } | null;
 }
 
-export function BuddyCard({
-  groupData,
-}: BuddyCardProps) {
+export function BuddyCard({ groupData }: BuddyCardProps) {
   // 1. EMPTY / INVITE STATE: If user has no active group
   if (!groupData || !groupData.name) {
     return (
@@ -56,7 +54,8 @@ export function BuddyCard({
             Belum Bergabung ke Grup
           </h5>
           <p className='text-[11.5px] text-[#64748b] max-w-xs leading-relaxed mb-3.5'>
-            Ajak kawan sekelas atau sahabat UKS untuk saling mengingatkan jadwal minum TTD setiap minggu!
+            Ajak kawan sekelas atau sahabat UKS untuk saling mengingatkan jadwal minum TTD setiap
+            minggu!
           </p>
 
           <Link href='/user/buddy' className='w-full'>
@@ -143,7 +142,7 @@ export function BuddyCard({
               <span className='text-xs font-black font-mono'>{groupData.streakCount}</span>
             </div>
             <span className='text-[9px] font-extrabold text-[#e11d48] uppercase tracking-wider'>
-              Mgg Streak
+              Streak
             </span>
           </div>
         </div>
@@ -163,9 +162,7 @@ export function BuddyCard({
             </span>
             <span
               className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
-                isAllCompleted
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-rose-100 text-[#be123c]'
+                isAllCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-[#be123c]'
               }`}
             >
               {percent}%

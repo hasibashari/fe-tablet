@@ -31,6 +31,13 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
         } else {
           router.replace('/user/dashboard');
         }
+      } else if (user?.role === 'user') {
+        // If user hasn't completed initial setup, lock them to /user/setup
+        if (!user.isProfileComplete && pathname !== '/user/setup') {
+          router.replace('/user/setup');
+        } else if (user.isProfileComplete && pathname === '/user/setup') {
+          router.replace('/user/dashboard');
+        }
       }
     }
   }, [
@@ -53,6 +60,16 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
 
   if (requiredRole && user?.role !== requiredRole) {
     return null;
+  }
+
+  // Block rendering user pages if setup is incomplete, or block setup if already completed
+  if (user?.role === 'user') {
+    if (!user.isProfileComplete && pathname !== '/user/setup') {
+      return null;
+    }
+    if (user.isProfileComplete && pathname === '/user/setup') {
+      return null;
+    }
   }
 
   return <>{children}</>;

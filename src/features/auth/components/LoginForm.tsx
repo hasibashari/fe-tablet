@@ -3,15 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  ArrowRight,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types/auth.types';
 
@@ -54,7 +46,8 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
       });
 
       if (res.success && res.redirectTo) {
-        const target = redirectParam || res.redirectTo;
+        const isUserIncomplete = res.user?.role === 'user' && !res.isProfileComplete;
+        const target = isUserIncomplete ? '/user/setup' : redirectParam || res.redirectTo;
         const roleLabel = res.user?.role === 'admin' ? 'Administrator' : 'Siswi / Pengguna';
         setSuccessRole(roleLabel);
         setTimeout(() => {
@@ -75,7 +68,9 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
       {/* Optional Header Form if not in tabbed container */}
       {!hideHeader && (
         <div className='mb-6 text-left'>
-          <h2 className='text-2xl font-extrabold text-[#1e293b] tracking-tight mb-1'>Masuk ke FEMORY</h2>
+          <h2 className='text-2xl font-extrabold text-[#1e293b] tracking-tight mb-1'>
+            Masuk ke FEMORY
+          </h2>
           <p className='text-xs sm:text-sm text-[#64748b]'>
             Masukkan kredensial akun Siswi atau Administrator Anda.
           </p>
@@ -86,7 +81,9 @@ export function LoginForm({ hideHeader = false }: LoginFormProps) {
       {isJustRegistered && !errorMessage && !successRole && (
         <div className='mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-2 animate-fade-in'>
           <CheckCircle2 size={16} className='text-emerald-600 shrink-0' />
-          <span>Akun Anda telah berhasil dibuat! Silakan masuk menggunakan email dan kata sandi Anda.</span>
+          <span>
+            Akun Anda telah berhasil dibuat! Silakan masuk menggunakan email dan kata sandi Anda.
+          </span>
         </div>
       )}
 

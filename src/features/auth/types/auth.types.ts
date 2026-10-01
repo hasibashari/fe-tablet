@@ -26,7 +26,7 @@ export interface RegisterCredentials {
   email: string;
   password?: string;
   phone?: string;
-  gender?: 'Perempuan' | 'Laki-laki';
+  gender?: 'Perempuan';
 }
 
 export interface AuthState {

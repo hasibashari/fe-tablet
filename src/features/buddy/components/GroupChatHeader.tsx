@@ -72,7 +72,7 @@ export default function GroupChatHeader({
         >
           <Flame size={13} className='fill-amber-500 text-amber-500' />
           <span className='text-[11px] font-black text-amber-800 font-mono'>
-            {group.streakCount} Mgg
+            {group.streakCount}
           </span>
         </div>
 
